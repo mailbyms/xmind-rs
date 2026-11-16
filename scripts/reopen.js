@@ -1,0 +1,1 @@
+(async function(){const s=(ms)=>new Promise(r=>setTimeout(r,ms));const c=document.querySelector('.fp-chev');if(!c.closest('.fp-head').classList.contains('open'))c.click();await s(200);return [...document.querySelectorAll('.fp-head')].map(h=>h.classList.contains('open')).join(',');})()

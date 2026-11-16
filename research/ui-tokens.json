@@ -1,0 +1,508 @@
+{
+  "viewport": {
+    "w": 1470,
+    "h": 858,
+    "dpr": 2
+  },
+  "titleBar": {
+    "label": "title-bar",
+    "cls": "uk-window-expanded-title-bar",
+    "rect": {
+      "x": 1,
+      "y": 1,
+      "w": 1468,
+      "h": 53
+    },
+    "style": {
+      "bg": "rgb(245, 245, 245)",
+      "color": "rgb(39, 41, 42)",
+      "font": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, Ro",
+      "size": "13px",
+      "weight": "400",
+      "lh": "19.5px",
+      "pad": "0px",
+      "gap": "normal",
+      "radius": "0px",
+      "shadow": "none",
+      "display": "block",
+      "dir": "row",
+      "align": "normal",
+      "justify": "normal",
+      "borderBottom": "1px solid rgb(232, 232, 232)",
+      "opacity": "1"
+    }
+  },
+  "titleBarChildren": [
+    {
+      "cls": "uk-window-topbar top-bar uk-workbench-top-bar uk-flex uk-wid",
+      "rect": {
+        "x": 1,
+        "y": 1,
+        "w": 1468,
+        "h": 52
+      },
+      "bg": "rgba(0, 0, 0, 0)"
+    }
+  ],
+  "toolbar": {
+    "label": "toolbar",
+    "cls": "uk-window-topbar top-bar uk-workbench-top-bar uk-flex uk-width-1-1 uk-",
+    "rect": {
+      "x": 1,
+      "y": 1,
+      "w": 1468,
+      "h": 52
+    },
+    "style": {
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(39, 41, 42)",
+      "font": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, Ro",
+      "size": "13px",
+      "weight": "400",
+      "lh": "19.5px",
+      "pad": "0px 132px 0px 0px",
+      "gap": "normal",
+      "radius": "0px",
+      "shadow": "none",
+      "display": "flex",
+      "dir": "row",
+      "align": "center",
+      "justify": "normal",
+      "borderBottom": "0px none rgb(39, 41, 42)",
+      "opacity": "1"
+    }
+  },
+  "toolbarDirectChildren": [
+    {
+      "cls": "uk-window-control-button-group top-bar-window-control",
+      "rect": {
+        "x": 1337,
+        "y": 1,
+        "w": 132,
+        "h": 21
+      },
+      "dir": "flex"
+    },
+    {
+      "cls": "uk-flex uk-flex-middle top-bar-title-bar",
+      "rect": {
+        "x": 1,
+        "y": 7,
+        "w": 216,
+        "h": 40
+      },
+      "dir": "flex"
+    },
+    {
+      "cls": "uk-flex-1 top-bar-placeholder top-bar-placeholder-1",
+      "rect": {
+        "x": 217,
+        "y": 27,
+        "w": 374,
+        "h": 0
+      },
+      "dir": "block"
+    },
+    {
+      "cls": "uk-flex uk-flex-column uk-flex-center uk-flex-middle uk-preserve-inter",
+      "rect": {
+        "x": 591,
+        "y": 11,
+        "w": 32,
+        "h": 32
+      },
+      "dir": "flex"
+    },
+    {
+      "cls": "top-bar-tool-bar-item-placeholder",
+      "rect": {
+        "x": 623,
+        "y": 27,
+        "w": 16,
+        "h": 0
+      },
+      "dir": "block"
+    },
+    {
+      "cls": "uk-flex uk-flex-column uk-flex-center uk-flex-middle uk-preserve-inter",
+      "rect": {
+        "x": 639,
+        "y": 11,
+        "w": 33,
+        "h": 32
+      },
+      "dir": "flex"
+    },
+    {
+      "cls": "top-bar-tool-bar-item-placeholder",
+      "rect": {
+        "x": 672,
+        "y": 27,
+        "w": 16,
+        "h": 0
+      },
+      "dir": "block"
+    },
+    {
+      "cls": "uk-flex uk-flex-column uk-flex-center uk-flex-middle uk-preserve-inter",
+      "rect": {
+        "x": 688,
+        "y": 11,
+        "w": 32,
+        "h": 32
+      },
+      "dir": "flex"
+    },
+    {
+      "cls": "top-bar-tool-bar-item-placeholder",
+      "rect": {
+        "x": 720,
+        "y": 27,
+        "w": 16,
+        "h": 0
+      },
+      "dir": "block"
+    },
+    {
+      "cls": "uk-flex uk-flex-column uk-flex-center uk-flex-middle uk-preserve-inter",
+      "rect": {
+        "x": 736,
+        "y": 11,
+        "w": 32,
+        "h": 32
+      },
+      "dir": "flex"
+    }
+  ],
+  "items": [
+    {
+      "txt": "主题",
+      "rect": {
+        "x": 591,
+        "y": 11,
+        "w": 32,
+        "h": 32
+      },
+      "pad": "0px",
+      "radius": "0px",
+      "svg": {
+        "x": 597,
+        "y": 9,
+        "w": 20,
+        "h": 20
+      },
+      "stroke": null,
+      "labelSize": "11px"
+    },
+    {
+      "txt": "子主题",
+      "rect": {
+        "x": 639,
+        "y": 11,
+        "w": 33,
+        "h": 32
+      },
+      "pad": "0px",
+      "radius": "0px",
+      "svg": {
+        "x": 646,
+        "y": 9,
+        "w": 20,
+        "h": 20
+      },
+      "stroke": null,
+      "labelSize": "11px"
+    },
+    {
+      "txt": "联系",
+      "rect": {
+        "x": 688,
+        "y": 11,
+        "w": 32,
+        "h": 32
+      },
+      "pad": "0px",
+      "radius": "0px",
+      "svg": {
+        "x": 694,
+        "y": 9,
+        "w": 20,
+        "h": 20
+      },
+      "stroke": null,
+      "labelSize": "11px"
+    },
+    {
+      "txt": "概要",
+      "rect": {
+        "x": 736,
+        "y": 11,
+        "w": 32,
+        "h": 32
+      },
+      "pad": "0px",
+      "radius": "0px",
+      "svg": {
+        "x": 742,
+        "y": 9,
+        "w": 20,
+        "h": 20
+      },
+      "stroke": null,
+      "labelSize": "11px"
+    },
+    {
+      "txt": "外框",
+      "rect": {
+        "x": 784,
+        "y": 11,
+        "w": 32,
+        "h": 32
+      },
+      "pad": "0px",
+      "radius": "0px",
+      "svg": {
+        "x": 790,
+        "y": 9,
+        "w": 20,
+        "h": 20
+      },
+      "stroke": null,
+      "labelSize": "11px"
+    },
+    {
+      "txt": "标记",
+      "rect": {
+        "x": 832,
+        "y": 11,
+        "w": 32,
+        "h": 32
+      },
+      "pad": "0px",
+      "radius": "0px",
+      "svg": {
+        "x": 838,
+        "y": 9,
+        "w": 20,
+        "h": 20
+      },
+      "stroke": null,
+      "labelSize": "11px"
+    },
+    {
+      "txt": "插入",
+      "rect": {
+        "x": 880,
+        "y": 11,
+        "w": 40,
+        "h": 32
+      },
+      "pad": "0px",
+      "radius": "0px",
+      "svg": {
+        "x": 880,
+        "y": 7,
+        "w": 24,
+        "h": 24
+      },
+      "stroke": "#27292A",
+      "labelSize": "11px"
+    },
+    {
+      "txt": "ZEN",
+      "rect": {
+        "x": 1107,
+        "y": 11,
+        "w": 32,
+        "h": 32
+      },
+      "pad": "0px",
+      "radius": "0px",
+      "svg": {
+        "x": 1113,
+        "y": 9,
+        "w": 20,
+        "h": 20
+      },
+      "stroke": null,
+      "labelSize": "11px"
+    },
+    {
+      "txt": "演说",
+      "rect": {
+        "x": 1155,
+        "y": 11,
+        "w": 32,
+        "h": 32
+      },
+      "pad": "0px",
+      "radius": "0px",
+      "svg": {
+        "x": 1161,
+        "y": 9,
+        "w": 20,
+        "h": 20
+      },
+      "stroke": null,
+      "labelSize": "11px"
+    },
+    {
+      "txt": "格式",
+      "rect": {
+        "x": 1281,
+        "y": 11,
+        "w": 32,
+        "h": 32
+      },
+      "pad": "0px",
+      "radius": "0px",
+      "svg": {
+        "x": 1287,
+        "y": 9,
+        "w": 20,
+        "h": 20
+      },
+      "stroke": null,
+      "labelSize": "11px"
+    }
+  ],
+  "statusBar": {
+    "label": "status-bar",
+    "cls": "workbench-status-bar",
+    "rect": {
+      "x": 1,
+      "y": 824,
+      "w": 1200,
+      "h": 33
+    },
+    "style": {
+      "bg": "rgb(245, 245, 245)",
+      "color": "rgb(39, 41, 42)",
+      "font": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, Ro",
+      "size": "13px",
+      "weight": "400",
+      "lh": "19.5px",
+      "pad": "0px",
+      "gap": "normal",
+      "radius": "0px",
+      "shadow": "none",
+      "display": "block",
+      "dir": "row",
+      "align": "normal",
+      "justify": "normal",
+      "borderBottom": "0px none rgb(39, 41, 42)",
+      "opacity": "1"
+    }
+  },
+  "statusParts": [
+    {
+      "cls": "uk-separator",
+      "txt": "",
+      "rect": {
+        "x": 1,
+        "y": 824,
+        "w": 1200,
+        "h": 1
+      },
+      "size": "13px",
+      "color": "rgb(39, 41, 42)"
+    },
+    {
+      "cls": "uk-flex uk-flex-row uk-flex-middle uk-padding-xsma",
+      "txt": "画布 1\n主题: 1 / 5\n100%\n大纲",
+      "rect": {
+        "x": 1,
+        "y": 825,
+        "w": 1200,
+        "h": 30
+      },
+      "size": "13px",
+      "color": "rgb(39, 41, 42)"
+    }
+  ],
+  "sheetBar": {
+    "label": "sheet-bar",
+    "cls": "uk-workbench-sheet-bar uk-height-1-1 uk-overflow-hidden uk-invisible-h",
+    "rect": {
+      "x": 5,
+      "y": 829,
+      "w": 75,
+      "h": 22
+    },
+    "style": {
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(39, 41, 42)",
+      "font": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, Ro",
+      "size": "13px",
+      "weight": "400",
+      "lh": "19.5px",
+      "pad": "0px",
+      "gap": "normal",
+      "radius": "0px",
+      "shadow": "none",
+      "display": "block",
+      "dir": "row",
+      "align": "normal",
+      "justify": "normal",
+      "borderBottom": "0px none rgb(39, 41, 42)",
+      "opacity": "0"
+    }
+  },
+  "sheetTabs": [],
+  "windowBody": {
+    "label": "window-body",
+    "cls": "uk-window-body uk-panel uk-overflow-hidden",
+    "rect": {
+      "x": 1,
+      "y": 54,
+      "w": 1468,
+      "h": 803
+    },
+    "style": {
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(39, 41, 42)",
+      "font": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, Ro",
+      "size": "13px",
+      "weight": "400",
+      "lh": "19.5px",
+      "pad": "0px",
+      "gap": "normal",
+      "radius": "0px",
+      "shadow": "none",
+      "display": "block",
+      "dir": "row",
+      "align": "normal",
+      "justify": "normal",
+      "borderBottom": "0px none rgb(39, 41, 42)",
+      "opacity": "1"
+    }
+  },
+  "viewer": {
+    "label": "viewer",
+    "cls": "sheet-viewer active",
+    "rect": {
+      "x": 1,
+      "y": 54,
+      "w": 1200,
+      "h": 770
+    },
+    "style": {
+      "bg": "rgb(255, 255, 255)",
+      "color": "rgb(39, 41, 42)",
+      "font": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, Ro",
+      "size": "13px",
+      "weight": "400",
+      "lh": "19.5px",
+      "pad": "0px",
+      "gap": "normal",
+      "radius": "0px",
+      "shadow": "none",
+      "display": "block",
+      "dir": "row",
+      "align": "normal",
+      "justify": "normal",
+      "borderBottom": "0px none rgb(39, 41, 42)",
+      "opacity": "1"
+    }
+  }
+}

@@ -1,0 +1,230 @@
+{
+  "sections": [
+    {
+      "h": 520,
+      "text": "骨架\n矩阵图\n配色方案\n永恒\n背景颜色\n全局字体\n默认\n分支线粗细\n默认\n彩虹分支"
+    },
+    {
+      "h": 127,
+      "text": "导图样式\n自动平衡布局\n紧凑型布局\n同级主题对齐"
+    },
+    {
+      "h": 127,
+      "text": "高级布局\n分支自由布局\n灵活自由主题\n主题层叠"
+    },
+    {
+      "h": 168,
+      "text": "中日韩字体\n默认\n中日韩字体，设置后将优化与西文字体混合排版的字体效果。\n自定义风格"
+    }
+  ],
+  "out": [
+    {
+      "tag": "BUTTON",
+      "title": "选择骨架。",
+      "cls": "uk-button uk-button-icon uk-button-popover-toggle uk-overflow-hidden uk-width-1-1 uk-open",
+      "rect": [
+        457,
+        117,
+        228,
+        60
+      ],
+      "text": "矩阵图",
+      "html": "<button data-v-6af36f5c=\"\" id=\"popover-f04a5644815906a9130bcae37c\" title=\"选择骨架。\" data-focus=\"redirect: > [uk-popover] > .uk-button\" class=\"uk-button uk-button-icon uk-button-popover-toggle uk-overflow-hidden uk-width-1-1 uk-open\" focustrigger=\"cannotGetFocusByMouse\" style=\"height: 60px; padding-left"
+    },
+    {
+      "tag": "BUTTON",
+      "title": "选择配色方案。",
+      "cls": "uk-button uk-button-icon uk-button-popover-toggle uk-height-1-1 uk-overflow-hidden uk-margin-small-right",
+      "rect": [
+        457,
+        228,
+        188,
+        32
+      ],
+      "text": "永恒",
+      "html": "<button data-v-c45a9840=\"\" id=\"popover-be9bcae2aa196d1bdb872bd1d6\" title=\"选择配色方案。\" class=\"uk-button uk-button-icon uk-button-popover-toggle uk-height-1-1 uk-overflow-hidden uk-margin-small-right\" focustrigger=\"cannotGetFocusByMouse\" style=\"width: 188px; padding: 8px 24px 8px 12px;\" aria-expanded=\"fa"
+    },
+    {
+      "tag": "BUTTON",
+      "title": "新建配色方案。",
+      "cls": "uk-flex-1 uk-button uk-button-popover-toggle uk-height-1-1 uk-padding-remove",
+      "rect": [
+        653,
+        228,
+        32,
+        32
+      ],
+      "text": "",
+      "html": "<button data-v-c45a9840=\"\" id=\"add-custom-SMT-button\" title=\"新建配色方案。\" class=\"uk-flex-1 uk-button uk-button-popover-toggle uk-height-1-1 uk-padding-remove\" focustrigger=\"cannotGetFocusByMouse\" style=\"min-width: 0px;\"><img data-v-c45a9840=\"\" data-src=\"file://C:\\Users\\DM\\AppData\\Local\\Programs\\Xmind\\re"
+    },
+    {
+      "tag": "BUTTON",
+      "title": "点击选择颜色。",
+      "cls": "uk-color-well-button uk-button uk-button-default uk-button-compact",
+      "rect": [
+        620,
+        397,
+        65,
+        22
+      ],
+      "text": "",
+      "html": "<button data-v-604f4d07=\"\" id=\"popover-f05bde7f2e5acaa38f742b76e3\" type=\"button\" title=\"点击选择颜色。\" class=\"uk-color-well-button uk-button uk-button-default uk-button-compact\" style=\"background-color: rgb(255, 255, 255);\"><!----></button>"
+    },
+    {
+      "tag": "BUTTON",
+      "title": "设置字体属性。",
+      "cls": "uk-width-1-1 uk-button uk-button-popover-toggle uk-select-icon uk-text-left",
+      "rect": [
+        457,
+        470,
+        228,
+        22
+      ],
+      "text": "默认",
+      "html": "<button data-v-08076bbe=\"\" id=\"popover-b5b91dc8bab8fb07584b89854b\" title=\"设置字体属性。\" class=\"uk-width-1-1 uk-button uk-button-popover-toggle uk-select-icon uk-text-left\" focustrigger=\"cannotGetFocusByMouse\"> 默认 </button>"
+    },
+    {
+      "tag": "BUTTON",
+      "title": "设置线条粗细。",
+      "cls": "uk-width-1-1 uk-button uk-button-popover-toggle uk-select-icon uk-text-left uk-overflow-hidden",
+      "rect": [
+        457,
+        523,
+        228,
+        22
+      ],
+      "text": "默认",
+      "html": "<button data-v-16e6ac26=\"\" id=\"popover-032a8931dc0b2a437fec39da55\" title=\"设置线条粗细。\" class=\"uk-width-1-1 uk-button uk-button-popover-toggle uk-select-icon uk-text-left uk-overflow-hidden\" focustrigger=\"cannotGetFocusByMouse\"><!----> <span data-v-16e6ac26=\"\">默认</span></button>"
+    },
+    {
+      "tag": "LABEL",
+      "title": "为每个分支设置不同颜色。",
+      "cls": "uk-format-panel-sub-section-heading uk-format-panel-inline-ml",
+      "rect": [
+        477,
+        570,
+        52,
+        13
+      ],
+      "text": "彩虹分支",
+      "html": "<label for=\"isMultiBranchColorEnableCheckBox\" title=\"为每个分支设置不同颜色。\" class=\"uk-format-panel-sub-section-heading uk-format-panel-inline-ml\"> 彩虹分支 </label>"
+    },
+    {
+      "tag": "BUTTON",
+      "title": "点击选择颜色。",
+      "cls": "uk-color-well-button uk-button uk-button-default uk-button-compact",
+      "rect": [
+        620,
+        566,
+        65,
+        22
+      ],
+      "text": "",
+      "html": "<button data-v-604f4d07=\"\" id=\"popover-030af8e4cc19e66038eaaafd28\" type=\"button\" title=\"点击选择颜色。\" class=\"uk-color-well-button uk-button uk-button-default uk-button-compact\" style=\"background-color: rgb(20, 20, 20);\"><!----></button>"
+    },
+    {
+      "tag": "LABEL",
+      "title": "设置思维导图为左右平衡结构。",
+      "cls": "uk-flex uk-flex-middle",
+      "rect": [
+        457,
+        649,
+        98,
+        14
+      ],
+      "text": "自动平衡布局",
+      "html": "<label data-v-6d66e594=\"\" title=\"设置思维导图为左右平衡结构。\" class=\"uk-flex uk-flex-middle\"><input data-v-6d66e594=\"\" type=\"checkbox\" class=\"uk-checkbox\" focustrigger=\"cannotGetFocusByMouse\" disabled=\"disabled\"> <span data-v-6d66e594=\"\" class=\"uk-format-panel-sub-section-heading uk-format-panel-inline-ml\">自动平衡布"
+    },
+    {
+      "tag": "LABEL",
+      "title": "减少元素的大小和间距。",
+      "cls": "uk-flex uk-flex-middle",
+      "rect": [
+        457,
+        675,
+        85,
+        14
+      ],
+      "text": "紧凑型布局",
+      "html": "<label data-v-69fb0fb1=\"\" title=\"减少元素的大小和间距。\" class=\"uk-flex uk-flex-middle\"><input data-v-69fb0fb1=\"\" type=\"checkbox\" class=\"uk-checkbox\" focustrigger=\"cannotGetFocusByMouse\"> <span data-v-69fb0fb1=\"\" class=\"uk-format-panel-sub-section-heading uk-format-panel-inline-ml\">紧凑型布局</span></label>"
+    },
+    {
+      "tag": "LABEL",
+      "title": "自动统一同层级主题的宽度。",
+      "cls": "uk-flex uk-flex-middle",
+      "rect": [
+        457,
+        701,
+        98,
+        14
+      ],
+      "text": "同级主题对齐",
+      "html": "<label data-v-2e109af3=\"\" title=\"自动统一同层级主题的宽度。\" class=\"uk-flex uk-flex-middle\"><input data-v-2e109af3=\"\" type=\"checkbox\" class=\"uk-checkbox\" focustrigger=\"cannotGetFocusByMouse\"> <span data-v-2e109af3=\"\" class=\"uk-format-panel-sub-section-heading uk-format-panel-inline-ml\">同级主题对齐</span></label>"
+    },
+    {
+      "tag": "LABEL",
+      "title": "分支主题可以自由摆放。\n（仅支持“思维导图”结构）",
+      "cls": "uk-flex uk-flex-middle",
+      "rect": [
+        457,
+        781,
+        98,
+        14
+      ],
+      "text": "分支自由布局",
+      "html": "<label data-v-42cdfd92=\"\" title=\"分支主题可以自由摆放。 （仅支持“思维导图”结构）\" class=\"uk-flex uk-flex-middle\"><input data-v-42cdfd92=\"\" type=\"checkbox\" class=\"uk-checkbox\" focustrigger=\"cannotGetFocusByMouse\" disabled=\"disabled\"> <span data-v-42cdfd92=\"\" class=\"uk-format-panel-sub-section-heading uk-format-panel-inlin"
+    },
+    {
+      "tag": "LABEL",
+      "title": "当拖动自由主题时，不会与其他主题相连。\n（按住 Shift 键可临时关闭/启用该功能）",
+      "cls": "uk-flex uk-flex-middle",
+      "rect": [
+        457,
+        807,
+        98,
+        14
+      ],
+      "text": "灵活自由主题",
+      "html": "<label data-v-50b0d7f8=\"\" title=\"当拖动自由主题时，不会与其他主题相连。 （按住 Shift 键可临时关闭/启用该功能）\" class=\"uk-flex uk-flex-middle\"><input data-v-50b0d7f8=\"\" type=\"checkbox\" class=\"uk-checkbox\" focustrigger=\"cannotGetFocusByMouse\"> <span data-v-50b0d7f8=\"\" class=\"uk-format-panel-sub-section-heading uk-format-panel-inline-"
+    },
+    {
+      "tag": "SPAN",
+      "title": "使主题间能够相互重叠。",
+      "cls": "uk-format-panel-sub-section-heading uk-format-panel-inline-ml",
+      "rect": [
+        477,
+        834,
+        52,
+        13
+      ],
+      "text": "主题层叠",
+      "html": "<span data-v-970bd15c=\"\" title=\"使主题间能够相互重叠。\" class=\"uk-format-panel-sub-section-heading uk-format-panel-inline-ml\">主题层叠</span>"
+    },
+    {
+      "tag": "BUTTON",
+      "title": "设置字体属性。",
+      "cls": "uk-width-1-1 uk-button uk-button-popover-toggle uk-select-icon uk-text-left",
+      "rect": [
+        457,
+        899,
+        228,
+        22
+      ],
+      "text": "默认",
+      "html": "<button data-v-08076bbe=\"\" id=\"popover-ed9a471ef538d07171191a4d44\" title=\"设置字体属性。\" class=\"uk-width-1-1 uk-button uk-button-popover-toggle uk-select-icon uk-text-left\" focustrigger=\"cannotGetFocusByMouse\"> 默认 </button>"
+    },
+    {
+      "tag": "BUTTON",
+      "title": "查看和创建自定义风格。",
+      "cls": "uk-button uk-button-default uk-width-1-1",
+      "rect": [
+        457,
+        993,
+        228,
+        23
+      ],
+      "text": "自定义风格",
+      "html": "<button data-v-6d8491d0=\"\" type=\"button\" title=\"查看和创建自定义风格。\" class=\"uk-button uk-button-default uk-width-1-1\"> 自定义风格 </button>"
+    }
+  ]
+}

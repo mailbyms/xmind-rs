@@ -1,0 +1,1309 @@
+/* ============================================================================
+   XMind chrome tokens — every value below was measured from the running
+   XMind 23.07 desktop app over CDP (computed styles + bounding boxes at DPR 2).
+   ========================================================================== */
+/* ---------------------------------------------------------------------------
+   Official XMind topic font stack (measured from the desktop bundle 8846.js):
+     'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei',sans-serif
+   Montserrat / Open Sans are Google Fonts OFL-1.1 latin variable subsets,
+   NeverMind* comes from xmindltd/nevermind (SIL OFL-1.1).  Both licence texts
+   ship alongside the binaries in /fonts/.  CJK has no glyphs in these fonts,
+   so the Chinese fallbacks are system faces, exactly like the original.
+   --------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/Montserrat-latin.woff2') format('woff2');
+  font-style: normal; font-weight: 100 900; font-display: swap;
+}
+@font-face {
+  font-family: 'Open Sans';
+  src: url('/fonts/OpenSans-latin.woff2') format('woff2');
+  font-style: normal; font-weight: 300 800; font-display: swap;
+}
+@font-face {
+  font-family: 'NeverMind';
+  src: url('/fonts/NeverMind-Regular.woff2') format('woff2');
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: 'NeverMind';
+  src: url('/fonts/NeverMind-Medium.woff2') format('woff2');
+  font-style: normal; font-weight: 500 600; font-display: swap;
+}
+@font-face {
+  font-family: 'NeverMind';
+  src: url('/fonts/NeverMind-Bold.woff2') format('woff2');
+  font-style: normal; font-weight: 700 900; font-display: swap;
+}
+@font-face {
+  font-family: 'NeverMindHand';
+  src: url('/fonts/NeverMindHand-Regular.woff2') format('woff2');
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: 'NeverMind Condensed';
+  src: url('/fonts/NeverMindCondensed-Regular.woff2') format('woff2');
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+
+:root {
+  /* Shared with the Rust SVG exporter (`export.rs::FONT_STACK`). */
+  --topic-font: 'Montserrat', 'NeverMind', 'Microsoft YaHei', 'PingFang SC',
+    'Microsoft JhengHei', sans-serif;
+  --chrome: #f5f5f5;        /* title bar, status bar, right panel */
+  --surface: #ffffff;       /* canvas */
+  --line: #e8e8e8;          /* 1px separators */
+  --line-soft: rgba(0, 0, 0, .05);
+  --text: #27292a;
+  --text-dim: #5c6064;
+  --text-faint: #949699;
+  --accent: #0f66de;
+  --accent-soft: rgba(15, 102, 222, .1);
+  --hover: rgba(0, 0, 0, .06);
+  --press: rgba(0, 0, 0, .1);
+  --danger: #e53935;
+  --titlebar-h: 53px;
+  --statusbar-h: 33px;
+  --panel-w: 268px;
+  --ctrl-w: 132px;
+  --radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto,
+    "Helvetica Neue", Arial, "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+* { box-sizing: border-box; }
+html, body, #root { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body {
+  background: var(--chrome);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+.boot, .loading {
+  height: 100%; display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px; color: var(--text-faint); font-size: 13px;
+}
+.boot-mark {
+  width: 32px; height: 32px; border-radius: 8px; background: #000229;
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, .04);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse { 50% { transform: scale(.88); opacity: .65; } }
+
+.app { display: flex; flex-direction: column; height: 100%; background: var(--chrome); }
+
+/* ---------------------------------------------------------------- title bar */
+.titlebar {
+  flex: none; height: var(--titlebar-h); display: flex; align-items: center;
+  padding-right: var(--ctrl-w); background: var(--chrome);
+  border-bottom: 1px solid var(--line); position: relative; user-select: none;
+}
+/* Left cluster: 32x22 hamburger (margin 12/16) + 13px document name. */
+.titlebar-left {
+  display: flex; align-items: center; padding-left: 12px; height: 40px;
+  flex: none; min-width: 0; max-width: 340px;
+}
+.menu-btn {
+  width: 32px; height: 22px; flex: none; margin-right: 16px; padding: 0;
+  border: 0; border-radius: 4px; background: transparent; color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+}
+.menu-btn svg { width: 24px; height: 24px; display: block; }
+.menu-btn:hover { background: var(--hover); }
+.menu-btn:active { background: var(--press); }
+.doc-name {
+  font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* XMind's second line under the file name: blank for a clean document,
+   「已编辑」 while dirty, 「保存中...」 during a save.  The 14px box is kept
+   even when empty so the name never jumps when the state changes. */
+.titlebar-title {
+  display: flex; flex-direction: column; justify-content: center;
+  min-width: 0; height: 40px;
+}
+.doc-status {
+  font-size: 11px; line-height: 14px; height: 14px; color: #86898c;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Tool bar: 32x32 slots, 16px apart, grouped by flexible whitespace (no rules). */
+.toolbar {
+  flex: 1; display: flex; align-items: center; height: 52px; min-width: 0;
+}
+.tool-group { display: flex; align-items: center; flex: none; }
+.tool-group + .tool-group { margin-left: 16px; }
+.tool-flex { flex: 1 1 0; min-width: 8px; }
+/* The shipped bar keeps 179px / 89px voids before 演说 and 格式, so the main
+   tool cluster lands on the window centre. */
+.tool-flex.mid { flex: 0 1 179px; }
+.tool-flex.end { flex: 0 1 89px; }
+
+.tool-item {
+  min-width: 32px; height: 32px; flex: none; position: relative;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; overflow: visible;
+}
+.tool-item + .tool-item { margin-left: 16px; }
+.tool-item > button {
+  width: 32px; height: 22px; flex: none; padding: 0; border: 0; border-radius: 4px;
+  background: transparent; color: var(--text); line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.tool-item > button svg { width: 20px; height: 20px; display: block; }
+.tool-item > button:hover:not(:disabled) { background: var(--hover); }
+.tool-item > button:active:not(:disabled) { background: var(--press); }
+.tool-item > button:disabled { opacity: .35; cursor: default; }
+.tool-item.wide > button { width: 40px; }
+.tool-label {
+  font-size: 11px; line-height: 16.5px; color: var(--text);
+  white-space: nowrap; pointer-events: none;
+}
+.tool-item.on > button { color: var(--accent); }
+.tool-item.on .tool-label { color: var(--accent); }
+.tool-gap { width: 24px; flex: none; }
+
+/* Main menu, opened from the hamburger at the far left. */
+.menu-backdrop { position: fixed; inset: 0; z-index: 55; }
+.app-menu {
+  position: absolute; left: 12px; top: 46px; z-index: 60; width: 208px;
+  padding: 4px; border-radius: 6px; background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .16), 0 0 0 1px rgba(0, 0, 0, .06);
+  display: flex; flex-direction: column;
+}
+.app-menu button {
+  height: 26px; padding: 0 10px; border: 0; border-radius: 4px; background: transparent;
+  color: var(--text); font-size: 13px; display: flex; align-items: center;
+  justify-content: space-between; text-align: left;
+}
+.app-menu button:hover:not(:disabled) { background: var(--hover); }
+.app-menu button:disabled { color: var(--text-faint); cursor: default; }
+.app-menu button span { font-size: 11px; color: var(--text-faint); }
+.app-menu-sep { height: 1px; background: var(--line); margin: 4px 6px; }
+.app-menu-meta { padding: 4px 10px 2px; font-size: 11px; color: var(--text-faint); }
+
+/* ------------------------------------------------------------- menu system
+   XMind 23.07 opens Electron native menus (both the hamburger menu and the
+   two context menus). Native Windows menus are white rounded panels with a
+   fixed check/indent gutter, right-aligned accelerators, grey disabled rows
+   and a blue hover row. The React menu reproduces that chrome. */
+.xm-backdrop { position: fixed; inset: 0; z-index: 70; }
+.xm-panel {
+  position: fixed; z-index: 71; min-width: 220px; max-width: 340px;
+  max-height: calc(100vh - 12px); overflow-y: auto;
+  padding: 5px 0; border-radius: 8px; background: #fff;
+  border: 1px solid rgba(0, 0, 0, .08);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, .18), 0 2px 8px rgba(0, 0, 0, .07);
+  display: flex; flex-direction: column; user-select: none; outline: none;
+  font-size: 13px; color: var(--text);
+}
+.xm-item {
+  display: flex; align-items: center; width: 100%; height: 28px;
+  padding: 0 10px 0 0; border: 0; border-radius: 0; background: transparent;
+  color: inherit; font-size: 13px; text-align: left; white-space: nowrap;
+}
+.xm-item:hover:not(:disabled), .xm-item.focus:not(:disabled), .xm-item.open:not(:disabled) {
+  background: var(--accent-soft); color: var(--accent);
+}
+.xm-item:disabled { color: #b8bcc0; cursor: default; }
+.xm-item.danger:not(:disabled) { color: var(--danger); }
+.xm-tick { flex: 0 0 28px; width: 28px; text-align: center; font-size: 12px; }
+.xm-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.xm-shortcut { flex: none; margin-left: 24px; font-size: 11px; color: var(--text-faint); }
+.xm-item:disabled .xm-shortcut, .xm-item:disabled .xm-arrow { color: #c9ccd0; }
+.xm-arrow { flex: none; width: 16px; text-align: center; font-size: 15px; line-height: 1; color: var(--text-dim); }
+.xm-sep { height: 1px; margin: 5px 8px; background: var(--line); }
+
+/* 工具栏 > 仅显示图标 */
+.app.icons-only .tool-label { display: none; }
+.app.icons-only .tool-item { min-width: 32px; }
+
+/* 帮助 / 关于 / 快捷键助手 use the same small dialog as 联系改名. */
+.info-dialog {
+  width: 420px; max-width: 90vw; max-height: 70vh; overflow: auto;
+  padding: 18px; border-radius: 10px; background: var(--chrome);
+  border: 1px solid var(--line); box-shadow: 0 12px 40px rgba(0, 0, 0, .2);
+}
+.info-lines { font-size: 12px; line-height: 1.9; color: var(--text-dim); }
+.info-lines > div { border-bottom: 1px solid var(--line-soft); }
+
+.window-controls {
+  position: absolute; top: 1px; right: 0; width: var(--ctrl-w); height: 21px;
+  display: flex;
+}
+.window-controls button {
+  flex: 1 1 0; height: 21px; border: 0; background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  color: #000; padding: 0;
+}
+.window-controls button svg { width: 16px; height: 16px; }
+.window-controls button:hover { background: var(--hover); }
+.window-controls button.close:hover { background: var(--danger); color: #fff; }
+
+/* --------------------------------------------------------------- main split */
+/* The right panel spans the whole window height; the status bar only sits
+   under the canvas, exactly like the shipped workbench. */
+.main { flex: 1; display: flex; min-height: 0; position: relative; }
+.left-col { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.workspace { flex: 1; min-height: 0; min-width: 0; position: relative; display: flex; }
+.canvas-wrap { position: relative; flex: 1; min-width: 0; }
+
+.canvas {
+  position: absolute; inset: 0; overflow: hidden; touch-action: none;
+  background: var(--surface); cursor: default;
+}
+.canvas.panning { cursor: grabbing; }
+.canvas.space-pan { cursor: grab; }
+
+.stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.edges { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.decor-layer { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.decor-hit { pointer-events: stroke; cursor: pointer; }
+/* 概要 / 外框 范围手柄 (XMind's summary-resize-handle-*). */
+.summary-handle { pointer-events: all; }
+.summary-handle.horizontal { cursor: ns-resize; }
+.summary-handle.vertical { cursor: ew-resize; }
+.summary-handle:hover circle:last-child { stroke-width: 2.6; }
+.range-preview {
+  fill: rgba(46, 189, 255, .12);
+  stroke: rgba(46, 189, 255, .9);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  pointer-events: none;
+}
+.decor-label {
+  font-size: 12px; font-weight: 500; pointer-events: none;
+  paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round;
+}
+.decor-frame.selected > path:first-child,
+.decor-link.selected > path:first-child { filter: drop-shadow(0 0 3px var(--accent)); }
+.canvas.link-pick .node { cursor: crosshair; }
+
+/* ZEN: chrome-free canvas, Esc or the floating button restores it. */
+.app.zen .titlebar, .app.zen .statusbar, .app.zen .panel { display: none; }
+.zen-exit {
+  position: fixed; right: 16px; top: 14px; z-index: 60; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--chrome);
+  color: var(--text); padding: 5px 12px; font-size: 12px; opacity: .35;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
+}
+.zen-exit:hover { opacity: 1; }
+
+/* In-app rename box for 联系 / 外框 (WebView2 has no reliable prompt()). */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, .18);
+  display: flex; align-items: center; justify-content: center;
+}
+.rename-dialog {
+  width: 320px; padding: 18px; border-radius: 10px; background: var(--chrome);
+  border: 1px solid var(--line); box-shadow: 0 12px 40px rgba(0, 0, 0, .2);
+}
+.rename-title { font-size: 13px; color: var(--text); margin-bottom: 10px; }
+.rename-input {
+  box-sizing: border-box; width: 100%; padding: 7px 9px; font-size: 13px;
+  border: 1px solid var(--line); border-radius: 5px; background: #fff; color: var(--text);
+}
+.rename-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.rename-actions button {
+  padding: 5px 14px; font-size: 12px; border-radius: 5px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--chrome); color: var(--text);
+}
+.rename-actions button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* Overlay scrollbars: 6px rounded thumbs inside a 10px gutter, as in XMind. */
+.scroll-x { position: absolute; left: 0; right: 10px; bottom: 0; height: 10px; z-index: 5; }
+.scroll-y { position: absolute; top: 0; bottom: 10px; right: 0; width: 10px; z-index: 5; }
+.scroll-x .scroll-thumb, .scroll-y .scroll-thumb {
+  position: absolute; border-radius: 3px; background: rgba(0, 0, 0, .22);
+}
+.scroll-x .scroll-thumb { top: 2px; height: 6px; }
+.scroll-y .scroll-thumb { left: 2px; width: 6px; }
+.scroll-x .scroll-thumb:hover, .scroll-y .scroll-thumb:hover { background: rgba(0, 0, 0, .34); }
+
+/* ------------------------------------------------------------------- topics */
+.node {
+  position: absolute; display: flex; align-items: center; justify-content: center;
+  padding: 0; border: 0; cursor: pointer; user-select: none;
+  white-space: nowrap; overflow: visible;
+  font-family: var(--topic-font);
+  line-height: 1.333; letter-spacing: 0;
+}
+.node:hover { filter: brightness(.985); }
+/* Selection is an SVG outline, not a CSS ring: the original draws a rounded
+   blue frame only 2px outside the shape box on each side (also for a single
+   selection). The class stays as a state hook for the inspector and UI tests. */
+.node.selected { box-shadow: none; }
+.node.underline { box-shadow: none; }
+/* Rubber band + per-topic outlines, both in stage space and click-through. */
+.selection-layer {
+  position: absolute; left: 0; top: 0; overflow: visible;
+  pointer-events: none; z-index: 5;
+}
+.marquee { fill: rgba(46, 189, 255, .1); stroke: rgba(46, 189, 255, .5); stroke-width: 1; }
+.topic-outline { fill: none; stroke: rgb(46, 189, 255); stroke-width: 2; }
+/* Drag to reparent: the source subtree fades, the prospective parent gets a
+   ring, and a dashed curve previews the branch that would be created. */
+.node.drag-src { opacity: .35; }
+.node.drag-origin { outline: 1.5px dashed var(--accent); outline-offset: 1px; }
+.node.drop-target { outline: 2px solid var(--accent); outline-offset: 1px; }
+.drop-layer { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 3; }
+.drop-curve {
+  fill: none; stroke: var(--accent); stroke-width: 1.6px;
+  stroke-dasharray: 5 4; stroke-linecap: round;
+}
+.drop-bar {
+  position: absolute; z-index: 4; height: 2px; border-radius: 1px;
+  background: var(--accent); pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(15, 102, 222, .16);
+}
+.drag-ghost {
+  position: absolute; z-index: 4; pointer-events: none; border-radius: 4px;
+  border: 1.5px dashed var(--accent); background: rgba(15, 102, 222, .06);
+}
+.drag-ghost.free { border-color: #8a63d2; background: rgba(138, 99, 210, .08); }
+.drag-ghost.free::after {
+  content: '自由主题'; position: absolute; left: 0; top: -19px;
+  font-size: 11px; white-space: nowrap; color: #7346c8;
+}
+.node-shape { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.node.underline .node-title {
+  /* 下划线骨架的线要贴合文字，不能拉满整个主题盒。 */
+  width: auto; flex: 0 1 auto;
+  border-bottom: var(--ulw, 1.5px) solid var(--ul, currentColor); padding-bottom: 2px;
+}
+/* 形状是一层绝对定位的 <svg>，按 CSS 绘制顺序会盖住文档流里的标题文字，
+   所以标题必须自己建立层叠上下文（否则导图里只有彩色空块）。 */
+.node-title {
+  display: block; flex: 1 1 auto; width: 100%; min-width: 0;
+  max-width: 100%; overflow: hidden;
+  position: relative; z-index: 1;
+  /* 长标题折行而不是省略：后端 title_lines() 用同样的逐字符宽度算行数，
+     再把主题增高，这里必须与它一致地按任意字符断行。 */
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+/* 矩阵/树表的单元格高度是固定行高，仍按单行省略，别撑破表格。 */
+.node.cell .node-title,
+.node.cell .node-title-input {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* 双重问题，别删：形状层是绝对定位的 <svg>（.node-shape），按绘制顺序会盖住
+   文档流里的所有内容。标题 span 靠 position/z-index 冒到形状之上；输入框以前没写，
+   于是编辑时输入的文字整个被形状遮住 —— 只有失焦后 .node-title 才显形。 */
+.node-title-input {
+  position: relative; z-index: 1;
+  flex: 1 1 auto; width: 100%; min-width: 0; margin: 0;
+  border: 0; outline: none; background: transparent; padding: 0;
+  text-align: inherit; font: inherit; color: inherit; line-height: inherit;
+  caret-color: currentColor; cursor: text; user-select: text;
+  /* textarea: rows 由后端行数给出，高度刚好贴合文字，父级 flex 垂直居中。 */
+  resize: none; overflow: hidden;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.node.underline .node-title-input { border-bottom: var(--ulw, 1.5px) solid var(--ul, currentColor); }
+/* 原版把主题盒的水平内边距平均分到文字两侧（实测中心/一级/二级 29/18/6px），
+   之前只把 hpad 加在盒宽上，左对齐文字会贴着左边框、右边却留一大块空白。
+   这里只给左对齐主题内缩，同时用「加宽元素 + 负右外边距」把文字的可用宽度
+   保持成整个主题盒：折行上限、后端 title_lines()、就地编辑的 rows 全部不变。
+   居中主题内缩在视觉上没有意义，textPad 由布局端置 0。 */
+.node.align-left:not(.underline) .node-title,
+.node.align-left:not(.underline) .node-title-input {
+  padding-left: var(--text-pad, 0px);
+  padding-right: var(--text-pad, 0px);
+  width: calc(100% + 2 * var(--text-pad, 0px));
+  max-width: none;
+  margin-right: calc(-2 * var(--text-pad, 0px));
+}
+/* 自动折行的长标题：上面的宽度补偿把内容区右边界推到了 box.right + pad，
+   长行文字会画到背景色块外面（example2 实测溢出 1.5~3.7px）。
+   原版的文字区是 topicG 减去左右各 pad，所以这里把右侧 padding 提到 3×pad：
+   元素框仍是 width + 2×pad，内容区 = width - 2×pad，右边界回到 box.right - pad。
+   后端 wrap_usable() 对同一批节点用同样的收窄上限算行数，盒高与 textarea
+   rows 同步；只影响自动折行的左对齐主题，单行主题不受影响（否则 wrap_ratio
+   比盒宽用的 char_ratio 大，会把大量单行标题误判成两行）。 */
+.node.align-left.auto-wrap:not(.underline) .node-title,
+.node.align-left.auto-wrap:not(.underline) .node-title-input {
+  padding-right: calc(var(--text-pad, 0px) * 3);
+}
+/* 下划线骨架的标题贴合文字宽度，不能拉满盒子，只补左侧缩进。 */
+.node.align-left.underline .node-title,
+.node.align-left.underline .node-title-input { padding-left: var(--text-pad, 0px); }
+.node-markers { position: absolute; left: -8px; top: -9px; display: flex; gap: 2px; }
+.marker-chip {
+  min-width: 16px; height: 16px; border-radius: 4px; font-size: 10px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; background: #f9423a; padding: 0 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+}
+.node-labels {
+  position: absolute; left: 0; right: 0; bottom: -17px; display: flex;
+  gap: 4px; justify-content: center; pointer-events: none;
+}
+.label-chip {
+  font-size: 10px; padding: 1px 6px; border-radius: 4px;
+  background: #ececf0; color: var(--text-dim);
+}
+.node-image { max-height: 22px; max-width: 46px; margin-right: 6px; object-fit: contain; }
+
+/* 折叠 / 展开控件: XMind 把它画在「通往子主题的那条线的起点」上 —— 16px 圆、
+   1px 分支色描边、画布底色填充、10px 分支色数字。默认完全透明, 鼠标移到主题上
+   才出现; 折叠状态例外, 它一直显示, 里面是整棵被隐藏子树的主题数 (不是直接
+   子主题数)。位置由 .node 内的 left/top 内联样式给出, 不在 CSS 里分左右。 */
+.fold-badge {
+  position: absolute; z-index: 2;
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: 10px; font-weight: 300; line-height: 1;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  cursor: pointer; opacity: 0; transition: opacity .12s ease;
+}
+.node:hover > .fold-badge,
+/* …and when the pointer lands on the disc itself: it pokes out past the topic,
+   so hovering the topic is not guaranteed while the cursor is over the disc. */
+.fold-badge:hover,
+.fold-badge.folded,
+.fold-badge:focus-visible { opacity: 1; }
+.link-dot { position: absolute; right: -7px; top: -7px; font-size: 10px; color: var(--accent); }
+
+/* ------------------------------------------------------------- right panel */
+.panel {
+  width: var(--panel-w); flex: none; background: var(--chrome);
+  border-left: 1px solid var(--line-soft); display: flex; flex-direction: column;
+  min-height: 0;
+}
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 40px; padding: 0 12px; flex: none; border-bottom: 1px solid var(--line-soft);
+}
+.panel-head h3 { margin: 0; font-size: 13px; font-weight: 500; color: var(--text); }
+.panel-close {
+  border: 0; background: transparent; color: var(--text-dim);
+  font-size: 16px; line-height: 1; padding: 4px 6px; border-radius: 4px;
+}
+.panel-close:hover { background: var(--hover); }
+.panel-body { padding: 12px; overflow-y: auto; flex: 1; min-height: 0; }
+
+/* ------------------------------------------------- XMind format panel (268px)
+   Structure and metrics lifted from .uk-format-panel in the shipped app:
+   capsule tab strip 28px + 1px rule, sections padded 16/20, collapsible
+   headers with a 16px chevron hung 5px outside the text column. */
+.fp {
+  width: var(--panel-w); flex: none; min-height: 0; display: flex;
+  flex-direction: column; background: var(--chrome);
+  border-left: 1px solid var(--line-soft);
+}
+
+.fp-tabs { display: flex; height: 28px; padding: 4px; margin: 0; list-style: none; flex: none; }
+.fp-tabs > li { flex: 1 1 0; height: 20px; display: flex; min-width: 0; position: relative; }
+/* .divider-vertical in the shipped strip: a 1px hairline spanning the middle
+   50% of the tab, hidden between the active tab and its neighbour. */
+.fp-tabs > li.bar::before {
+  content: ''; position: absolute; left: 0; top: 5px; height: 10px;
+  border-left: 1px solid rgba(0, 0, 0, .15);
+}
+.fp-tabs button {
+  flex: 1; height: 20px; padding: 0 12px; border: 0; border-radius: 4px;
+  background: transparent; color: rgba(0, 0, 0, .5);
+  font-size: 13px; font-weight: 600; line-height: 20px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.fp-tabs button:hover { color: rgba(0, 0, 0, .7); }
+.fp-tabs button.on { background: var(--accent); color: #fff; font-weight: 500; }
+/* Full-width section rule. The shipped separators carry no margin: each
+   section's own 16px padding supplies the space on both sides. */
+.fp-rule { height: 1px; background: var(--line-soft); margin: 0; border: 0; flex: none; }
+.fp-rule.tight { margin: 0; }
+
+/* The shipped panel uses overflow:overlay, so its content keeps the full 268px.
+   Chromium dropped `overlay`, so the native bar is hidden instead of
+   reserving 15px and breaking the column grid. */
+.fp-scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+.fp-scroll::-webkit-scrollbar { width: 0; height: 0; }
+
+.fp-section { padding: 16px 20px; }
+.fp-divider { height: 1px; background: var(--line-soft); border: 0; margin: 16px 0; }
+/* Map tab rules hug the block above: 4px before, 16px after. */
+.fp-divider.map { margin: 4px 0 16px; }
+.fp-split { height: 1px; background: var(--line-soft); border: 0; margin: 4px 0 0; }
+
+.fp-head { min-height: 18px; display: flex; align-items: center; }
+/* A 22px control makes the shipped header 23px tall; a bare title is 18. */
+.fp-head.has-ctl { min-height: 23px; }
+.fp-chev {
+  width: 16px; height: 16px; flex: none; margin-left: -5px; margin-right: 4px;
+  color: rgba(0, 0, 0, .5); opacity: .5; display: flex;
+  align-items: center; justify-content: center;
+}
+.fp-chev svg { width: 16px; height: 16px; display: block; }
+.fp-head.open .fp-chev { transform: rotate(0deg); }
+.fp-head:not(.open) .fp-chev { transform: rotate(-90deg); }
+.fp-title {
+  font-size: 13px; font-weight: 700; color: var(--text); line-height: 18px;
+  user-select: none;
+}
+.fp-head-spacer { flex: 1; min-width: 0; }
+
+.fp-content { padding-top: 12px; }
+/* Rows sit on a 35px rhythm (23px control + 12px gap), as in the shipped panel. */
+.fp-row { display: flex; align-items: center; padding-bottom: 12px; min-height: 35px; }
+.fp-row:last-child { padding-bottom: 0; min-height: 22px; }
+.fp-row-label { width: 75px; flex: none; font-size: 13px; font-weight: 500; color: #000; }
+.fp-fields { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+/* The slide tab pairs a title with an 85px control across the full 228px.
+   Its 23px rows get their spacing from the surrounding rules, not padding. */
+.fp-row.space { justify-content: space-between; padding-bottom: 0; min-height: 0; }
+/* The first caption block after the slide rows sits 16px below them. */
+.fp-row.space + .fp-field { margin-top: 16px; }
+.fp-row-label.auto { width: auto; flex: none; white-space: nowrap; }
+
+/* Control widths follow the shipped grid: 153 = 78 + 10 + 65 / 228 - 75. */
+.w-sm { width: 65px; flex: none; }
+.w-md { width: 78px; flex: none; }
+.w-lg { width: 153px; flex: none; }
+.w-85 { width: 85px; flex: none; }
+.w-full { width: 100%; flex: none; }
+
+.fp-ctl, .fp-select, .fp-input {
+  height: 22px; border: 0; border-radius: 4px; font-size: 13px; font-weight: 500;
+  background: #fff; color: var(--text); padding: 0 8px;
+  box-shadow: 0 .5px 1px 0 rgba(0, 0, 0, .1),
+    inset 0 0 1.5px .25px rgba(0, 0, 0, .4), inset 0 0 2px .25px rgba(0, 0, 0, .05);
+}
+.fp-ctl { display: flex; align-items: center; justify-content: center; padding: 0; }
+.fp-ctl svg { display: block; }
+
+/* Header control: glyph centred in the 45px left of a 65px box, caret on the
+   right edge — the shipped .uk-button-popover-toggle shape. */
+.fp-toggle {
+  width: 65px; height: 22px; flex: none; padding: 0 20px 0 0; border: 0;
+  border-radius: 4px; background: #fff; color: var(--text); position: relative;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 .5px 1px 0 rgba(0, 0, 0, .1),
+    inset 0 0 1.5px .25px rgba(0, 0, 0, .4), inset 0 0 2px .25px rgba(0, 0, 0, .05);
+}
+.fp-toggle svg { display: block; }
+.fp-toggle .fp-caret {
+  position: absolute; right: 4px; top: 50%; margin-top: -8px;
+  color: #000;
+}
+.fp-toggle:disabled { cursor: default; }
+/* The 78px fill control shows the current fill as a small chip. */
+.fp-fill-chip { width: 14px; height: 9px; border-radius: 2px; display: block; }
+.fp-ctl:hover:not(:disabled), .fp-select:hover, .fp-input:hover { background: #fdfdfd; }
+.fp-select {
+  display: flex; align-items: center; justify-content: flex-start;
+  position: relative; padding: 0 24px 0 8px; text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fp-select .fp-caret {
+  position: absolute; right: 4px; top: 50%; margin-top: -8px;
+  width: 16px; height: 16px; color: #000;
+}
+.fp-input { width: 100%; outline: none; }
+.fp-input:focus { box-shadow: 0 0 0 2px var(--accent); }
+.fp-ctl:disabled, .fp-select:disabled, .fp-input:disabled {
+  background: #fafafb; color: #bebfc0; box-shadow: none;
+  border: .5px solid #e8e8e8; cursor: default;
+}
+
+/* Value well: a 65x22 chip whose fill is the current colour. */
+.fp-well {
+  height: 22px; width: 65px; flex: none; padding: 0; border: 0; border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08);
+}
+.fp-well:hover { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18); }
+.fp-dot { width: 17px; height: 17px; border-radius: 50%; }
+/* 65x22 popover toggle: a 17px donut swatch plus the chevron gutter. */
+.fp-rainbow {
+  width: 65px; height: 22px; flex: none; padding: 0 20px; border: 0; border-radius: 4px;
+  background: #fff; position: relative; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 .5px 1px 0 rgba(0, 0, 0, .1),
+    inset 0 0 1.5px .25px rgba(0, 0, 0, .4), inset 0 0 2px .25px rgba(0, 0, 0, .05);
+}
+.fp-rainbow:disabled { cursor: default; }
+.fp-rainbow .fp-caret {
+  position: absolute; right: 4px; top: 50%; margin-top: -8px;
+  color: #000;
+}
+.fp-rainbow-dot {
+  width: 17px; height: 17px; flex: none; border-radius: 50%;
+  -webkit-mask: radial-gradient(transparent 3px, #000 4px);
+  mask: radial-gradient(transparent 3px, #000 4px);
+}
+
+.fp-measure { position: relative; width: 78px; flex: none; }
+.fp-measure .fp-input { padding-right: 20px; }
+.fp-unit {
+  position: absolute; right: 3px; top: 50%; transform: translateY(-50%);
+  font-size: 10px; font-weight: 600; color: var(--text-faint); pointer-events: none;
+}
+
+.fp-seg {
+  display: flex; width: 100%; height: 23px; margin: 0; padding: 0;
+  list-style: none; background: #fff; border-radius: 4px;
+  box-shadow: 0 .5px 1px 0 rgba(0, 0, 0, .1),
+    inset 0 0 1.5px .25px rgba(0, 0, 0, .4), inset 0 0 2px .25px rgba(0, 0, 0, .05);
+}
+.fp-seg > li { flex: 1 1 0; min-width: 0; padding: 0; }
+.fp-seg button {
+  width: 100%; height: 22px; margin: 0; padding: 0; border: 0; border-radius: 4px;
+  background: transparent; color: var(--text); display: flex;
+  align-items: center; justify-content: center;
+}
+.fp-seg button svg { width: 16px; height: 16px; display: block; }
+.fp-seg button:hover { background: var(--hover); }
+.fp-seg button.on { background: var(--accent); color: #fff; }
+.fp-seg button.on:hover { background: var(--accent); }
+
+.fp-check-row { display: flex; align-items: center; width: 100%; }
+.fp-check {
+  width: 14px; height: 14px; flex: none; margin: 0; border: 0; border-radius: 3px;
+  background: #fff; appearance: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+}
+.fp-check:checked { background: var(--accent) url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%222%22%20fill%3D%22none%22%20d%3D%22M4.48%208l3.02%203%204-7%22%2F%3E%3C%2Fsvg%3E") center/14px 14px no-repeat; box-shadow: none; }
+.fp-check-label { font-size: 13px; font-weight: 500; margin-left: 6px; line-height: 13px; user-select: none; }
+.fp-label-sm { font-size: 11px; font-weight: 500; color: var(--text-faint); line-height: 18px; }
+
+.fp-footer { flex: none; border-top: 1px solid var(--line-soft); padding: 16px 20px; background: var(--chrome); }
+/* 重设样式 is a transparent outlined button in the shipped panel. */
+.fp-footer > button {
+  height: 22px; width: 100%; border: .5px solid rgba(0, 0, 0, .1); border-radius: 4px;
+  background: transparent; color: var(--text); font-size: 13px; font-weight: 500;
+  box-shadow: 0 0 2px rgba(0, 0, 0, .2);
+}
+.fp-footer > button:hover { background: rgba(0, 0, 0, .04); }
+.fp-hint { padding: 24px 20px; color: var(--text-faint); font-size: 12px; line-height: 1.7; }
+
+/* --------------------------------------------------- panel: shared blocks */
+/* 11px field caption above a full-width control: 18px line + 22px control
+   + 13px bottom gap = the shipped 53px block. */
+.fp-field { padding-bottom: 13px; }
+.fp-field > .fp-label-sm { line-height: 18px; margin-bottom: 0; }
+.fp-field:last-child { padding-bottom: 0; }
+.fp-note {
+  margin-top: 6px; font-size: 11px; line-height: 16.5px; color: var(--text-faint);
+}
+/* Section-level bold caption ("导图样式" / "高级布局" / 演说预览). */
+.fp-subtitle {
+  font-size: 13px; font-weight: 700; color: var(--text); line-height: 18px;
+  padding-bottom: 12px;
+}
+.fp-section-top { padding-bottom: 0; }
+/* The preview caption carries its own 12px gap below; the block sets none. */
+.fp-section-top .fp-subtitle { padding-bottom: 0; }
+
+.fp-seg-row { padding-bottom: 12px; }
+.fp-seg-row.last { padding-bottom: 0; }
+
+/* Read-only value box with the 24px arrow gutter the shipped combo uses. */
+.fp-combo { position: relative; width: 65px; flex: none; display: block; }
+.fp-combo .fp-input { padding-right: 24px; }
+.fp-combo .fp-caret {
+  position: absolute; right: 4px; top: 50%; margin-top: -8px;
+  color: #000; pointer-events: none;
+}
+
+/* Two stacked caption+control pairs, used by the 分支 row. */
+.fp-stack { display: flex; flex-direction: column; flex: none; }
+.fp-stack > .fp-label-sm { line-height: 18px; }
+.fp-split-fields { align-items: flex-start; }
+
+/* ------------------------------------------------- panel: 画布 tab blocks */
+/* Bone picker: a 228x60 white card holding a 71x44 thumbnail + name. */
+.fp-bone {
+  width: 100%; height: 60px; padding: 0 24px 0 10px; border: 0; border-radius: 8px;
+  background: #fff; display: flex; align-items: center; gap: 10px; text-align: left;
+  position: relative;
+  box-shadow: 0 .5px 1px 0 rgba(0, 0, 0, .1),
+    inset 0 0 1.5px .25px rgba(0, 0, 0, .4), inset 0 0 2px .25px rgba(0, 0, 0, .05);
+}
+.fp-bone:disabled { cursor: default; }
+.fp-bone .fp-caret {
+  position: absolute; right: 4px; top: 50%; margin-top: -8px;
+  color: #000;
+}
+/* The shipped card paints a faint grey wireframe of the current skeleton in a
+   71x44 box; we render the official structure glyph as a grey mask so the
+   silhouette stays exact while keeping that washed-out tone. */
+.fp-bone-art {
+  width: 71px; height: 44px; flex: none; display: block; background: #e5e5e5;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-size: 62px 36px; mask-size: 62px 36px;
+}
+.fp-bone-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.fp-ctl.fp-add { width: 32px; height: 32px; flex: none; }
+
+/* Palette picker: 188px swatch strip + 8px gap + 32px menu button. */
+.fp-palette-row { display: flex; align-items: center; gap: 8px; }
+.fp-palette {
+  width: 188px; height: 32px; flex: none; padding: 8px 24px 8px 12px;
+  border: 0; border-radius: 4px; background: #fff; display: flex;
+  align-items: center; gap: 8px; text-align: left; position: relative;
+  box-shadow: 0 .5px 1px 0 rgba(0, 0, 0, .1),
+    inset 0 0 1.5px .25px rgba(0, 0, 0, .4), inset 0 0 2px .25px rgba(0, 0, 0, .05);
+}
+.fp-palette .fp-caret {
+  position: absolute; right: 4px; top: 50%; margin-top: -8px;
+  color: #000;
+}
+.fp-chips {
+  display: flex; width: 72px; height: 16px; flex: none; overflow: hidden;
+  border-radius: 1px;
+}
+.fp-chips > span { width: 12px; height: 16px; flex: none; }
+.fp-palette-name {
+  font-size: 13px; font-weight: 500; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* 3x2 preview grid, exactly as the shipped form lays it out:
+   margin 12px 3px 3px, 9px row gap, 7px column gap, 1fr columns. */
+.fp-bone-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px 7px;
+  margin: 12px 3px 3px; width: auto;
+}
+.fp-bone-card {
+  height: 42.5px; padding: 0; border: 0; border-radius: 4px; background: #fff;
+  overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08);
+}
+.fp-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fp-bone-card.on { box-shadow: inset 0 0 0 1.5px var(--accent); }
+
+/* Title + control on one line (背景颜色 / 彩虹分支). */
+.fp-inline {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 12px; min-height: 23px;
+}
+.fp-inline-check { padding-bottom: 0; }
+.fp-inline-title { font-size: 11px; font-weight: 500; color: var(--text-faint); line-height: 13px; }
+.fp-inline-title.lg { font-size: 13px; color: #000; line-height: 13px; }
+/* Checkbox rows: a 14px box on a 26px rhythm (14 + 12). */
+.fp-check-line { padding-bottom: 12px; display: flex; align-items: center; }
+.fp-check-line .fp-check-row { height: 14px; }
+.fp-check-line.last { padding-bottom: 0; }
+
+/* ------------------------------------------------- panel: 演说 tab blocks */
+/* 228x128 slide preview: the bone render is letterboxed on black. */
+.fp-preview {
+  width: 228px; height: 128px; margin-top: 12px; border-radius: 10px;
+  background: #000; overflow: hidden; display: flex;
+  align-items: center; justify-content: center;
+  transition: background-color .18s ease, color .18s ease;
+}
+.fp-preview-inner {
+  width: 100%; height: 100%; display: flex; flex-direction: column; gap: 6px;
+  align-items: center; justify-content: center; padding: 0 18px;
+}
+.fp-preview-text {
+  font-size: 13px; font-weight: 700; color: currentColor; max-width: 100%;
+  text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fp-preview-sub {
+  font-size: 11px; max-width: 100%; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* .is-<风格> only tweaks the chrome the inline swatch cannot express. */
+.fp-preview.is-hand-drawn { border-radius: 4px; }
+.fp-preview.is-innocence .fp-preview-text { letter-spacing: .5px; }
+.fp-preview.is-shape-for-you .fp-preview-text { font-weight: 600; }
+/* Flat white button (更换风格) — no inner shadow in the shipped panel. */
+.fp-btn-flat {
+  height: 22px; width: 100%; border: 0; border-radius: 4px; padding: 0 16px;
+  background: #fff; color: var(--text); font-size: 13px; font-weight: 500;
+  box-shadow: 0 .5px 1px 0 rgba(0, 0, 0, .1),
+    inset 0 0 1.5px .25px rgba(0, 0, 0, .4), inset 0 0 2px .25px rgba(0, 0, 0, .05);
+}
+.fp-btn-flat:disabled { cursor: default; }
+/* 重设样式 / 自定义风格: white with a hairline border. */
+.fp-btn-default {
+  height: 22px; border: .5px solid rgba(0, 0, 0, .1); border-radius: 4px; padding: 0 16px;
+  background: #fff; color: var(--text); font-size: 13px; font-weight: 500;
+  box-shadow: 0 0 2px rgba(0, 0, 0, .2);
+}
+.fp-btn-default:hover:not(:disabled) { background: #fafafb; }
+.fp-reset { padding-top: 0; }
+
+/* ------------------------------------------------- panel: 画布 tab metrics
+   Measured against the shipped panel: each sub-block closes with 12px, the
+   11px captions sit on 17px lines, and the two 228px combos carry the 1px
+   line-box slack of the shipped buttons (53px blocks, not 52). */
+.fp-cv .fp-field { padding-bottom: 12px; }
+.fp-cv .fp-field > .fp-select { margin-bottom: 1px; }
+.fp-cv .fp-subtitle { line-height: 17px; }
+.fp-cv .fp-inline-check { margin-top: 8px; }
+.fp-cv .fp-btn-default { height: 23px; }
+
+/* --------------------------------------------------------------- status bar
+   Measured from the shipped bar: 33px tall with a 1px top rule, 21px tiles
+   (13px/500) padded 0 8px, and 1x11 dividers. Right-aligned, always. */
+.statusbar {
+  height: var(--statusbar-h); flex: none; background: var(--chrome);
+  border-top: 1px solid rgba(0, 0, 0, .08);
+  display: flex; flex-direction: column;
+}
+.sb-line {
+  flex: 1; min-height: 0; display: flex; align-items: center;
+  padding: 0 4px; gap: 0;
+}
+.sb-sheet {
+  padding: 0 4px; font-size: 13px; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sb-right { margin-left: auto; display: flex; align-items: center; }
+.sb-btn {
+  height: 21px; padding: 0 8px; border: 0; border-radius: 4px; background: transparent;
+  font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap;
+  display: flex; align-items: center;
+}
+.sb-btn:hover { background: var(--hover); }
+.sb-btn:active { background: var(--press); }
+.sb-busy { font-size: 12px; color: var(--text-faint); padding: 0 6px; }
+.sb-divider {
+  width: 1px; height: 11px; flex: none;
+  background: rgba(0, 0, 0, .15); margin: 0 1px;
+}
+.sb-zoom { padding: 0 6px 0 0; }
+.sb-zoom-label { padding: 0 8px; }
+.sb-chevron { flex: none; }
+
+/* Zoom ladder popover: anchored above the tile, right-aligned to it. */
+.zoom-backdrop { position: fixed; inset: 0; z-index: 60; }
+.zoom-menu {
+  position: fixed; z-index: 61; min-width: 128px; padding: 4px 0;
+  background: #fff; border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .06), 0 6px 24px rgba(0, 0, 0, .16),
+    0 2px 6px rgba(0, 0, 0, .08);
+}
+.zoom-item {
+  display: flex; align-items: center; width: 100%; height: 26px;
+  padding: 0 14px 0 4px; border: 0; background: transparent;
+  font-size: 13px; color: var(--text); text-align: left;
+}
+.zoom-item:hover { background: #f2f3f5; }
+.zoom-tick {
+  width: 24px; height: 14px; flex: none; margin-right: 2px;
+  display: flex; align-items: center; justify-content: center; color: var(--accent);
+}
+.zoom-sep { height: 1px; margin: 4px 0; background: rgba(0, 0, 0, .08); }
+
+/* -------------------------------------------------------------- outliner
+   The shipped outliner: a 650px centred column, a 40px title on a #fafafb
+   band, 22px indent steps, 18px/700 branches and 16px/400 leaves. */
+.outline-view {
+  position: absolute; inset: 0; background: var(--surface);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ol-scroll { flex: 1; overflow: auto; padding-bottom: 100px; display: flex; }
+.ol-inner { width: 650px; max-width: 650px; flex: none; margin: 0 auto; }
+.ol-central {
+  height: 48px; margin: 100px 0 24px; padding-left: 22px;
+  background: #fafafb; display: flex; align-items: center;
+}
+.ol-central-title {
+  font-size: 40px; font-weight: 700; line-height: 48px; color: rgba(0, 0, 0, .9);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  outline: none; cursor: text;
+}
+
+.ol-row {
+  min-height: 30px; margin: 0 -20px 4px; border-radius: 3px;
+  display: flex; align-items: flex-start; position: relative;
+  padding-right: 20px;
+}
+.ol-row:hover { background: #f7f7f8; }
+.ol-row.sel { background: rgba(0, 0, 0, .02); }
+/* The guide line under a branch: one dash per row keeps it continuous. */
+.ol-row:not(.main)::before {
+  content: ''; position: absolute; left: calc(var(--pl, 42px) - 11px); top: 0; bottom: 0; width: 1px;
+  background: repeating-linear-gradient(to bottom, #dedede 0 3px, transparent 3px 6px);
+}
+
+.ol-dot {
+  width: 18px; height: 18px; flex: none; margin: 6px 4px 0 2px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ol-dot.toggle { cursor: pointer; border-radius: 2px; }
+.ol-dot.toggle:hover { background: rgba(0, 0, 0, .05); }
+.ol-leaf { width: 4px; height: 4px; background: #000; }
+.ol-caret {
+  width: 0; height: 0; cursor: pointer;
+  border-left: 5px solid #000;
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  transition: transform .12s ease;
+}
+.ol-caret.open { transform: rotate(90deg); }
+
+.ol-title {
+  flex: 0 1 auto; min-width: 0; min-height: 22px; padding: 4px 22px 4px 0; outline: none;
+  line-height: 22px; color: rgba(0, 0, 0, .9); cursor: text;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.ol-title.d0 { font-size: 18px; font-weight: 700; }
+.ol-title.d1, .ol-title.d2, .ol-title.d3 { font-size: 16px; font-weight: 400; }
+
+.ol-badge {
+  align-self: flex-start; margin: 5px 0 0; height: 20px; padding: 0 8px;
+  border-radius: 10px; background: #f2f2f3; color: #6f7377;
+  font-size: 11px; display: flex; align-items: center; flex: none;
+}
+
+/* ------------------------------------------------------- panel: header art
+   Every collapsing header carries a 65x22 popover toggle whose artwork is an
+   18x22 glyph (the structure toggle is the taller 22x30 tree mark). */
+.fp-toggle-art { width: 18px; height: 22px; object-fit: contain; display: block; }
+/* The fill chip is the pattern artwork masked onto the current fill colour. */
+.fp-pattern {
+  width: 18px; height: 9px; flex: none; display: block;
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+}
+.fp-arrow-art { width: 18px; height: 22px; object-fit: contain; display: block; }
+/* Only the toggle's own glyph is 22x30; the caret keeps its 16px box. */
+.fp-toggle > svg { width: 22px; height: 30px; }
+/* The 结构 toggle shows the current skeleton's 22x18 panel glyph. */
+.fp-struct-glyph { width: 22px; height: 18px; object-fit: contain; display: block; }
+/* The 65px size combo keeps its input and hangs the caret in a 24px gutter. */
+.fp-combo-btn {
+  position: absolute; right: 0; top: 0; width: 24px; height: 22px; padding: 0;
+  border: 0; background: transparent; display: flex; align-items: center;
+  justify-content: center; color: #000;
+}
+.fp-combo-btn svg { width: 16px; height: 16px; display: block; }
+/* 结构 stacks two full-width selects 12px apart. */
+.fp-gap { margin-top: 12px; }
+.fp-aa { font-size: 13px; font-weight: 500; line-height: 1; }
+.fp-aa.on { color: var(--accent); }
+
+/* -------------------------------------------------------------- popovers
+   Measured from the shipped `.uk-pop.uk-popover`: 10px radius, 70% white over
+   a 30px backdrop blur, and `0 8px 15px 6px rgba(0,0,0,.2)` under it. */
+.pop {
+  position: fixed; z-index: 80; border-radius: 10px;
+  background: rgba(255, 255, 255, .7);
+  -webkit-backdrop-filter: blur(30px); backdrop-filter: blur(30px);
+  box-shadow: 0 8px 15px 6px rgba(0, 0, 0, .2), 0 1px 4px 0 rgba(0, 0, 0, .15),
+    inset 0 0 2px 0 rgba(255, 255, 255, .3);
+  color: var(--text); font-size: 13px; line-height: 19.5px;
+}
+.pop.is-tiles { padding: 16px 20px 20px; }
+/* The 31-shape library scrolls: the shipped list keeps a 32px right gutter
+   for its overlay scrollbar. */
+.pop.is-shape { padding: 16px 32px 16px 20px; }
+.pop.is-menu { padding: 5px 0; }
+.pop.is-menu.is-compact { padding: 4px 0; }
+/* 骨架库：390x496 的滚动面板，九组、每组三列 106x65 缩略图卡片。
+   原版是「按钮左侧弹出、顶部对齐」，卡片无文字，仅靠缩略图区分。 */
+.pop.is-skeleton { padding: 20px 12px 0; }
+.bone-board { display: block; }
+.bone-head {
+  margin: 0 0 12px 8px;
+  font-size: 16px; line-height: 21px; font-weight: 600; color: var(--text);
+}
+.bone-group:not(:first-child) .bone-head { margin-top: 0; }
+.bone-grid {
+  display: grid; grid-template-columns: repeat(3, 106px);
+  justify-content: space-between;
+  gap: 12px 0; margin: 0 8px 20px;
+}
+.bone-card {
+  position: relative; padding: 0; border: 0; cursor: pointer;
+  aspect-ratio: 106 / 65; overflow: hidden; border-radius: 8px;
+  background: #fff; display: block;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .06), 0 1px 4px rgba(0, 0, 0, .10);
+  transition: box-shadow .12s ease;
+}
+.bone-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bone-card:hover { box-shadow: 0 0 0 1px rgba(0, 0, 0, .12), 0 2px 8px rgba(0, 0, 0, .16); }
+.bone-card.on { box-shadow: 0 0 0 3px var(--accent); }
+.bone-card .bone-hand {
+  position: absolute; left: 3px; top: 2px;
+  width: 14px; height: 14px; object-fit: contain;
+}
+/* 配色方案 board — `uk-popover-left-center`, 316x370, capsule tabs pinned on
+   top and the nine/twenty-three swatch groups scrolling underneath. */
+.pop.is-themes { padding: 0; overflow: hidden; height: 370px; }
+.pal-board { display: flex; flex-direction: column; height: 100%; }
+.pal-tabs {
+  flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  height: 30px; padding: 4px; box-sizing: border-box;
+  border-bottom: 1px solid rgba(0, 0, 0, .08);
+}
+.pal-tabs button {
+  height: 22px; padding: 0 12px; border: 0; border-radius: 4px;
+  background: transparent; font-size: 13px; font-weight: 600;
+  color: rgba(0, 0, 0, .5); line-height: 22px;
+}
+.pal-tabs button.on { background: rgba(0, 0, 0, .08); color: #000; }
+.pal-scroll {
+  flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  display: grid; grid-template-columns: repeat(2, 130px);
+  gap: 16px 16px; align-content: start;
+  padding: 19px 20px 20px; box-sizing: border-box;
+}
+.pal-scroll::-webkit-scrollbar { width: 0; height: 0; }
+.pal-group { width: 130px; }
+.pal-name {
+  height: 16px; font-size: 13px; font-weight: 500; line-height: 16px;
+  color: #27292a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pal-cell {
+  position: relative; margin-top: 4px; width: 130px; height: 24px;
+  padding: 0; border: 0; border-radius: 2px; overflow: hidden;
+  display: flex; cursor: pointer;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1), 0 1px 6px 0 rgba(0, 0, 0, .1);
+  transition: box-shadow .12s ease;
+}
+.pal-cell > span { flex: 1 1 0; height: 100%; display: block; }
+.pal-cell:hover {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .18),
+    0 1px 2px 0 rgba(0, 0, 0, .1), 0 1px 6px 0 rgba(0, 0, 0, .1);
+}
+.pal-cell.on {
+  box-shadow: 0 0 0 3px #0f66de,
+    0 1px 2px 0 rgba(0, 0, 0, .1), 0 1px 6px 0 rgba(0, 0, 0, .1);
+}
+.pal-switch {
+  position: absolute; inset: 0; display: none;
+  align-items: center; justify-content: center; gap: 4px;
+  background: rgba(0, 0, 0, .28); color: #fff;
+  font-size: 13px; font-style: normal; font-weight: 500; line-height: 1;
+}
+.pal-switch::before {
+  content: ''; width: 12px; height: 12px; flex: none;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 3.2px, #fff 3.2px 4.4px, transparent 4.4px),
+    conic-gradient(from 200deg, #fff 0 62%, transparent 62%);
+  -webkit-mask: radial-gradient(circle at 50% 50%, #000 0 100%);
+  border-radius: 50%;
+}
+.pal-cell:hover .pal-switch { display: flex; }
+
+/* Quick-pick strip under 配色方案: one mini map per saved palette
+   (`public/tiles/palettes/*.svg`, generated by build-palette-data.mjs). */
+.fp-bone-card.is-pal .fp-thumb { object-fit: cover; object-position: center; }
+
+.pop.is-color { padding: 0; }
+
+/* Tile library: 66x40 shapes (8px gutters), 75x40 fills/borders/lines/ends. */
+.pop-tiles { display: grid; justify-content: start; }
+.pop-tile {
+  padding: 0; border: 0; border-radius: 4px; background: transparent;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.pop-tile img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.pop-tile:hover { background: rgba(0, 0, 0, .05); }
+
+/* 无填充 / 无边框: a 22px default button 16px under the tiles. */
+.pop-foot {
+  display: block; width: 100%; height: 22px; margin-top: 16px; padding: 0 16px;
+  border: 0; border-radius: 4px; background: #fff; color: var(--text);
+  font-size: 13px; font-weight: 500;
+  box-shadow: 0 .5px 1px 0 rgba(0, 0, 0, .1),
+    inset 0 0 1.5px .25px rgba(0, 0, 0, .4), inset 0 0 2px .25px rgba(0, 0, 0, .05);
+}
+.pop-foot:hover { background: #fafafb; }
+
+/* Menu: 27px rows, 28px text inset, solid #0f66de for the current value. */
+.pop-menu {
+  list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
+  align-items: stretch;
+}
+.pop-menu li { flex: none; }
+.pop-menu button {
+  display: flex; align-items: center; width: 100%; height: 27px; padding: 6px 28px;
+  border: 0; border-radius: 0; background: transparent; text-align: left;
+  font-size: 13px; font-weight: 500; line-height: 15px; color: rgb(45, 47, 49);
+}
+.pop-menu button:hover:not(.on) { background: rgba(0, 0, 0, .05); }
+.pop-menu button.on { background: rgb(15, 102, 222); color: rgb(250, 250, 251); }
+.pop-menu.is-compact button, .pop-menu.compact button { padding: 6px 4px; }
+.pop-sep { height: 1px; margin: 4px 0; background: rgba(0, 0, 0, .05); }
+.pop-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 分支线样式 shows the 116x12 line artwork only — no label. */
+.fp-line-menu button { padding: 6px 28px; }
+.pop-line-art { width: 116px; height: 12px; display: block; }
+.fp-line-menu button.on .pop-line-art { filter: invert(1); }
+
+/* ---------------------------------------------------------- colour picker
+   9x5 grid of 25px swatches on a 2px lattice, then hex + opacity, then the
+   最近使用 strip behind a hairline. Total 257x250, as shipped. */
+.pop-color { display: block; }
+.pc-section { padding: 8px; }
+.pc-grid {
+  display: grid; grid-template-columns: repeat(9, 25px); gap: 2px;
+  margin-bottom: 5px;
+}
+.pc-swatch {
+  width: 25px; height: 25px; padding: 0; border: 0; border-radius: 0;
+  box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .1); background-clip: padding-box;
+}
+.pc-swatch:hover { box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, .35); }
+.pc-row { display: flex; align-items: center; height: 22px; margin-top: 5px; }
+.pc-input {
+  position: relative; display: flex; align-items: center; width: 127px; height: 22px;
+  border-radius: 4px; background: #fff; overflow: hidden;
+  box-shadow: 0 .5px 1px 0 rgba(0, 0, 0, .1),
+    inset 0 0 1.5px .25px rgba(0, 0, 0, .4), inset 0 0 2px .25px rgba(0, 0, 0, .05);
+}
+.pc-hash {
+  position: absolute; left: 4px; top: 4px; width: 14px; height: 14px;
+  color: var(--text-faint); display: flex; pointer-events: none;
+}
+.pc-hex {
+  width: 72px; height: 18px; padding: 0 0 0 20px; border: 0; background: transparent;
+  outline: none; font-size: 13px; font-weight: 500; color: var(--text);
+  letter-spacing: .2px;
+}
+.pc-divider { width: 1px; height: 11px; flex: none; background: rgba(0, 0, 0, .15); margin: 0 6px; }
+.pc-alpha {
+  width: 31px; height: 18px; padding: 0; border: 0; background: transparent;
+  outline: none; font-size: 13px; font-weight: 500; color: var(--text); text-align: center;
+}
+.pc-percent { font-size: 13px; font-weight: 500; color: var(--text); }
+.pc-preview {
+  width: 22px; height: 22px; flex: none; margin-left: 8px; border-radius: 1px;
+  box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .1); background-clip: padding-box;
+}
+.pc-more {
+  width: 20px; height: 22px; flex: none; margin-left: auto; display: flex;
+  align-items: center; justify-content: center; position: relative; cursor: pointer;
+}
+.pc-ring {
+  width: 20px; height: 20px; border-radius: 50%; display: block;
+  -webkit-mask: radial-gradient(transparent 5px, #000 6px);
+  mask: radial-gradient(transparent 5px, #000 6px);
+}
+.pc-more input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; border: 0; padding: 0; cursor: pointer; }
+.pc-sep { height: 1px; margin: 4px 0; border: 0; background: rgba(0, 0, 0, .05); }
+.pc-recent-title { font-size: 13px; font-weight: 400; line-height: 19.5px; margin-bottom: 4px; }
+.pc-recent { display: grid; grid-template-columns: repeat(9, 25px); gap: 2px; }
+
+/* ------------------------------------------------- 分支配色 / table cells
+   九种分支配色：184 宽的弹层里 3x3 的 40px 圆盘，每个圆盘是 6 色扇形。 */
+.pop.is-palette { padding: 20px 24px; }
+.pal-grid { display: grid; grid-template-columns: repeat(3, 40px); gap: 8px 9px; }
+.pal-disc {
+  width: 40px; height: 40px; padding: 0; border: 0; background: transparent;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.pal-disc .pal-disc-art {
+  width: 33px; height: 33px; border-radius: 50%; display: block;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08);
+  transition: transform .12s ease;
+}
+.pal-disc:hover .pal-disc-art { transform: scale(1.07); }
+.pal-disc.on { box-shadow: 0 0 0 2px var(--accent); }
+
+/* 树型表格 / 矩阵图：单元格没有形状，边框由装饰层画。 */
+.node.cell { border-radius: 0; }
+.node.cell:hover { filter: none; }
+.node.cell.selected { box-shadow: inset 0 0 0 2px var(--accent); border-radius: 0; }
+
+/* ------------------------------------------------------------- 演说风格
+   原版弹层 276×412，内边距 20/20/8，两列 112 宽、缩略图 112×63 + 标题。 */
+.pop.is-pitch { padding: 20px 20px 8px; }
+.pitch-grid {
+  display: grid; grid-template-columns: repeat(2, 112px);
+  column-gap: 12px; row-gap: 18px; justify-content: space-between;
+}
+.pitch-card {
+  width: 112px; padding: 0; border: 0; background: transparent;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;
+}
+.pitch-thumb {
+  width: 112px; height: 63px; border-radius: 4px; overflow: hidden; display: block;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .08);
+}
+.pitch-thumb img { width: 112px; height: 63px; object-fit: cover; display: block; }
+.pitch-card:hover .pitch-thumb { box-shadow: 0 0 0 1px rgba(0, 0, 0, .18); }
+.pitch-thumb.on { box-shadow: 0 0 0 2px var(--accent); }
+.pitch-title { font-size: 13px; line-height: 18px; color: var(--text); }
+
+/* ------------------------------------------------------------- 演说模式
+   全屏播放：舞台居中，幻灯片按长宽比缩放，底部一条极简控制条。 */
+.present {
+  position: fixed; inset: 0; z-index: 400; display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+  animation: present-in .18s ease-out;
+}
+@keyframes present-in { from { opacity: 0; } to { opacity: 1; } }
+.present-stage {
+  flex: 1; width: 100%; display: flex; align-items: center;
+  justify-content: center; padding: 24px 24px 0; cursor: pointer;
+}
+.present-slide {
+  border-radius: 12px; overflow: hidden; display: flex;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .06);
+  animation: slide-in .22s cubic-bezier(.22, .8, .3, 1);
+}
+@keyframes slide-in { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: none; } }
+.ps-cover {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 18px; padding: 8% 10%; text-align: center;
+}
+.ps-cover-title {
+  font-size: clamp(30px, 5.4vw, 76px); font-weight: 700; line-height: 1.16;
+  letter-spacing: .5px; max-width: 92%;
+}
+.ps-cover-sub { font-size: clamp(12px, 1.2vw, 18px); letter-spacing: 2px; }
+.ps-body {
+  flex: 1; display: flex; flex-direction: column; gap: 4%;
+  padding: 7% 9%; min-width: 0;
+}
+.ps-title {
+  font-size: clamp(22px, 3.4vw, 48px); font-weight: 700; line-height: 1.2;
+  padding-bottom: 3%; border-bottom: 1px solid currentColor; border-color: currentColor;
+  opacity: .96;
+}
+.present-slide.kind-list .ps-title { border-bottom-color: rgba(127, 127, 127, .35); }
+.ps-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2.2vh; }
+.ps-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: clamp(16px, 2.1vw, 30px); line-height: 1.4;
+  animation: bullet-in .2s ease-out;
+}
+@keyframes bullet-in { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+.ps-item.is-current .ps-text { font-weight: 600; }
+.ps-item:not(.is-current) .ps-text { opacity: .72; }
+.ps-dot { width: .42em; height: .42em; border-radius: 50%; margin-top: .52em; flex: none; }
+.present-bar {
+  width: 100%; height: 52px; display: flex; align-items: center; gap: 14px;
+  padding: 0 20px; color: rgba(255, 255, 255, .82); font-size: 12px; position: relative;
+}
+.present-exit {
+  height: 24px; padding: 0 12px; border: 0; border-radius: 4px; cursor: pointer;
+  background: rgba(255, 255, 255, .14); color: #fff; font-size: 12px;
+}
+.present-exit:hover { background: rgba(255, 255, 255, .24); }
+.present-count { font-variant-numeric: tabular-nums; }
+.present-hint { opacity: .55; }
+.present-track {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: rgba(255, 255, 255, .12);
+}
+.present-track span { display: block; height: 100%; background: var(--accent); transition: width .18s ease; }
+
+/* 演说的五种「布局」只改幻灯片内部排布，不动标题层级。 */
+.present-slide.layout-2 .ps-body { flex-direction: row; gap: 6%; align-items: flex-start; }
+.present-slide.layout-2 .ps-title { flex: 0 0 38%; border-bottom: 0; border-right: 1px solid rgba(127, 127, 127, .35); padding: 0 4% 0 0; }
+.present-slide.layout-2 .ps-list { flex: 1; }
+.present-slide.layout-3 .ps-body { align-items: center; text-align: center; }
+.present-slide.layout-3 .ps-title { border-bottom: 0; }
+.present-slide.layout-3 .ps-list { align-items: center; }
+.present-slide.layout-3 .ps-item { justify-content: center; }
+.present-slide.layout-4 .ps-list { flex-wrap: wrap; flex-direction: row; }
+.present-slide.layout-4 .ps-item { flex: 0 0 46%; }
+.present-slide.layout-5 .ps-body { justify-content: center; }
+.present-slide.layout-5 .ps-title { border-bottom: 0; text-align: center; }
+.present-slide.layout-5 .ps-list { flex-direction: row; flex-wrap: wrap; gap: 1.4vh 2.4vw; justify-content: center; }
+.present-slide.layout-5 .ps-item { background: rgba(127, 127, 127, .12); border-radius: 999px; padding: .4em 1em; }
+.present-slide.layout-5 .ps-dot { display: none; }

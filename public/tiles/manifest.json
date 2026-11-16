@@ -1,0 +1,816 @@
+{
+ "shape": [
+  {
+   "index": 0,
+   "file": "shape-00-shape-rounded-rect.svg",
+   "src": "shape-rounded-rect.svg",
+   "gid": "shape-rounded-rect",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 1,
+   "file": "shape-01-shape-rectangle.svg",
+   "src": "shape-rectangle.svg",
+   "gid": "shape-rectangle",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 2,
+   "file": "shape-02-shape-ellipse.svg",
+   "src": "shape-ellipse.svg",
+   "gid": "shape-ellipse",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 3,
+   "file": "shape-03-shape-ellipse-rect.svg",
+   "src": "shape-ellipse-rect.svg",
+   "gid": "shape-ellipse-rect",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 4,
+   "file": "shape-04-shape-underline.svg",
+   "src": "shape-underline.svg",
+   "gid": "shape-underline",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 5,
+   "file": "shape-05-shape-diamond.svg",
+   "src": "shape-diamond.svg",
+   "gid": "shape-diamond",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 6,
+   "file": "shape-06-shape-circle.svg",
+   "src": "shape-circle.svg",
+   "gid": "shape-circle",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 7,
+   "file": "shape-07-shape-parallelogram.svg",
+   "src": "shape-parallelogram.svg",
+   "gid": "shape-parallelogram",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 8,
+   "file": "shape-08-shape-hexagon.svg",
+   "src": "shape-hexagon.svg",
+   "gid": "shape-hexagon",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 9,
+   "file": "shape-09-shape-rounded-hexagon.svg",
+   "src": "shape-rounded-hexagon.svg",
+   "gid": "shape-rounded-hexagon",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 10,
+   "file": "shape-10-shape-elliptic-rect.svg",
+   "src": "shape-elliptic-rect.svg",
+   "gid": "shape-elliptic-rect",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 11,
+   "file": "shape-11-shape-single-breakangle.svg",
+   "src": "shape-single-breakangle.svg",
+   "gid": "shape-single-breakangle",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 12,
+   "file": "shape-12-shape-double-underline.svg",
+   "src": "shape-double-underline.svg",
+   "gid": "shape-double-underline",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 13,
+   "file": "shape-13-shape-stack.svg",
+   "src": "shape-stack.svg",
+   "gid": "shape-stack",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 14,
+   "file": "shape-14-shape-bookmark.svg",
+   "src": "shape-bookmark.svg",
+   "gid": "Shape-object-bookmark",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 15,
+   "file": "shape-15-shape-cloud.svg",
+   "src": "shape-cloud.svg",
+   "gid": "Shape-object-cloud",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 16,
+   "file": "shape-16-shape-cut-diamond.svg",
+   "src": "shape-cut-diamond.svg",
+   "gid": "Shape-object-diamond",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 17,
+   "file": "shape-17-shape-drop.svg",
+   "src": "shape-drop.svg",
+   "gid": "Shape-object-drop",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 18,
+   "file": "shape-18-shape-heart.svg",
+   "src": "shape-heart.svg",
+   "gid": "Shape-object-heart",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 19,
+   "file": "shape-19-shape-label.svg",
+   "src": "shape-label.svg",
+   "gid": "Shape-object-label",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 20,
+   "file": "shape-20-shape-left-arrow.svg",
+   "src": "shape-left-arrow.svg",
+   "gid": "Shape-object-left-arrow",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 21,
+   "file": "shape-21-shape-right-arrow.svg",
+   "src": "shape-right-arrow.svg",
+   "gid": "Shape-object-right-arrow",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 22,
+   "file": "shape-22-shape-shield.svg",
+   "src": "shape-shield.svg",
+   "gid": "Shape-object-shield",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 23,
+   "file": "shape-23-shape-star.svg",
+   "src": "shape-star.svg",
+   "gid": "Shape-object-star",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 24,
+   "file": "shape-24-shape-punctuation-angle-brackets.svg",
+   "src": "shape-punctuation-angle-brackets.svg",
+   "gid": "Shape-punctuation-angle-brackets",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 25,
+   "file": "shape-25-shape-punctuation-brace.svg",
+   "src": "shape-punctuation-brace.svg",
+   "gid": "Shape-punctuation-brace",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 26,
+   "file": "shape-26-shape-punctuation-double-quotes.svg",
+   "src": "shape-punctuation-double-quotes.svg",
+   "gid": "Shape-punctuation-double-quotes",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 27,
+   "file": "shape-27-shape-punctuation-french-quotes.svg",
+   "src": "shape-punctuation-french-quotes.svg",
+   "gid": "Shape-punctuation-french-quotes",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 28,
+   "file": "shape-28-shape-punctuation-parentheses.svg",
+   "src": "shape-punctuation-parentheses.svg",
+   "gid": "Shape-punctuation-parentheses",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 29,
+   "file": "shape-29-shape-punctuation-square-brackets.svg",
+   "src": "shape-punctuation-square-brackets.svg",
+   "gid": "Shape-punctuation-square-brackets",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  },
+  {
+   "index": 30,
+   "file": "shape-30-shape-punctuation-square-quotes.svg",
+   "src": "shape-punctuation-square-quotes.svg",
+   "gid": "Shape-punctuation-square-quotes",
+   "text": "",
+   "active": false,
+   "w": 66,
+   "h": 40
+  }
+ ],
+ "fill": [
+  {
+   "index": 0,
+   "file": "fill-00-solid.svg",
+   "src": "solid.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 1,
+   "file": "fill-01-solid-hand-drawn.svg",
+   "src": "solid-hand-drawn.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 2,
+   "file": "fill-02-diagonal-hand-drawn.svg",
+   "src": "diagonal-hand-drawn.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 3,
+   "file": "fill-03-diagonal-thin-hand-drawn.svg",
+   "src": "diagonal-thin-hand-drawn.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 4,
+   "file": "fill-04-horizontal-hand-drawn.svg",
+   "src": "horizontal-hand-drawn.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 5,
+   "file": "fill-05-horizontal-thin-hand-drawn.svg",
+   "src": "horizontal-thin-hand-drawn.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 6,
+   "file": "fill-06-tile-6.svg",
+   "src": "",
+   "gid": "",
+   "text": "无填充",
+   "active": false,
+   "w": 170,
+   "h": 23
+  }
+ ],
+ "border": [
+  {
+   "index": 0,
+   "file": "border-00-solid.svg",
+   "src": "solid.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 1,
+   "file": "border-01-dash.svg",
+   "src": "dash.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 2,
+   "file": "border-02-hand-drawn-solid.svg",
+   "src": "hand-drawn-solid.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 3,
+   "file": "border-03-hand-drawn-dash.svg",
+   "src": "hand-drawn-dash.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 4,
+   "file": "border-04-tile-4.svg",
+   "src": "",
+   "gid": "",
+   "text": "无边框",
+   "active": false,
+   "w": 170,
+   "h": 23
+  }
+ ],
+ "line": [
+  {
+   "index": 0,
+   "file": "line-00-line-rounded-elbow.svg",
+   "src": "line-rounded-elbow.svg",
+   "gid": "line-rounded-elbow",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 1,
+   "file": "line-01-line-elbow.svg",
+   "src": "line-elbow.svg",
+   "gid": "line-elbow",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 2,
+   "file": "line-02-line-straight.svg",
+   "src": "line-straight.svg",
+   "gid": "line-straight",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 3,
+   "file": "line-03-line-curve.svg",
+   "src": "line-curve.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 4,
+   "file": "line-04-line-bight.svg",
+   "src": "line-bight.svg",
+   "gid": "line-bight",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 5,
+   "file": "line-05-line-fold.svg",
+   "src": "line-fold.svg",
+   "gid": "line-fold",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 6,
+   "file": "line-06-line-rounded-fold.svg",
+   "src": "line-rounded-fold.svg",
+   "gid": "line-rounded-fold",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  }
+ ],
+ "arrow": [
+  {
+   "index": 0,
+   "file": "arrow-00-arrow-none.svg",
+   "src": "arrow-none.svg",
+   "gid": "arrow-none",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 1,
+   "file": "arrow-01-arrow-end-dot.svg",
+   "src": "arrow-end-dot.svg",
+   "gid": "arrow-end-dot",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 2,
+   "file": "arrow-02-arrow-end-triangle.svg",
+   "src": "arrow-end-triangle.svg",
+   "gid": "arrow-end-triangle",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 3,
+   "file": "arrow-03-arrow-end-spearhead.svg",
+   "src": "arrow-end-spearhead.svg",
+   "gid": "arrow-end-spearhead",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 4,
+   "file": "arrow-04-arrow-end-square.svg",
+   "src": "arrow-end-square.svg",
+   "gid": "arrow-end-square",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 5,
+   "file": "arrow-05-arrow-end-diamond.svg",
+   "src": "arrow-end-diamond.svg",
+   "gid": "arrow-end-diamond",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 6,
+   "file": "arrow-06-arrow-end-herringbone.svg",
+   "src": "arrow-end-herringbone.svg",
+   "gid": "arrow-end-herringbone",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 7,
+   "file": "arrow-07-arrow-end-doublearrow.svg",
+   "src": "arrow-end-doublearrow.svg",
+   "gid": "arrow-end-doublearrow",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 8,
+   "file": "arrow-08-arrow-end-antiTriangle.svg",
+   "src": "arrow-end-antiTriangle.svg",
+   "gid": "arrow-end-antiTriangle",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 9,
+   "file": "arrow-09-arrow-end-attached.svg",
+   "src": "arrow-end-attached.svg",
+   "gid": "arrow-end-attached",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  },
+  {
+   "index": 10,
+   "file": "arrow-10-arrow-end-hook.svg",
+   "src": "arrow-end-hook.svg",
+   "gid": "arrow-end-hook",
+   "text": "",
+   "active": false,
+   "w": 75,
+   "h": 40
+  }
+ ],
+ "linestyle": [
+  {
+   "index": 0,
+   "file": "linestyle-00-tile-0.svg",
+   "src": "",
+   "gid": "",
+   "text": "无",
+   "active": false,
+   "w": 172,
+   "h": 27
+  },
+  {
+   "index": 1,
+   "file": "linestyle-01-tile-1.svg",
+   "src": "",
+   "gid": "",
+   "text": "无",
+   "active": false,
+   "w": 172,
+   "h": 27
+  },
+  {
+   "index": 2,
+   "file": "linestyle-02-solid.svg",
+   "src": "solid.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 172,
+   "h": 28
+  },
+  {
+   "index": 3,
+   "file": "linestyle-03-solid.svg",
+   "src": "solid.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 172,
+   "h": 28
+  },
+  {
+   "index": 4,
+   "file": "linestyle-04-dash.svg",
+   "src": "dash.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 172,
+   "h": 28
+  },
+  {
+   "index": 5,
+   "file": "linestyle-05-dash.svg",
+   "src": "dash.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 172,
+   "h": 28
+  },
+  {
+   "index": 6,
+   "file": "linestyle-06-hand-drawn-solid.svg",
+   "src": "hand-drawn-solid.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 172,
+   "h": 28
+  },
+  {
+   "index": 7,
+   "file": "linestyle-07-hand-drawn-solid.svg",
+   "src": "hand-drawn-solid.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 172,
+   "h": 28
+  },
+  {
+   "index": 8,
+   "file": "linestyle-08-hand-drawn-dash.svg",
+   "src": "hand-drawn-dash.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 172,
+   "h": 28
+  },
+  {
+   "index": 9,
+   "file": "linestyle-09-hand-drawn-dash.svg",
+   "src": "hand-drawn-dash.svg",
+   "gid": "",
+   "text": "",
+   "active": false,
+   "w": 172,
+   "h": 28
+  }
+ ],
+ "skeleton": [
+  {
+   "index": 0,
+   "file": "skeleton-00-balanced-map-clockwise-Copy.svg",
+   "src": "",
+   "gid": "balanced-map-clockwise-Copy",
+   "text": "思维导图",
+   "active": false,
+   "w": 240,
+   "h": 36
+  },
+  {
+   "index": 1,
+   "file": "skeleton-01-logic-right-Copy.svg",
+   "src": "",
+   "gid": "logic-right-Copy",
+   "text": "逻辑图",
+   "active": false,
+   "w": 240,
+   "h": 36
+  },
+  {
+   "index": 2,
+   "file": "skeleton-02-brace-right-Copy.svg",
+   "src": "",
+   "gid": "brace-right-Copy",
+   "text": "括号图",
+   "active": false,
+   "w": 240,
+   "h": 36
+  },
+  {
+   "index": 3,
+   "file": "skeleton-03-org-down-Copy.svg",
+   "src": "",
+   "gid": "org-down-Copy",
+   "text": "组织结构图",
+   "active": false,
+   "w": 240,
+   "h": 36
+  },
+  {
+   "index": 4,
+   "file": "skeleton-04-tree-right-Copy.svg",
+   "src": "",
+   "gid": "tree-right-Copy",
+   "text": "树形图",
+   "active": false,
+   "w": 240,
+   "h": 36
+  },
+  {
+   "index": 5,
+   "file": "skeleton-05-Page-1.svg",
+   "src": "",
+   "gid": "Page-1",
+   "text": "时间轴",
+   "active": false,
+   "w": 240,
+   "h": 36
+  },
+  {
+   "index": 6,
+   "file": "skeleton-06-fishbone-left.svg",
+   "src": "",
+   "gid": "fishbone-left",
+   "text": "鱼骨图",
+   "active": false,
+   "w": 240,
+   "h": 36
+  },
+  {
+   "index": 7,
+   "file": "skeleton-07-treemap-row-Copy-2_.svg",
+   "src": "",
+   "gid": "treemap-row-Copy-2备份",
+   "text": "树型表格",
+   "active": false,
+   "w": 240,
+   "h": 36
+  },
+  {
+   "index": 8,
+   "file": "skeleton-08-matrix-row-Copy-3.svg",
+   "src": "",
+   "gid": "matrix-row-Copy-3",
+   "text": "矩阵图",
+   "active": false,
+   "w": 240,
+   "h": 36
+  }
+ ]
+}

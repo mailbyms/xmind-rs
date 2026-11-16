@@ -1,0 +1,32 @@
+[package]
+name = "xmind-rs"
+description = "A memory-light, XMind-compatible mind map editor built with Rust and Tauri 2"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+name = "xmind_rs_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", default-features = false, features = ["wry", "compression", "common-controls-v6", "dynamic-acl"] }
+tauri-plugin-dialog = "2"
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+base64 = { workspace = true }
+chrono = { workspace = true }
+xmind-core = { workspace = true }
+xmind-file = { workspace = true }
+xmind-resources = { workspace = true }
+aicompat = { workspace = true }
+
+[features]
+default = []
+custom-protocol = ["tauri/custom-protocol"]

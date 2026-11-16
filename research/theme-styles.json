@@ -1,0 +1,84 @@
+{
+  "pop": {
+    "w": 316,
+    "h": 370,
+    "radius": "10px",
+    "bg": "rgba(255, 255, 255, 0.7)",
+    "shadow": "none",
+    "pad": "0px"
+  },
+  "groups": [
+    {
+      "name": "永恒",
+      "cls": "smart-color-theme-group-cell uk-card uk-card-default uk-card-selectable uk-border-rounded uk-overflow-hidden uk-active",
+      "radius": "2px",
+      "border": "0px none rgb(232, 232, 232)",
+      "shadow": "rgb(15, 102, 222) 0px 0px 0px 3px, rgba(0, 0, 0, 0.1) 0px 1px 2px 0px, rgba(0, 0, 0, 0.1) 0px 1px 6px 0px",
+      "h5": {
+        "size": "13px",
+        "weight": "500",
+        "color": "rgb(39, 41, 42)",
+        "h": 16
+      }
+    },
+    {
+      "name": "奶油",
+      "cls": "smart-color-theme-group-cell uk-card uk-card-default uk-card-selectable uk-border-rounded uk-overflow-hidden",
+      "radius": "2px",
+      "border": "0px none rgb(232, 232, 232)",
+      "shadow": "rgba(0, 0, 0, 0.1) 0px 1px 2px 0px, rgba(0, 0, 0, 0.1) 0px 1px 6px 0px",
+      "h5": {
+        "size": "13px",
+        "weight": "500",
+        "color": "rgb(39, 41, 42)",
+        "h": 16
+      }
+    },
+    {
+      "name": "花海",
+      "cls": "smart-color-theme-group-cell uk-card uk-card-default uk-card-selectable uk-border-rounded uk-overflow-hidden",
+      "radius": "2px",
+      "border": "0px none rgb(232, 232, 232)",
+      "shadow": "rgba(0, 0, 0, 0.1) 0px 1px 2px 0px, rgba(0, 0, 0, 0.1) 0px 1px 6px 0px",
+      "h5": {
+        "size": "13px",
+        "weight": "500",
+        "color": "rgb(39, 41, 42)",
+        "h": 16
+      }
+    }
+  ],
+  "tabA": [
+    {
+      "label": "缤纷",
+      "active": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgba(0, 0, 0, 0.5)",
+      "fs": "13px",
+      "fw": "600",
+      "r": "4px",
+      "h": 22,
+      "w": 154,
+      "liCls": "divider-vertical uk-flex-1 divider-vertical-clear"
+    },
+    {
+      "label": "经典",
+      "active": true,
+      "bg": "rgba(0, 0, 0, 0.08)",
+      "color": "rgb(0, 0, 0)",
+      "fs": "13px",
+      "fw": "600",
+      "r": "4px",
+      "h": 22,
+      "w": 154,
+      "liCls": "divider-vertical uk-flex-1 uk-active divider-vertical-active"
+    }
+  ],
+  "tab": {
+    "bg": "rgba(0, 0, 0, 0)",
+    "pad": "4px",
+    "h": 30,
+    "pos": "fixed"
+  },
+  "scroll": []
+}

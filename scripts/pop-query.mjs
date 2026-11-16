@@ -1,0 +1,66 @@
+// Open a shipped popover, then evaluate an arbitrary snippet with `root`
+// bound to the popover element (same CDP session, so it stays open).
+// Usage: node scripts/pop-query.mjs "<selector>" <expr.js>
+import { readFileSync } from 'node:fs';
+
+const selector = process.argv[2];
+const source = readFileSync(process.argv[3], 'utf8');
+const PORT = process.env.CDP_PORT || 9222;
+
+const list = await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json();
+const page = (process.env.CDP_TARGET_ID && list.find((t) => t.id === process.env.CDP_TARGET_ID))
+  ?? list.find((t) => t.type === 'page' && /editor\.html/.test(t.url))
+  ?? list.find((t) => t.type === 'page');
+
+const ws = new WebSocket(page.webSocketDebuggerUrl);
+let id = 0;
+const pending = new Map();
+ws.addEventListener('message', (e) => {
+  const m = JSON.parse(e.data);
+  if (m.id && pending.has(m.id)) {
+    const { resolve, reject } = pending.get(m.id);
+    pending.delete(m.id);
+    m.error ? reject(new Error(JSON.stringify(m.error))) : resolve(m.result);
+  }
+});
+const send = (method, params = {}) =>
+  new Promise((resolve, reject) => {
+    const mid = ++id;
+    pending.set(mid, { resolve, reject });
+    ws.send(JSON.stringify({ id: mid, method, params }));
+  });
+const evaluate = async (expression) => {
+  const res = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
+  if (res.exceptionDetails) throw new Error(res.exceptionDetails.exception?.description ?? 'eval error');
+  return res.result.value;
+};
+await new Promise((r) => ws.addEventListener('open', r));
+for (const type of ['keyDown', 'keyUp']) {
+  await send('Input.dispatchKeyEvent', { type, key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+}
+await new Promise((r) => setTimeout(r, 150));
+
+const opened = await evaluate(`(() => {
+  const el = document.querySelector(${JSON.stringify(selector)});
+  if (!el) return { error: 'missing' };
+  el.scrollIntoView({ block: 'center' });
+  el.click();
+  return { ok: true };
+})()`);
+if (opened.error) { console.error('OPEN FAIL', selector); process.exit(1); }
+await new Promise((r) => setTimeout(r, 400));
+
+const out = await evaluate(`(() => {
+  const vis = [...document.querySelectorAll('[class*="uk-pop"], [class*="uk-menu"]')]
+    .map((e) => ({ e, b: e.getBoundingClientRect() }))
+    .filter(({ e, b }) => b.width > 30 && b.height > 16
+      && !/overlay/.test(String(e.className))
+      && b.width < innerWidth - 8 && b.height < innerHeight - 8);
+  if (!vis.length) return { error: 'no popover' };
+  vis.sort((a, b) => b.b.width * b.b.height - a.b.width * a.b.height);
+  const root = vis[0].e;
+  return (function (root) { ${source} })(root);
+})()`);
+console.log(typeof out === 'string' ? out : JSON.stringify(out, null, 1));
+ws.close();
+process.exit();

@@ -1,0 +1,1056 @@
+[
+  {
+    "group": "Vivid Light",
+    "items": [
+      {
+        "id": "e05d413a-8205-4a5a-8e22-653a0f5b8117",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "80608567-d052-4bbe-8050-08eebbebb2ce",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "8da51f46-c310-4e9b-8df8-344f2c3e31ae",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "f10c6de7-d910-4609-a374-56f63df5af60",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "d947aa06-f8cb-42db-8534-cd3ea8d415d8",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "4a075a5b-9865-461c-a0d0-b6eac8160671",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "aa993237-c21d-4ccb-8e39-11421ddad0de",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "bc38d71a-3d5b-4779-85cd-a8250f4a7532",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "98c4e16d-be50-4219-bee6-2b7c0a90a8d1",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "7583663e-5c35-4d46-8013-a535f181314c",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "316080a2-af89-4149-81c2-535c6bf81de1",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "12063f70-c904-479b-adf5-1236bde0cfa3",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Vivid Dark",
+    "items": [
+      {
+        "id": "fa020019-3089-4dc8-bf16-92613ed55001",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "df01d513-38fc-4dc2-8278-d50c6a135130",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "735a52d4-ca85-49e2-b549-a58664770bcb",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "6f8195d4-f39e-482a-afff-0ae1681583d0",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "705f7e7f-76db-4d8e-85a3-a973b1f9b10a",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "e8ba2a22-3723-4f21-8f10-1649c2e3d28c",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "f51066be-8c20-4857-8d7f-52fcf86deee5",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "206fba05-6207-45d1-8efb-daef0bc887a9",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "417e5053-b0a3-4534-aec6-488af815bcc3",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "305e5f99-7dd4-4d6e-a760-286b025e1c31",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "8ed83283-f897-44b4-9760-988d5c42ceda",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "1b6b0cfd-94e7-4d98-b1e5-0a941d956c8b",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Vivid Colorful",
+    "items": [
+      {
+        "id": "4c9b43b9-f5d7-41ac-8e76-64a92eb690f6",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "eb978e66-bd14-4b95-8b47-f2e79ee22ca2",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "43400515-f4ea-45d6-88e1-3e2c54e5a982",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "144bc4c6-7907-4c94-ac64-d1a672780975",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "6c40e65f-36ce-4aeb-b7a1-a075dceb6bc4",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "2452a12a-2058-4f2e-baa4-91d4bb2ac0e4",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "12c417e3-501d-456d-b9c4-2dff36511f73",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "4262d90c-8132-4902-872f-bec620a03aef",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "b0797032-82a4-48a6-a9d6-c7ea2f61f0ef",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "3f5081f4-c842-4479-9bf0-c9524aad52fe",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "30c99e08-2988-4daa-b169-b769bdff80b9",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "0827a586-fd10-4382-9918-0155e704d12e",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Light Grayish",
+    "items": [
+      {
+        "id": "7479edb0-cd00-4935-8942-668e3a18d55e",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "a8a3a3f8-de6b-43c6-9f10-259e176c4721",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "4eeabb54-6cf5-481c-ac2b-241aece2db50",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "589874b1-365e-45d0-85bf-137bd697569b",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "0e5944c7-0d7c-4f96-9dd5-2c9bac3a1578",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "3f889ac5-9e74-49dd-b4cf-fbe8b4b48066",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "5c90bd62-4977-4f41-93da-46ec6f935f4c",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "5cc2c51f-1d59-44cb-952b-eae4aa07f3a1",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "f5da2c55-a9b3-4064-b183-c1998d2d2c8b",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "01856bdb-ea78-4c8f-9e7e-9cf4764ee328",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "bffe7783-4fa9-4385-a162-30ac2f9d362d",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "aaef1851-9cda-40fa-a371-a4859d4aa356",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Light Dark",
+    "items": [
+      {
+        "id": "c0a77d18-9383-4f72-b742-7f9be6a5a67f",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "b1edf1ce-cb85-493d-88e1-a47caa6c24a1",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "2f55330b-d681-4b88-9269-276c6269e2c7",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "67681e99-d444-411a-96aa-2dd254f66294",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "5fd557bc-0fba-4480-be44-44d4d4c6a44c",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "0c29d43c-7703-45f4-8257-162e95eadc89",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "6db7e3c6-1850-4945-a0a7-8fc93ad76be3",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "8218c89e-97ad-44f5-afaf-66e61ade240c",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "94bacd9b-74c4-40a6-b0ef-c2ee06dfd0a3",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "197112fd-b7cf-4576-9400-b8fab54f2d6f",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "319aaba0-1a4e-4b4c-b83a-c8c16a2113bc",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "55798f4e-b66b-409c-bf4d-cb1c2696da95",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Light Colorful",
+    "items": [
+      {
+        "id": "a24b3414-a508-4da1-97c4-749ccc90ad27",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "284a2cfb-a3e6-4775-8395-70a39f576b73",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "bf54f074-0b49-4007-b19c-135e6e49de15",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "0d1f9990-68ae-47eb-ba9d-26494b8ffbcf",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "e1fee183-4b40-4731-981d-8d1b9ebe5449",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "2850be78-b977-461f-9526-182c4a4af2c8",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "89dcc183-91e9-4a83-ab47-747362353b03",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "35333fe8-fb29-4e04-b121-9d64a1acbcd9",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "a8403667-168c-4e02-8eb2-539bb866f1e7",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "a456ef16-1724-4b24-9db6-c3a18fc8602b",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "d769894d-e3e1-41cc-93ab-9f260dc44541",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "3afdd9a5-7768-495d-a42b-486723bf3fc7",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Gray",
+    "items": [
+      {
+        "id": "0df8cd54-91cd-4160-9747-229e0171d358",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "cdab15a6-d17e-41af-802e-a9d7c353b0ac",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "3e8a7f6a-ca70-4942-8088-fc9126b09638",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "b2199c71-bd9b-4b77-b4ce-01907d9fe0c7",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "86060f1c-c8d1-47dd-9d85-8b200341fe45",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "723815a9-c06c-412b-a7bd-9be493e18d96",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Classic",
+    "items": [
+      {
+        "id": "0ded5a08-2094-483e-852e-7d0fab0c9cf6",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "b8e12745-482f-4633-a704-77b4d91f4cfe",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "2d0dfcb9-8fa6-4ee3-a2de-19a3f10c7257",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "3efb8747-cea3-45a5-9a92-2a83db8135f6",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "05db3f7d-5a17-4a42-8198-f6b444089830",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "f32556b3-30e9-4b3a-ba16-b2b821172214",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "3d99443a-9c07-4c29-a2f8-36c52af438cc",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "f079c1b6-809d-4e96-a846-bac157e0b71f",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "9a56b3ee-cf69-4983-aff2-cb9e012abb50",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "2266258b-4b66-419e-9256-730d5df5b427",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Classic Colorful",
+    "items": [
+      {
+        "id": "17ebd166-0e5d-4f89-b6f5-033748707e16",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "02fa7487-4c92-47a4-8caa-3a0aa5fe1a73",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "9591ee4f-ece8-42ac-b267-83b23d01ea9d",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "8e198523-2c23-4b07-b074-86e8edbf2b94",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "ec3c5319-d776-4f9c-b514-cdc3ce21f8d8",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "cce5fd14-214a-4c0c-934a-33b8ceda15ae",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "e48a5858-41ed-4cae-9586-120a317f105c",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "034b01c1-16c5-4cbb-9bd9-ec91eedc8180",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "2b9fc63a-9c2d-4d22-a8a9-0075b22edc65",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "0de9086c-67c5-4777-be4a-a6ea8779cb85",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Mono",
+    "items": [
+      {
+        "id": "56cbeebc-e1c8-4fb5-97cd-33628fcb7630",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "d3ed92b7-e409-411a-ad22-ad15bfd5cff1",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "341646ed-9d68-4d2e-80a8-9e6b428972d7",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "d36adc4f-be8a-4b01-9258-80e8c458381d",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "d64f702b-ae7e-48ad-853f-9ed09c3a485b",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "57a613bd-f3dd-40ed-8c93-22e83db2e943",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "3220c924-f0b8-45f3-8c01-123d656ae59e",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "05fd175a-0055-4b8b-a42a-42d44a5498fb",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "d4c35266-5fdf-4171-81ed-a8f1cac4cca1",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "5f222841-a675-4324-92cb-af12e3e30349",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Rainbow",
+    "items": [
+      {
+        "id": "e11694a8-b2e6-46a7-9cc8-52985e175aa5",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "a5c58086-262f-4750-ac76-a9a45d21883b",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "f7ad81e6-c222-490f-abfa-7d79f8a4c7d8",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "4d7ab769-f439-46db-9cde-76844dd97aa2",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "722a8f54-792e-4dfd-a0a7-05a62285b856",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "3c5253a3-9bc9-4e59-beb2-08143296d9bf",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "a33ee4c3-0fde-45ba-8157-5eb369f79e68",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      },
+      {
+        "id": "ad92e2f2-0ce9-4c5a-8655-daf72076fe37",
+        "handDrawn": false,
+        "central": null,
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Brace Map",
+    "items": [
+      {
+        "id": "e61ab87dcac9e31dc0adba85ce",
+        "handDrawn": false,
+        "central": "org.xmind.ui.brace.right",
+        "main": null
+      },
+      {
+        "id": "0fd8201f7fe8e282fa35fa4750",
+        "handDrawn": false,
+        "central": "org.xmind.ui.brace.right",
+        "main": null
+      },
+      {
+        "id": "3928167d3ffa2e83c2382a0644",
+        "handDrawn": false,
+        "central": "org.xmind.ui.brace.right",
+        "main": null
+      },
+      {
+        "id": "c49a76edff28fe9e497b49499a",
+        "handDrawn": true,
+        "central": "org.xmind.ui.brace.right",
+        "main": "org.xmind.ui.brace.right"
+      }
+    ]
+  },
+  {
+    "group": "Fishbone",
+    "items": [
+      {
+        "id": "041a2b078e2986e953fe6b71af",
+        "handDrawn": false,
+        "central": "org.xmind.ui.fishbone.leftHeaded",
+        "main": null
+      },
+      {
+        "id": "401842e4d049428cfe841a1879",
+        "handDrawn": false,
+        "central": "org.xmind.ui.fishbone.leftHeaded",
+        "main": "org.xmind.ui.fishbone.leftHeaded"
+      },
+      {
+        "id": "233845a43c18f189d5ecc83e36",
+        "handDrawn": true,
+        "central": "org.xmind.ui.fishbone.leftHeaded",
+        "main": "org.xmind.ui.tree.right"
+      }
+    ]
+  },
+  {
+    "group": "Logic Chart",
+    "items": [
+      {
+        "id": "a148ee55687bdfc44af2fa5f16",
+        "handDrawn": false,
+        "central": "org.xmind.ui.logic.right",
+        "main": null
+      },
+      {
+        "id": "c1fbada1b45ba2e3bfc3b8b57b",
+        "handDrawn": false,
+        "central": "org.xmind.ui.logic.right",
+        "main": null
+      },
+      {
+        "id": "69e995eafceaa75d4772db83ca",
+        "handDrawn": false,
+        "central": "org.xmind.ui.logic.right",
+        "main": "org.xmind.ui.logic.right"
+      },
+      {
+        "id": "742a0094a75af3d82d6aebec36",
+        "handDrawn": false,
+        "central": "org.xmind.ui.logic.right",
+        "main": null
+      },
+      {
+        "id": "435b94254499a365f53b38c686",
+        "handDrawn": true,
+        "central": "org.xmind.ui.logic.right",
+        "main": "org.xmind.ui.logic.right"
+      },
+      {
+        "id": "63f9e6f1d8a855fd7d88783d7d",
+        "handDrawn": true,
+        "central": "org.xmind.ui.logic.right",
+        "main": "org.xmind.ui.logic.right"
+      },
+      {
+        "id": "2f7a92d35e78bb028393d81c91",
+        "handDrawn": true,
+        "central": "org.xmind.ui.logic.right",
+        "main": "org.xmind.ui.logic.right"
+      }
+    ]
+  },
+  {
+    "group": "Matrix",
+    "items": [
+      {
+        "id": "69a9222aa3cb5e4fb218190de7",
+        "handDrawn": false,
+        "central": "org.xmind.ui.spreadsheet.column",
+        "main": "org.xmind.ui.logic.right"
+      },
+      {
+        "id": "e3eabc5d4cbbbc26c2a8f811e1",
+        "handDrawn": false,
+        "central": "org.xmind.ui.spreadsheet",
+        "main": "org.xmind.ui.brace.right"
+      }
+    ]
+  },
+  {
+    "group": "Mind Map",
+    "items": [
+      {
+        "id": "db4a5df4db39a8cd1310ea55ea",
+        "handDrawn": false,
+        "central": "org.xmind.ui.map.clockwise",
+        "main": "org.xmind.ui.logic.right"
+      },
+      {
+        "id": "6e8a0060db4a430f98c8d89f66",
+        "handDrawn": false,
+        "central": "org.xmind.ui.map.clockwise",
+        "main": "org.xmind.ui.logic.right"
+      },
+      {
+        "id": "42c88f12129a77f5482a880df3",
+        "handDrawn": false,
+        "central": "org.xmind.ui.map.clockwise",
+        "main": "org.xmind.ui.logic.right"
+      },
+      {
+        "id": "bf289133ca1b566815eabb3698",
+        "handDrawn": false,
+        "central": "org.xmind.ui.map.clockwise",
+        "main": null
+      },
+      {
+        "id": "e179c2ffb0b8dec4f09479329d",
+        "handDrawn": false,
+        "central": "org.xmind.ui.map.clockwise",
+        "main": "org.xmind.ui.logic.right"
+      },
+      {
+        "id": "309bd0497a2b02cbc22488e492",
+        "handDrawn": true,
+        "central": "org.xmind.ui.map.clockwise",
+        "main": "org.xmind.ui.logic.right"
+      },
+      {
+        "id": "037bdacd906b00c163d38baac4",
+        "handDrawn": false,
+        "central": "org.xmind.ui.map.clockwise",
+        "main": "org.xmind.ui.logic.right"
+      },
+      {
+        "id": "9e7a72076c5b995963b13bdae4",
+        "handDrawn": true,
+        "central": "org.xmind.ui.map.clockwise",
+        "main": null
+      },
+      {
+        "id": "eb688e2c7c6b16ac265c088302",
+        "handDrawn": true,
+        "central": "org.xmind.ui.map.clockwise",
+        "main": null
+      },
+      {
+        "id": "bdc9e305d53995ffe2579809bc",
+        "handDrawn": true,
+        "central": "org.xmind.ui.map.clockwise",
+        "main": null
+      }
+    ]
+  },
+  {
+    "group": "Org Chart",
+    "items": [
+      {
+        "id": "935ad49000a89e4de4778b4267",
+        "handDrawn": false,
+        "central": "org.xmind.ui.org-chart.down",
+        "main": null
+      },
+      {
+        "id": "889beaa46659843b5b615bbf98",
+        "handDrawn": false,
+        "central": "org.xmind.ui.org-chart.down",
+        "main": null
+      },
+      {
+        "id": "fcb8419de37a2e68d873f8b781",
+        "handDrawn": false,
+        "central": "org.xmind.ui.org-chart.down",
+        "main": null
+      },
+      {
+        "id": "e4aac349e2f87621626278de47",
+        "handDrawn": false,
+        "central": "org.xmind.ui.org-chart.down",
+        "main": null
+      },
+      {
+        "id": "d179fb8de49871c40103ca1720",
+        "handDrawn": true,
+        "central": "org.xmind.ui.org-chart.down",
+        "main": "org.xmind.ui.org-chart.down"
+      }
+    ]
+  },
+  {
+    "group": "Timeline",
+    "items": [
+      {
+        "id": "2f0afb8d995a55939d8ff954ea",
+        "handDrawn": false,
+        "central": "org.xmind.ui.timeline.horizontal",
+        "main": null
+      },
+      {
+        "id": "85188f38c3ba2741c61ba94de8",
+        "handDrawn": false,
+        "central": "org.xmind.ui.timeline.horizontal",
+        "main": "org.xmind.ui.brace.right"
+      },
+      {
+        "id": "cf2bb698b7199f86e41ffbe381",
+        "handDrawn": false,
+        "central": "org.xmind.ui.timeline.sided.horizontal",
+        "main": null
+      },
+      {
+        "id": "e56bba21bd999bd979e0aaa696",
+        "handDrawn": false,
+        "central": "org.xmind.ui.timeline.through.vertical",
+        "main": null
+      },
+      {
+        "id": "0faa01d612f995b9198b39a769",
+        "handDrawn": true,
+        "central": "org.xmind.ui.timeline.through.vertical",
+        "main": "org.xmind.ui.tree.right"
+      }
+    ]
+  },
+  {
+    "group": "Tree Chart",
+    "items": [
+      {
+        "id": "456ab570dafa3902b18f8ab397",
+        "handDrawn": false,
+        "central": "org.xmind.ui.tree.right",
+        "main": "org.xmind.ui.logic.right"
+      },
+      {
+        "id": "8318d7b395b90814c9c76a601c",
+        "handDrawn": false,
+        "central": "org.xmind.ui.tree.right",
+        "main": null
+      },
+      {
+        "id": "886bcf346678a4dbed25d89d03",
+        "handDrawn": false,
+        "central": "org.xmind.ui.timeline.vertical",
+        "main": "org.xmind.ui.brace.right"
+      },
+      {
+        "id": "a92988ac13baf149b576ca0b54",
+        "handDrawn": false,
+        "central": "org.xmind.ui.timeline.vertical",
+        "main": "org.xmind.ui.tree.right"
+      },
+      {
+        "id": "31891a966b2afb371280b93c09",
+        "handDrawn": true,
+        "central": "org.xmind.ui.timeline.vertical",
+        "main": "org.xmind.ui.tree.right"
+      }
+    ]
+  },
+  {
+    "group": "Tree Table",
+    "items": [
+      {
+        "id": "cbba3b400fba766fda29a989b6",
+        "handDrawn": false,
+        "central": "org.xmind.ui.treetable.toptitle",
+        "main": null
+      },
+      {
+        "id": "6c59046c172871b866ad4892e2",
+        "handDrawn": false,
+        "central": "org.xmind.ui.treetable",
+        "main": null
+      }
+    ]
+  }
+]

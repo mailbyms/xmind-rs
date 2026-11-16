@@ -1,0 +1,17 @@
+[
+  { "name": "shape", "selector": "button[title=\"设置主题形状。\"]" },
+  { "name": "fillStyle", "selector": "button[title=\"选择填充样式。\"]" },
+  { "name": "borderStyle", "selector": "button[title=\"选择边框样式。\"]" },
+  { "name": "borderWidth", "selector": "button[title=\"设置边框粗细。\"]" },
+  { "name": "fontFamily", "selector": "button[title=\"设置字体属性。\"]" },
+  { "name": "fontSize", "selector": ".uk-combo-box .uk-button-select" },
+  { "name": "weight", "selector": "button[title=\"选择字体样式。\"]" },
+  { "name": "case", "selector": "button[title=\"设置文字大小写。\"]" },
+  { "name": "structurePop", "selector": "button[title=\"设置主题结构。\"]" },
+  { "name": "structure", "selector": "button[title=\"设置结构布局。\"]" },
+  { "name": "lineShape", "selector": "button[title=\"选择分支线形状。\"]" },
+  { "name": "lineStyle", "selector": "button[title=\"选择分支线样式。\"]" },
+  { "name": "endpoint", "selector": "button[title=\"选择端点样式。\"]" },
+  { "name": "branchWidth", "selector": "button[title=\"设置线条粗细。\"]" },
+  { "name": "rainbow", "selector": ".uk-format-panel-section:last-of-type .uk-button-popover-toggle:not(.uk-select-icon)" }
+]

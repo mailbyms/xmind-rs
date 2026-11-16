@@ -1,0 +1,275 @@
+{
+  "popRect": [
+    125,
+    155,
+    316,
+    370
+  ],
+  "popCls": "uk-pop uk-popover uk-open uk-popover-left-center",
+  "popStyle": {
+    "pad": "0px",
+    "radius": "10px",
+    "bg": "rgba(255, 255, 255, 0.7)",
+    "maxH": "none",
+    "overflow": "visible",
+    "filter": "blur(30px)"
+  },
+  "scrollH": 370,
+  "scrollW": 333,
+  "tree": "<div class=\"uk-flex uk-flex-column uk-width-1-1 uk-height-1-1\"> 316x370 \"缤纷\n经典\n彩虹\n活力\n水粉\n和风\n华丽\n雅致\n三时\n炫彩\n\"\n  <ul class=\"uk-tab uk-tab-capsule uk-width-1-1 uk-position-fixed\"> 316x30 \"缤纷\n经典\"\n    <li class=\"divider-vertical uk-flex-1 uk-active divider-vertical-active divider-vertical-clear\"> 154x22 \"缤纷\"\n      <a class=\"\"> 154x22 \"缤纷\"\n    <li class=\"divider-vertical uk-flex-1\"> 154x22 \"经典\"\n      <a class=\"\"> 154x22 \"经典\"\n  <hr class=\"uk-margin-remove\"> 316x1 \"\"\n  <div class=\"uk-flex uk-flex-column uk-width-1-1\"> 316x336 \"彩虹\n活力\n水粉\n和风\n华丽\n雅致\n三时\n炫彩\n复古\n甜点\n\"\n    <div class=\"smart-color-theme-group\"> 130x44 \"彩虹\"\n      <div class=\"uk-flex uk-flex-between uk-flex-middle\"> 130x16 \"彩虹\"\n        <h5 class=\"uk-margin-remove uk-form-label uk-text-left uk-format-panel-section-sub-title uk-text-trun\"> 26x16 \"彩虹\"\n      <div class=\"smart-color-theme-group-cell uk-card uk-card-default uk-card-selectable uk-border-rounded \"> 130x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"smart-color-theme-group-cell-overlay uk-position-cover\"> 0x0 \"\"\n        <div class=\"smart-color-theme-group-cell-switch uk-position-center\"> 0x0 \"切换\"\n          <img class=\"\"> 0x0 \"\" src=file://C:\\Users\\DM\\AppData\\Local\\Programs\\Xmind\\resources\\ap\n          <svg class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n            <path class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n            <path class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n          <span class=\"\"> 0x0 \"切换\"\n    <div class=\"smart-color-theme-group\"> 130x44 \"活力\"\n      <div class=\"uk-flex uk-flex-between uk-flex-middle\"> 130x16 \"活力\"\n        <h5 class=\"uk-margin-remove uk-form-label uk-text-left uk-format-panel-section-sub-title uk-text-trun\"> 26x16 \"活力\"\n      <div class=\"smart-color-theme-group-cell uk-card uk-card-default uk-card-selectable uk-border-rounded \"> 130x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"smart-color-theme-group-cell-overlay uk-position-cover\"> 0x0 \"\"\n        <div class=\"smart-color-theme-group-cell-switch uk-position-center\"> 0x0 \"切换\"\n          <img class=\"\"> 0x0 \"\" src=file://C:\\Users\\DM\\AppData\\Local\\Programs\\Xmind\\resources\\ap\n          <svg class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n            <path class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n            <path class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n          <span class=\"\"> 0x0 \"切换\"\n    <div class=\"smart-color-theme-group\"> 130x44 \"水粉\"\n      <div class=\"uk-flex uk-flex-between uk-flex-middle\"> 130x16 \"水粉\"\n        <h5 class=\"uk-margin-remove uk-form-label uk-text-left uk-format-panel-section-sub-title uk-text-trun\"> 26x16 \"水粉\"\n      <div class=\"smart-color-theme-group-cell uk-card uk-card-default uk-card-selectable uk-border-rounded \"> 130x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"smart-color-theme-group-cell-overlay uk-position-cover\"> 0x0 \"\"\n        <div class=\"smart-color-theme-group-cell-switch uk-position-center\"> 0x0 \"切换\"\n          <img class=\"\"> 0x0 \"\" src=file://C:\\Users\\DM\\AppData\\Local\\Programs\\Xmind\\resources\\ap\n          <svg class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n            <path class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n            <path class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n          <span class=\"\"> 0x0 \"切换\"\n    <div class=\"smart-color-theme-group\"> 130x44 \"和风\"\n      <div class=\"uk-flex uk-flex-between uk-flex-middle\"> 130x16 \"和风\"\n        <h5 class=\"uk-margin-remove uk-form-label uk-text-left uk-format-panel-section-sub-title uk-text-trun\"> 26x16 \"和风\"\n      <div class=\"smart-color-theme-group-cell uk-card uk-card-default uk-card-selectable uk-border-rounded \"> 130x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"smart-color-theme-group-cell-overlay uk-position-cover\"> 0x0 \"\"\n        <div class=\"smart-color-theme-group-cell-switch uk-position-center\"> 0x0 \"切换\"\n          <img class=\"\"> 0x0 \"\" src=file://C:\\Users\\DM\\AppData\\Local\\Programs\\Xmind\\resources\\ap\n          <svg class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n            <path class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n            <path class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n          <span class=\"\"> 0x0 \"切换\"\n    <div class=\"smart-color-theme-group\"> 130x44 \"华丽\"\n      <div class=\"uk-flex uk-flex-between uk-flex-middle\"> 130x16 \"华丽\"\n        <h5 class=\"uk-margin-remove uk-form-label uk-text-left uk-format-panel-section-sub-title uk-text-trun\"> 26x16 \"华丽\"\n      <div class=\"smart-color-theme-group-cell uk-card uk-card-default uk-card-selectable uk-border-rounded \"> 130x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"\"> 22x24 \"\"\n        <div class=\"smart-color-theme-group-cell-overlay uk-position-cover\"> 0x0 \"\"\n        <div class=\"smart-color-theme-group-cell-switch uk-position-center\"> 0x0 \"切换\"\n          <img class=\"\"> 0x0 \"\" src=file://C:\\Users\\DM\\AppData\\Local\\Programs\\Xmind\\resources\\ap\n          <svg class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n            <path class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n            <path class=\"[object SVGAnimatedString]\"> 0x0 \"\"\n          <span class=\"\"> 0x0 \"切换\"\n    <div class=\"smart-color-theme-group\"> 130x44 \"雅致\"\n      <div class=\"uk-flex uk-flex-between uk-flex-middle\"> 130x16 \"雅致\"\n        <h5 class=\"uk-margin-remove uk-form-label uk-text-left uk-format-panel-section-sub-title uk-text-tr",
+  "groups": [
+    {
+      "heading": "彩虹",
+      "headingRect": [
+        20,
+        50,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "活力",
+      "headingRect": [
+        166,
+        50,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "水粉",
+      "headingRect": [
+        20,
+        110,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "和风",
+      "headingRect": [
+        166,
+        110,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "华丽",
+      "headingRect": [
+        20,
+        170,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "雅致",
+      "headingRect": [
+        166,
+        170,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "三时",
+      "headingRect": [
+        20,
+        230,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "炫彩",
+      "headingRect": [
+        166,
+        230,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "复古",
+      "headingRect": [
+        20,
+        290,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "甜点",
+      "headingRect": [
+        166,
+        290,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "香草",
+      "headingRect": [
+        20,
+        350,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "糖果",
+      "headingRect": [
+        166,
+        350,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "绿茶",
+      "headingRect": [
+        20,
+        410,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "霓虹",
+      "headingRect": [
+        166,
+        410,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "宇宙",
+      "headingRect": [
+        20,
+        470,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "樱花",
+      "headingRect": [
+        166,
+        470,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "壁炉",
+      "headingRect": [
+        20,
+        530,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "假日",
+      "headingRect": [
+        166,
+        530,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "海洋",
+      "headingRect": [
+        20,
+        590,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "岛屿",
+      "headingRect": [
+        166,
+        590,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "紫藤",
+      "headingRect": [
+        20,
+        650,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "玫瑰",
+      "headingRect": [
+        166,
+        650,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    },
+    {
+      "heading": "薄荷",
+      "headingRect": [
+        20,
+        710,
+        130,
+        16
+      ],
+      "cls": "uk-flex uk-flex-between uk-flex-middle",
+      "cards": []
+    }
+  ]
+}

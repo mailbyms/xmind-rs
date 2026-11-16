@@ -1,0 +1,1 @@
+(function(){const b=[...document.querySelectorAll('.fp-tabs button')];return JSON.stringify({buttons:b.map(x=>x.textContent.trim()+(x.classList.contains('on')?':ON':'')),sections:[...document.querySelectorAll('.fp-section')].map(s=>(s.className+' '+s.textContent.trim().slice(0,18)))});})()

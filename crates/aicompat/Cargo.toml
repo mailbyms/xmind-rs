@@ -1,0 +1,13 @@
+[package]
+name = "aicompat"
+description = "Lazy, provider-agnostic AI compatibility layer (OpenAI-compatible + offline mock)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+reqwest = { workspace = true }
+thiserror = { workspace = true }

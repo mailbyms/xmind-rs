@@ -1,0 +1,82 @@
+{
+  "surveyedAt": "2026-11-16",
+  "org": "https://github.com/xmindltd",
+  "publicRepos": 14,
+  "verdict": {
+    "fontResources": "available",
+    "currentDesktopLineRendererSource": "not available on xmindltd",
+    "specificationResources": "available and useful"
+  },
+  "downloaded": [
+    {
+      "file": "research/official/xmind-model-styles.ts",
+      "source": "https://github.com/xmindltd/xmind-model/blob/master/src/common/constants/styles.ts",
+      "license": "MIT",
+      "use": "Canonical STYLE_KEYS / STYLE_LAYER / TOPICSHAPE / BRANCHCONNECTION / ARROWSHAPE / ARROWLINEPATTERN / COMMON_FONT_FAMILY. Extends the 2020 viewer's styles.ts (adds STYLE_LAYER, level3-related keys, cjk-font-family, gradient keys)."
+    },
+    {
+      "file": "research/official/theme-snowbrush.json",
+      "source": "https://github.com/xmindltd/xmind-sdk-js/blob/master/src/common/themes/snowbrush.json",
+      "license": "MIT",
+      "use": "Full official theme incl. level3 section, line-tapered='tapered', line-width in pt, arrow-begin-class."
+    },
+    {
+      "file": "research/official/theme-robust.json",
+      "source": "https://github.com/xmindltd/xmind-sdk-js/blob/master/src/common/themes/robust.json",
+      "license": "MIT",
+      "use": "Montserrat-based official theme; bight lines, 3pt/underline main topics."
+    },
+    {
+      "file": "research/official/theme-business.json",
+      "source": "https://github.com/xmindltd/xmind-sdk-js/blob/master/src/common/themes/business.json",
+      "license": "MIT",
+      "use": "Open Sans theme; centralTopic carries roundedElbow line-class."
+    },
+    {
+      "file": "target/verify/fonts/NeverMind-{Regular,Medium,Bold}.ttf",
+      "source": "https://github.com/xmindltd/nevermind/tree/master/fonts/NeverMind",
+      "license": "SIL OFL 1.1 (see target/verify/fonts/OFL-NeverMind.txt)",
+      "verified": "valid sfnt TTF, family NeverMind / NeverMind Medium, no CJK glyphs"
+    },
+    {
+      "file": "target/verify/fonts/NeverMindHand-Regular.ttf",
+      "source": "https://github.com/xmindltd/nevermind/tree/master/fonts/NeverMindFamily/NeverMindHand/ttf",
+      "license": "SIL OFL 1.1",
+      "use": "Hand-drawn skeleton font; filename matches the font embedded in the installed desktop app.asar."
+    },
+    {
+      "file": "target/verify/fonts/Montserrat-wght.ttf",
+      "source": "https://github.com/google/fonts/blob/main/ofl/montserrat/Montserrat%5Bwght%5D.ttf",
+      "license": "SIL OFL 1.1 (see target/verify/fonts/OFL-Montserrat.txt)",
+      "verified": "valid variable TTF (fvar present); this is the font example.xmind actually requests"
+    },
+    {
+      "file": "target/verify/fonts/OpenSans.ttf",
+      "source": "https://github.com/google/fonts/blob/main/ofl/opensans/OpenSans%5Bwdth,wght%5D.ttf",
+      "license": "SIL OFL 1.1",
+      "verified": "valid variable TTF (fvar present); used by the official business theme"
+    }
+  ],
+  "desktopBundleFindings": {
+    "archive": "%LOCALAPPDATA%/Programs/Xmind/resources/app.asar (read-only reverse-engineering source)",
+    "fontStack": "'Montserrat','NeverMind','Microsoft YaHei','PingFang SC','Microsoft JhengHei','sans-serif',sans-serif",
+    "embeddedFonts": "NeverMind-*.ttf incl. Condensed* and NeverMindHand-*.ttf; same names as the open-source nevermind repo",
+    "branchConnectionClasses": [
+      "arrowedCurve", "bight", "brace", "brace2", "brace3", "brace4", "brace5",
+      "curve", "elbow", "fish", "fishbone", "fold", "fold2", "matrix", "none",
+      "roundedElbow", "roundedfold", "sidedTimeline", "straight", "timeline",
+      "treeTableNoConnections"
+    ],
+    "rendererSymbols": ["changeBranchLineStyle", "catAxisLineStyle", "valAxisLineStyle", "brush"],
+    "note": "Renderer logic exists only as a minified webpack bundle (no readable source), so geometry must still be reverse-engineered."
+  },
+  "missing": [
+    "Readable/unminified current-desktop connection rendering source (brushes / getControlPosition)",
+    "Hand-drawn brush stroke data (random jitter, pressure profiles)",
+    "Avenir Next (commercial, macOS-only; not redistributable)"
+  ],
+  "licenseNotes": [
+    "OFL 1.1 allows bundling/embedding with the app; must ship the copyright notice + license text, must not sell the fonts by themselves, and modified versions must not reuse reserved names.",
+    "xmindltd SDK repos are MIT; the archived xmind-viewer is MIT but explicitly DEPRECATED."
+  ]
+}

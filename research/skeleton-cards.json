@@ -1,0 +1,647 @@
+[
+  {
+    "group": "思维导图",
+    "index": 0,
+    "file": "思维导图-00.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 21465
+  },
+  {
+    "group": "思维导图",
+    "index": 1,
+    "file": "思维导图-01.svg",
+    "active": true,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 18847
+  },
+  {
+    "group": "思维导图",
+    "index": 2,
+    "file": "思维导图-02.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 17577
+  },
+  {
+    "group": "思维导图",
+    "index": 3,
+    "file": "思维导图-03.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 22391
+  },
+  {
+    "group": "思维导图",
+    "index": 4,
+    "file": "思维导图-04.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 14825
+  },
+  {
+    "group": "思维导图",
+    "index": 5,
+    "file": "思维导图-05.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 90123
+  },
+  {
+    "group": "思维导图",
+    "index": 6,
+    "file": "思维导图-06.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 20016
+  },
+  {
+    "group": "思维导图",
+    "index": 7,
+    "file": "思维导图-07.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 159804
+  },
+  {
+    "group": "思维导图",
+    "index": 8,
+    "file": "思维导图-08.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 24134
+  },
+  {
+    "group": "思维导图",
+    "index": 9,
+    "file": "思维导图-09.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 83707
+  },
+  {
+    "group": "逻辑图",
+    "index": 0,
+    "file": "逻辑图-00.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 37088
+  },
+  {
+    "group": "逻辑图",
+    "index": 1,
+    "file": "逻辑图-01.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 32385
+  },
+  {
+    "group": "逻辑图",
+    "index": 2,
+    "file": "逻辑图-02.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 33502
+  },
+  {
+    "group": "逻辑图",
+    "index": 3,
+    "file": "逻辑图-03.svg",
+    "active": false,
+    "box": [
+      106,
+      66
+    ],
+    "natural": [
+      800,
+      495
+    ],
+    "bytes": 32906
+  },
+  {
+    "group": "逻辑图",
+    "index": 4,
+    "file": "逻辑图-04.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 47823
+  },
+  {
+    "group": "逻辑图",
+    "index": 5,
+    "file": "逻辑图-05.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 49502
+  },
+  {
+    "group": "逻辑图",
+    "index": 6,
+    "file": "逻辑图-06.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 252140
+  },
+  {
+    "group": "括号图",
+    "index": 0,
+    "file": "括号图-00.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 38828
+  },
+  {
+    "group": "括号图",
+    "index": 1,
+    "file": "括号图-01.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 30559
+  },
+  {
+    "group": "括号图",
+    "index": 2,
+    "file": "括号图-02.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 40771
+  },
+  {
+    "group": "括号图",
+    "index": 3,
+    "file": "括号图-03.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 42430
+  },
+  {
+    "group": "组织结构图",
+    "index": 0,
+    "file": "组织结构图-00.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 22975
+  },
+  {
+    "group": "组织结构图",
+    "index": 1,
+    "file": "组织结构图-01.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 21864
+  },
+  {
+    "group": "组织结构图",
+    "index": 2,
+    "file": "组织结构图-02.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 24565
+  },
+  {
+    "group": "组织结构图",
+    "index": 3,
+    "file": "组织结构图-03.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 16027
+  },
+  {
+    "group": "组织结构图",
+    "index": 4,
+    "file": "组织结构图-04.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 176649
+  },
+  {
+    "group": "树形图",
+    "index": 0,
+    "file": "树形图-00.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 18242
+  },
+  {
+    "group": "树形图",
+    "index": 1,
+    "file": "树形图-01.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 10980
+  },
+  {
+    "group": "树形图",
+    "index": 2,
+    "file": "树形图-02.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 19870
+  },
+  {
+    "group": "树形图",
+    "index": 3,
+    "file": "树形图-03.svg",
+    "active": false,
+    "box": [
+      106,
+      66
+    ],
+    "natural": [
+      800,
+      495
+    ],
+    "bytes": 16875
+  },
+  {
+    "group": "树形图",
+    "index": 4,
+    "file": "树形图-04.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 23805
+  },
+  {
+    "group": "时间轴",
+    "index": 0,
+    "file": "时间轴-00.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      801,
+      494
+    ],
+    "bytes": 18354
+  },
+  {
+    "group": "时间轴",
+    "index": 1,
+    "file": "时间轴-01.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 13053
+  },
+  {
+    "group": "时间轴",
+    "index": 2,
+    "file": "时间轴-02.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 18985
+  },
+  {
+    "group": "时间轴",
+    "index": 3,
+    "file": "时间轴-03.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 26049
+  },
+  {
+    "group": "时间轴",
+    "index": 4,
+    "file": "时间轴-04.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 43129
+  },
+  {
+    "group": "鱼骨图",
+    "index": 0,
+    "file": "鱼骨图-00.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 16267
+  },
+  {
+    "group": "鱼骨图",
+    "index": 1,
+    "file": "鱼骨图-01.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 17527
+  },
+  {
+    "group": "鱼骨图",
+    "index": 2,
+    "file": "鱼骨图-02.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 66524
+  },
+  {
+    "group": "树型表格",
+    "index": 0,
+    "file": "树型表格-00.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 35604
+  },
+  {
+    "group": "树型表格",
+    "index": 1,
+    "file": "树型表格-01.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 34491
+  },
+  {
+    "group": "矩阵图",
+    "index": 0,
+    "file": "矩阵图-00.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 60485
+  },
+  {
+    "group": "矩阵图",
+    "index": 1,
+    "file": "矩阵图-01.svg",
+    "active": false,
+    "box": [
+      106,
+      65
+    ],
+    "natural": [
+      800,
+      494
+    ],
+    "bytes": 71795
+  }
+]

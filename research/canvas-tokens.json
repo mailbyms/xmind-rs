@@ -1,0 +1,524 @@
+{
+  "scale": "none",
+  "viewer": {
+    "bg": "rgb(255, 255, 255)",
+    "bgImage": "none"
+  },
+  "svg": {
+    "w": "3953.2262773722628",
+    "h": "2210",
+    "viewBox": null
+  },
+  "totalForeignObjects": 85,
+  "samples": [
+    {
+      "i": 0,
+      "text": "The Use Of Mind Mapping",
+      "rect": {
+        "w": 142,
+        "h": 44
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "30px",
+      "weight": "700",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 1,
+      "text": "Studying",
+      "rect": {
+        "w": 43,
+        "h": 13
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "18px",
+      "weight": "500",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": [
+        {
+          "tag": "g",
+          "fill": null,
+          "stroke": null,
+          "rx": null,
+          "w": null,
+          "h": null,
+          "d": ""
+        }
+      ]
+    },
+    {
+      "i": 2,
+      "text": "Thesis Writing",
+      "rect": {
+        "w": 54,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 3,
+      "text": "Statement",
+      "rect": {
+        "w": 40,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 4,
+      "text": "Analysis",
+      "rect": {
+        "w": 32,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 5,
+      "text": "Research",
+      "rect": {
+        "w": 35,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 6,
+      "text": "Experiment",
+      "rect": {
+        "w": 43,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 7,
+      "text": "Conclusion",
+      "rect": {
+        "w": 43,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 8,
+      "text": "Exam Preparation",
+      "rect": {
+        "w": 68,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 9,
+      "text": "Syllabus",
+      "rect": {
+        "w": 32,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 10,
+      "text": "Time Arrangement",
+      "rect": {
+        "w": 71,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 11,
+      "text": "Info Presenting",
+      "rect": {
+        "w": 76,
+        "h": 13
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "18px",
+      "weight": "500",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": [
+        {
+          "tag": "g",
+          "fill": null,
+          "stroke": null,
+          "rx": null,
+          "w": null,
+          "h": null,
+          "d": ""
+        }
+      ]
+    },
+    {
+      "i": 12,
+      "text": "Book Review",
+      "rect": {
+        "w": 49,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 13,
+      "text": "Introduction",
+      "rect": {
+        "w": 46,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 14,
+      "text": "Opinion",
+      "rect": {
+        "w": 29,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 15,
+      "text": "Writing Techniques",
+      "rect": {
+        "w": 73,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 16,
+      "text": "Recipe",
+      "rect": {
+        "w": 26,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 17,
+      "text": "Ingredients",
+      "rect": {
+        "w": 43,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 18,
+      "text": "3",
+      "rect": {
+        "w": 4,
+        "h": 7
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(255, 173, 54)",
+      "shadow": "none",
+      "font": "Helvetica, Arial, sans-serif",
+      "size": "10px",
+      "weight": "300",
+      "lh": "normal",
+      "color": "rgb(255, 173, 54)",
+      "shapes": [
+        {
+          "tag": "path",
+          "fill": "rgba(255, 255, 255, 1)",
+          "stroke": "rgba(255, 173, 54, 1)",
+          "rx": null,
+          "w": null,
+          "h": null,
+          "d": "M 0 8 C 0 3.5817220013536515, 3.5817220013536515 0, 8 0 C 12.41827799864635 0, 16 3.581722"
+        }
+      ]
+    },
+    {
+      "i": 19,
+      "text": "Directions",
+      "rect": {
+        "w": 39,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 20,
+      "text": "Personal Info",
+      "rect": {
+        "w": 51,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    },
+    {
+      "i": 21,
+      "text": "Personal Biography",
+      "rect": {
+        "w": 74,
+        "h": 10
+      },
+      "bg": "rgba(0, 0, 0, 0)",
+      "radius": "0px",
+      "pad": "0px",
+      "border": "0px none rgb(13, 13, 13)",
+      "shadow": "none",
+      "font": "Roboto, NeverMind, sans-serif",
+      "size": "14px",
+      "weight": "400",
+      "lh": "normal",
+      "color": "rgb(13, 13, 13)",
+      "shapes": []
+    }
+  ],
+  "centerTopic": {
+    "i": 0,
+    "text": "The Use Of Mind Mapping",
+    "rect": {
+      "w": 142,
+      "h": 44
+    },
+    "bg": "rgba(0, 0, 0, 0)",
+    "radius": "0px",
+    "pad": "0px",
+    "border": "0px none rgb(13, 13, 13)",
+    "shadow": "none",
+    "font": "Roboto, NeverMind, sans-serif",
+    "size": "30px",
+    "weight": "700",
+    "lh": "normal",
+    "color": "rgb(13, 13, 13)",
+    "shapes": []
+  },
+  "lines": [
+    {
+      "stroke": "rgba(239, 108, 112, 1)",
+      "sw": "4",
+      "fill": "none",
+      "cap": "butt",
+      "join": null,
+      "d": "M 2 10 C 2 5.5817220013536515, 5.5817220013536515 2, 10 2 L 289 2 C 293.4182779986464 2, 297 5.5817220013536515, 297 10 L 297 100 C 297 104.4182779986"
+    },
+    {
+      "stroke": "rgba(250, 129, 85, 1)",
+      "sw": "2",
+      "fill": "none",
+      "cap": "butt",
+      "join": null,
+      "d": "M 53.5 0 C 93.25 0, 80 -57.5, 106.5 -57.5"
+    },
+    {
+      "stroke": "rgba(250, 129, 85, 1)",
+      "sw": "2",
+      "fill": "none",
+      "cap": "butt",
+      "join": null,
+      "d": "M 53.5 0 C 93.25 0, 80 57.5, 106.5 57.5"
+    },
+    {
+      "stroke": "rgba(250, 129, 85, 1)",
+      "sw": "2",
+      "fill": "none",
+      "cap": "butt",
+      "join": null,
+      "d": "M 50.5 0 C 90.25 0, 77 -58.5, 103.5 -58.5"
+    },
+    {
+      "stroke": "rgba(250, 129, 85, 1)",
+      "sw": "2",
+      "fill": "none",
+      "cap": "butt",
+      "join": null,
+      "d": "M 50.5 0 C 90.25 0, 77 0, 103.5 0"
+    }
+  ]
+}

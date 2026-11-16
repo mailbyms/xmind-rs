@@ -1,0 +1,39 @@
+{
+  "overlay": {
+    "cls": "smart-color-theme-group-cell-overlay uk-position-cover",
+    "w": 0,
+    "h": 0,
+    "bg": "rgba(0, 0, 0, 0.2)",
+    "opacity": "1",
+    "display": "none",
+    "color": "rgb(39, 41, 42)",
+    "fontSize": "13px",
+    "radius": "0px",
+    "text": ""
+  },
+  "sw": {
+    "cls": "smart-color-theme-group-cell-switch uk-position-center",
+    "w": 0,
+    "h": 0,
+    "bg": "rgba(0, 0, 0, 0)",
+    "opacity": "1",
+    "display": "none",
+    "color": "rgb(255, 255, 255)",
+    "fontSize": "13px",
+    "radius": "0px",
+    "text": "切换"
+  },
+  "cell": {
+    "cls": "smart-color-theme-group-cell uk-card uk-card-default uk-card-selectable uk-border-rounded uk-overflow-hidden",
+    "w": 130,
+    "h": 24,
+    "bg": "rgb(255, 255, 255)",
+    "opacity": "1",
+    "display": "grid",
+    "color": "rgb(39, 41, 42)",
+    "fontSize": "13px",
+    "radius": "2px",
+    "text": ""
+  },
+  "switchHtml": "<div data-v-728901d4=\"\" class=\"smart-color-theme-group-cell-switch uk-position-center\"><img data-v-728901d4=\"\" draggable=\"false\" uk-svg=\"\" src=\"file://C:\\Users\\DM\\AppData\\Local\\Programs\\Xmind\\resources\\app.asar\\static\\assets\\images\\color-theme-panel\\switch.svg\" hidden=\"true\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" class=\" uk-svg\"> <path d=\"M11.0303 3.46967C10.7374 3.17678 10.2626 3.17678 9.96967 3.46967C9.67678 3.76256 9.67678 4.23744 9.96967 4.53033L11.1893 5.75H3C2.58579 5.75 2.25 6.08579 2.25 6.5C2.25 6.91421 2.58579 7.25 3 7.25H12.7586C13.5158 7.25 13.8951 6.33443 13.3596 5.79896L11.0303 3.46967Z\" fill=\"white\"></path> <path d=\"M4.969"
+}

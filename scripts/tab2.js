@@ -1,0 +1,1 @@
+(function(){const ul=document.querySelector('.uk-workbench-right ul.uk-tab-capsule');if(!ul)return 'no ul';const li=ul.children[2];li.querySelector('a').click();return 'clicked ['+li.textContent.trim()+']';})()
