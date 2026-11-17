@@ -2290,3 +2290,79 @@ const activate = (index, element) => {
 `ui-verify` 0 FAIL、`ui-skeleton-lines` 17/17、`ui-theme-style` 22/22、
 `compare-skeletons` exit 0。`scripts/open-sample.mjs` 截图前的
 Escape + 空白点击保留为兜底，注释改为指向本回归脚本。
+
+## 34. 启动文档与常驻滚动条（2026-11-17）
+
+### 34.1 启动必须是干净的「未命名」
+
+原版 XMind 每次启动都是一张新图：`中心主题` + `分支主题 1..4`（见 §2
+`editor.js` 的默认结构与 `research/canvas-default.json`），标题栏 `未命名`。
+xmind-rs 却在 bootstrap 里先调 `doc_restore`：
+
+```ts
+const restored = await api.restore();
+const initial = restored ?? await api.newDoc();
+```
+
+`doc_restore` 读的是 `recovery/document.json`（每次 dirty 后 900ms 自动写的
+快照），并且 `replace_document(document, None, None)` 把 path 置空。于是
+「标题是 `未命名`，内容却是上次打开的文件」——正是用户看到的现象。
+
+修复（`src/shell/App.tsx`）：bootstrap 只调 `api.info()` + `api.newDoc()`；
+`doc_restore` 保留在 Rust 侧供**显式**恢复使用，但启动流程不再消费快照。
+`Document::new()` 本身已经是原版的 5 主题骨架，不需要改模型。dirty 自动
+写快照的逻辑保留（数据不丢，未来接「恢复未保存的导图」时仍可用），只是
+不再决定启动内容。
+
+### 34.2 滚动条常显且任意缩放可操作
+
+原实现是「内容超出视口才出现」的 overlay 条：
+
+```ts
+const maxX = Math.max(0, contentW - bounds.w);
+const showX = maxX > 1;
+const factor = track > 0 ? range / track : 0;   // 10% 缩放时 range = 0
+```
+
+缩到 10%（或内容小于窗口）时两条滚动条直接消失；即使出现，缩放越小
+`factor` 越接近 0，拖了也不动。
+
+修复（`src/editor/MapCanvas.tsx`）把画布当无限平面，建一个虚拟世界：
+
+```
+padX  = max(SCROLL_OVER, bounds.w - contentW + SCROLL_OVER)   // 160px 起
+worldW = contentW + 2*padX
+offX   = padX                    // stage 左上角在世界中的 x
+rangeX = worldW - bounds.w       // 恒 >= 2*SCROLL_OVER = 320px
+scrollX = clamp(offX - view.tx, 0, rangeX)
+posX   = scrollX / rangeX * (trackX - thumbW)
+```
+
+* `pad` 在视口比内容大时额外加 `(viewport - content)`，所以 `reset()`
+  （`tx = 0`，内容贴左上角）也落在可导航范围内，滑块不会跳。
+* `range` 恒大于 0 ⇒ 10% ~ 500% 每一档都能拖动，thumb 位置由
+  `view.tx/ty` 反算，滚轮 / Space 平移时同步；pan 可以超出世界，但显示值
+  clamp，拖滚动条时会把视图拉回范围内。
+* `beginScroll(axis, event, jump)`：拖 thumb 用当前 clamp 后的 scroll 作起点；
+  点轨道先按点击位置居中 thumb 再继续拖（`pointercancel` 也收尾）。
+* 两条轨道 + 右下角块在 `ready`（ResizeObserver 量到尺寸）后恒显。配色取
+  `research/vana.css` 的 `uk-win32` 常量：track `#FAFAFB` + `#E8E8E8` 内侧
+  细线、thumb `#DADADB` / hover `#C6C7C9` / active `#B0B2B3`、10px gutter、
+  8px 圆角滑块。
+
+### 34.3 回归
+
+新增 `scripts/ui-startup-scrollbars.mjs`（`CDP_PORT=9223` + 隔离数据目录，
+目录里放一份真实的 `recovery/document.json` 与 `settings.json`）：20 项断言
+覆盖「快照确实是另一个文档」「启动 5 主题 / 未命名 / 无已编辑」「两条滚动条
++ 角块常显」「10/50/100/300/500% 每档水平与垂直滑块都能拖」「点轨道跳转」
+「滚轮平移时 thumb 同步」「打开 example2.xmind 后同样常显可拖」→ **ALL PASS**。
+实测 10% 档 `tx 578.1→399.0 / posX 333.7→413.7`，500% 档
+`tx -1704.3→-1944.7 / posX 620.5→700.5`。
+
+其余回归全绿：`cargo test --workspace`（61 passed / 0 failed）、
+`npx tsc --noEmit`、`npm run build:app`、`ui-menus` ALL PASS、
+`ui-marquee-summary` ALL PASS、`ui-rename`、`ui-verify` 0 FAIL、
+`ui-skeleton-lines` 17/17、`ui-theme-style` 22/22、`ui-menu-dismiss` ALL PASS、
+`compare-skeletons` exit 0。滚动条常显占 10px 边缘，框选 / 范围手柄 /
+就地编辑 / 主题样式均未受影响。

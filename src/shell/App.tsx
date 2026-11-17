@@ -230,7 +230,10 @@ export default function App() {
     return { startId: best[0].id, endId: best[best.length - 1].id };
   }, [selectedIds]);
 
-  // Bootstrap: only app_info + recovery are read; no layout work at startup.
+  // Bootstrap: XMind always opens on a clean, unsaved "未命名" map (one
+  // central topic + four main topics), never on the document left behind by
+  // the previous session. Recovery snapshots are still written on edit and can
+  // be loaded through `doc_restore`, but startup must not consume them.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -238,9 +241,7 @@ export default function App() {
         const appInfo = await api.info();
         if (cancelled) return;
         setInfo(appInfo);
-        const restored = await api.restore();
-        if (cancelled) return;
-        const initial = restored ?? await api.newDoc();
+        const initial = await api.newDoc();
         if (cancelled) return;
         commit(initial);
         select(initial.document.sheets[initial.document.activeSheet].root.id);
@@ -265,7 +266,9 @@ export default function App() {
     void getCurrentWindow().setTitle(docLabel(snapshot?.path)).catch(() => undefined);
   }, [snapshot?.path]);
 
-  // Debounced crash recovery, entirely on the Rust side.
+  // Debounced crash-recovery snapshot, entirely on the Rust side. Startup no
+  // longer reads it back automatically (XMind always opens a clean map), but
+  // the data remains available for an explicit `doc_restore` call.
   useEffect(() => {
     if (!snapshot?.dirty) return;
     const timer = window.setTimeout(() => { void api.saveRecovery().catch(() => undefined); }, 900);

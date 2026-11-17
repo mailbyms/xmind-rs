@@ -316,15 +316,29 @@ button { cursor: pointer; }
 }
 .rename-actions button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-/* Overlay scrollbars: 6px rounded thumbs inside a 10px gutter, as in XMind. */
-.scroll-x { position: absolute; left: 0; right: 10px; bottom: 0; height: 10px; z-index: 5; }
-.scroll-y { position: absolute; top: 0; bottom: 10px; right: 0; width: 10px; z-index: 5; }
-.scroll-x .scroll-thumb, .scroll-y .scroll-thumb {
-  position: absolute; border-radius: 3px; background: rgba(0, 0, 0, .22);
+/* Always-visible scrollbars. XMind's canvas is an infinite plane, so both
+   bars stay on screen and stay draggable at every zoom level. Colours and the
+   10px gutter follow the shipped Windows chrome (#FAFAFB track, #DADADB
+   thumb, #E8E8E8 hairline / corner). */
+.scroll-x {
+  position: absolute; left: 0; right: 10px; bottom: 0; height: 10px; z-index: 5;
+  background: #FAFAFB; box-shadow: inset 0 .5px 0 0 #E8E8E8;
 }
-.scroll-x .scroll-thumb { top: 2px; height: 6px; }
-.scroll-y .scroll-thumb { left: 2px; width: 6px; }
-.scroll-x .scroll-thumb:hover, .scroll-y .scroll-thumb:hover { background: rgba(0, 0, 0, .34); }
+.scroll-y {
+  position: absolute; top: 0; bottom: 10px; right: 0; width: 10px; z-index: 5;
+  background: #FAFAFB; box-shadow: inset .5px 0 0 0 #E8E8E8;
+}
+.scroll-corner {
+  position: absolute; right: 0; bottom: 0; width: 10px; height: 10px;
+  z-index: 5; background: #E8E8E8;
+}
+.scroll-x .scroll-thumb, .scroll-y .scroll-thumb {
+  position: absolute; border-radius: 4px; background: #DADADB;
+}
+.scroll-x .scroll-thumb { top: 1px; height: 8px; }
+.scroll-y .scroll-thumb { left: 1px; width: 8px; }
+.scroll-thumb:hover { background: #C6C7C9; }
+.scroll-thumb:active { background: #B0B2B3; }
 
 /* ------------------------------------------------------------------- topics */
 .node {

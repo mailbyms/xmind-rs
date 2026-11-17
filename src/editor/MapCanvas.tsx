@@ -41,6 +41,13 @@ interface Props {
 
 interface View { scale: number; tx: number; ty: number }
 
+/** Width of the always-visible scrollbar gutters (XMind's Windows chrome). */
+const SCROLL_SIZE = 10;
+/** Extra navigable space around the map, in screen px. It keeps both bars
+ *  draggable even when the whole map fits on screen (e.g. at 10% zoom). */
+const SCROLL_OVER = 160;
+const clamp = (value: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, value));
+
 /** Where a dragged topic would land if the pointer were released now. */
 interface DropPreview {
   id: string;
@@ -770,41 +777,79 @@ const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
 
   const onPointerUp = () => { panStart.current = null; setDragging(false); };
 
-  /* Overlay scrollbars, the way XMind draws them: they only appear when the
-     map is bigger than the viewport, and dragging them pans the stage. */
+  /* XMind treats the canvas as an infinite plane: both scrollbars are always
+     present and always usable, at any zoom level. Model a virtual "world" that
+     contains the map *and* the viewport, padded by SCROLL_OVER on every side.
+     The padding guarantees a non-zero scroll range even when the content is
+     much smaller than the viewport, which is what keeps the thumbs draggable
+     at 10% / 20% zoom. */
   const contentW = layout.width * view.scale;
   const contentH = layout.height * view.scale;
-  const maxX = Math.max(0, contentW - bounds.w);
-  const maxY = Math.max(0, contentH - bounds.h);
-  const showX = maxX > 1;
-  const showY = maxY > 1;
-  const thumbW = showX ? Math.max(28, Math.min(bounds.w, bounds.w * (bounds.w / contentW))) : 0;
-  const thumbH = showY ? Math.max(28, Math.min(bounds.h, bounds.h * (bounds.h / contentH))) : 0;
-  const trackX = Math.max(1, bounds.w - thumbW - (showY ? 10 : 0));
-  const trackY = Math.max(1, bounds.h - thumbH - (showX ? 10 : 0));
-  const posX = maxX > 0 ? Math.min(1, Math.max(0, -view.tx / maxX)) * trackX : 0;
-  const posY = maxY > 0 ? Math.min(1, Math.max(0, -view.ty / maxY)) * trackY : 0;
+  const ready = bounds.w > 0 && bounds.h > 0;
+  // Pad each side of the map. When the viewport is wider than the map, widen
+  // the padding so that even `reset()` (tx = 0, map flush left) stays inside
+  // the navigable world and the thumb never has to jump.
+  const padX = Math.max(SCROLL_OVER, bounds.w - contentW + SCROLL_OVER);
+  const padY = Math.max(SCROLL_OVER, bounds.h - contentH + SCROLL_OVER);
+  const worldW = contentW + padX * 2;
+  const worldH = contentH + padY * 2;
+  // Where the stage's top-left corner sits inside the virtual world (screen px).
+  const offX = padX;
+  const offY = padY;
+  // Scrollable distance: at least 2 * SCROLL_OVER, whatever the zoom is.
+  const rangeX = Math.max(1, worldW - bounds.w);
+  const rangeY = Math.max(1, worldH - bounds.h);
+  // Clamp the displayed offset so a free pan can't push the thumb off-track.
+  const scrollX = clamp(offX - view.tx, 0, rangeX);
+  const scrollY = clamp(offY - view.ty, 0, rangeY);
+  const trackX = Math.max(1, bounds.w - SCROLL_SIZE);
+  const trackY = Math.max(1, bounds.h - SCROLL_SIZE);
+  const thumbW = Math.min(trackX, Math.max(28, bounds.w * (bounds.w / worldW)));
+  const thumbH = Math.min(trackY, Math.max(28, bounds.h * (bounds.h / worldH)));
+  const movableX = Math.max(1, trackX - thumbW);
+  const movableY = Math.max(1, trackY - thumbH);
+  const posX = scrollX / rangeX * movableX;
+  const posY = scrollY / rangeY * movableY;
 
-  const beginScroll = (axis: 'x' | 'y', event: ReactPointerEvent<HTMLDivElement>) => {
+  /** Drag a thumb, or click a track to jump (the thumb centres on the pointer
+   *  first, like a native scrollbar). Both gestures keep working at any zoom. */
+  const beginScroll = (
+    axis: 'x' | 'y', event: ReactPointerEvent<HTMLDivElement>, jump = false,
+  ) => {
     event.stopPropagation();
     event.preventDefault();
-    const track = axis === 'x' ? trackX : trackY;
-    const range = axis === 'x' ? maxX : maxY;
-    const factor = track > 0 ? range / track : 0;
-    const start = axis === 'x' ? event.clientX : event.clientY;
-    const origin = axis === 'x' ? view.tx : view.ty;
+    const host = containerRef.current;
+    if (!host) return;
+    const horizontal = axis === 'x';
+    const box = host.getBoundingClientRect();
+    const range = horizontal ? rangeX : rangeY;
+    const movable = horizontal ? movableX : movableY;
+    const thumb = horizontal ? thumbW : thumbH;
+    const off = horizontal ? offX : offY;
+    const start = horizontal ? event.clientX : event.clientY;
+    const trackOrigin = horizontal ? box.left : box.top;
+    const originScroll = jump
+      ? clamp((start - trackOrigin - thumb / 2) / movable * range, 0, range)
+      : (horizontal ? scrollX : scrollY);
+    const apply = (next: number) => {
+      const translate = off - next;
+      setView((current) => (horizontal
+        ? { ...current, tx: translate }
+        : { ...current, ty: translate }));
+    };
+    if (jump) apply(originScroll);
     const move = (native: PointerEvent) => {
-      const delta = (axis === 'x' ? native.clientX : native.clientY) - start;
-      setView((current) => (axis === 'x'
-        ? { ...current, tx: origin - delta * factor }
-        : { ...current, ty: origin - delta * factor }));
+      const delta = (horizontal ? native.clientX : native.clientY) - start;
+      apply(clamp(originScroll + delta * range / movable, 0, range));
     };
     const up = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
   };
 
   // Prediction chrome for the in-flight drag: the topic is drawn where it would
@@ -1217,17 +1262,22 @@ const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
         )}
       </div>
 
-      {showX && (
-        <div className="scroll-x" onPointerDown={(event) => event.stopPropagation()}>
-          <div className="scroll-thumb" style={{ width: thumbW, transform: `translateX(${posX}px)` }}
-            onPointerDown={(event) => beginScroll('x', event)} />
-        </div>
-      )}
-      {showY && (
-        <div className="scroll-y" onPointerDown={(event) => event.stopPropagation()}>
-          <div className="scroll-thumb" style={{ height: thumbH, transform: `translateY(${posY}px)` }}
-            onPointerDown={(event) => beginScroll('y', event)} />
-        </div>
+      {ready && (
+        <>
+          <div className="scroll-x" data-axis="x"
+            onPointerDown={(event) => beginScroll('x', event, true)}>
+            <div className="scroll-thumb" data-thumb="x"
+              style={{ width: thumbW, transform: `translateX(${posX}px)` }}
+              onPointerDown={(event) => beginScroll('x', event)} />
+          </div>
+          <div className="scroll-y" data-axis="y"
+            onPointerDown={(event) => beginScroll('y', event, true)}>
+            <div className="scroll-thumb" data-thumb="y"
+              style={{ height: thumbH, transform: `translateY(${posY}px)` }}
+              onPointerDown={(event) => beginScroll('y', event)} />
+          </div>
+          <div className="scroll-corner" />
+        </>
       )}
 
     </div>

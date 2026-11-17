@@ -110,7 +110,10 @@ pub fn doc_new(state: State<'_, AppState>) -> Result<Snapshot, String> {
     Ok(state.snapshot())
 }
 
-/// Called by the frontend *after* first paint, never during `setup()`.
+/// Explicit crash recovery. Startup deliberately does *not* call this: the
+/// shipped XMind always opens a clean "未命名" map instead of the document
+/// left behind by the previous session. The debounced snapshot stays on disk
+/// so a future "恢复未保存的导图" command can load it on demand.
 #[tauri::command]
 pub fn doc_restore(state: State<'_, AppState>) -> Result<Option<Snapshot>, String> {
     match state.read_recovery() {
