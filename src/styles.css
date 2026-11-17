@@ -140,9 +140,8 @@ button { cursor: pointer; }
 .tool-group { display: flex; align-items: center; flex: none; }
 .tool-group + .tool-group { margin-left: 16px; }
 .tool-flex { flex: 1 1 0; min-width: 8px; }
-/* The shipped bar keeps 179px / 89px voids before 演说 and 格式, so the main
-   tool cluster lands on the window centre. */
-.tool-flex.mid { flex: 0 1 179px; }
+/* The shipped bar keeps a flexible void before 格式 so the main tool cluster
+   lands on the window centre. ZEN / 演说 buttons were removed from the bar. */
 .tool-flex.end { flex: 0 1 89px; }
 
 .tool-item {
@@ -168,6 +167,55 @@ button { cursor: pointer; }
 .tool-item.on > button { color: var(--accent); }
 .tool-item.on .tool-label { color: var(--accent); }
 .tool-gap { width: 24px; flex: none; }
+
+/* Toolbar popovers (标记 / 插入): anchored under their own tool-item, above
+   the canvas and the menu backdrops. Clicking outside or Esc closes them. */
+.tool-pop {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 90;
+  max-width: calc(100vw - 16px); max-height: calc(100vh - 70px);
+  overflow-y: auto; padding: 8px; border-radius: 8px;
+  background: #fff; border: 1px solid rgba(0, 0, 0, .08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .16), 0 2px 6px rgba(0, 0, 0, .08);
+  color: var(--text); text-align: left; user-select: none; cursor: default;
+}
+.tool-pop-marker { width: 272px; }
+.tool-pop-insert { width: 244px; }
+.tp-head { font-size: 13px; font-weight: 600; padding: 2px 6px 6px; }
+.tp-group { margin-bottom: 2px; }
+.tp-title { font-size: 11px; color: var(--text-faint); padding: 5px 6px 3px; }
+.tp-marks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.tp-mark {
+  display: flex; align-items: center; gap: 4px; height: 28px; min-width: 0;
+  padding: 0 6px; border: 0; border-radius: 5px; background: transparent;
+  font-size: 11px; text-align: left; white-space: nowrap;
+}
+.tp-mark:hover { background: var(--hover); }
+.tp-mark.on { background: var(--accent-soft); color: var(--accent); }
+.tp-mark-glyph { width: 16px; flex: none; text-align: center; font-size: 13px; font-weight: 700; }
+.tp-mark-label { overflow: hidden; text-overflow: ellipsis; }
+.tp-foot, .tp-hint { font-size: 11px; color: var(--text-faint); padding: 6px 6px 2px; }
+.tp-sep { height: 1px; margin: 5px 0 2px; background: rgba(0, 0, 0, .08); }
+.tp-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; height: 28px; padding: 0 8px; border: 0; border-radius: 5px;
+  background: transparent; font-size: 13px; text-align: left;
+}
+.tp-row:hover:not(:disabled) { background: var(--hover); }
+.tp-row:disabled { opacity: .4; cursor: default; }
+.tp-shortcut { font-size: 11px; color: var(--text-faint); flex: none; }
+
+/* 主题属性面板里的标记按钮（与工具栏弹层共用 lib/markers.ts 的定义）。 */
+.marker-group { margin-bottom: 8px; }
+.marker-group-title { font-size: 11px; color: var(--text-faint); margin: 4px 0; }
+.marker-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+.marker-btn {
+  display: flex; align-items: center; gap: 4px; height: 26px; min-width: 0;
+  padding: 0 6px; border: 1px solid var(--line); border-radius: 5px;
+  background: #fff; font-size: 11px; white-space: nowrap; overflow: hidden;
+}
+.marker-btn:hover { background: var(--hover); }
+.marker-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.marker-glyph { width: 14px; flex: none; text-align: center; font-size: 13px; font-weight: 700; }
 
 /* Main menu, opened from the hamburger at the far left. */
 .menu-backdrop { position: fixed; inset: 0; z-index: 55; }

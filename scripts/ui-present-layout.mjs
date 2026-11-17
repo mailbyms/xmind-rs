@@ -1,3 +1,5 @@
+// LEGACY (2026-11-17): the 演说 side-panel tab was removed; present mode now
+// uses lib/pitch.ts defaults and is entered with Ctrl+Alt+P / 查看菜单.
 // Set 演说 layout N from the panel, enter present mode and screenshot.
 // Usage: node scripts/ui-present-layout.mjs <N> [out.png]
 import { writeFileSync, mkdirSync } from 'node:fs';

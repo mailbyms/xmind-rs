@@ -6,6 +6,7 @@ import type { MapCanvasHandle } from '../editor/MapCanvas';
 import type { AppInfo, DecorSelection, Document, Snapshot, Structure, Topic, TopicStyle, LiveEditPhase } from '../lib/types';
 import type { SkeletonPreset } from '../inspector/skeletons';
 import Menu, { type MenuItem } from './Menu';
+import { InsertPop, MarkerPop } from './ToolbarPop';
 import { buildMainMenu, buildCanvasMenu, buildTopicMenu, SHORTCUTS, type MenuContext } from './menuModel';
 import { exportBranch, printBranch, type BranchFormat } from '../io/branchExport';
 
@@ -19,10 +20,11 @@ const ExportDialog = lazy(() => import('../io/ExportDialog'));
 const PresentView = lazy(() => import('./PresentView'));
 
 type Panel = 'none' | 'ai' | 'format' | 'attrs' | 'export';
+type ToolbarPop = 'marker' | 'insert' | null;
 
 type IconName =
   | 'menu' | 'undo' | 'redo' | 'topic' | 'subtopic' | 'relation' | 'summary' | 'boundary'
-  | 'marker' | 'insert' | 'zen' | 'present' | 'format'
+  | 'marker' | 'insert' | 'format'
   | 'min' | 'max' | 'close';
 
 /** 20x20 line icons matching the weight of XMind's own toolbar glyphs. */
@@ -45,8 +47,6 @@ function Icon({ name }: { name: IconName }) {
     case 'boundary': return svg(<rect x="2.8" y="4.8" width="14.4" height="10.4" rx="2.4" strokeDasharray="2.4 2.2" />);
     case 'marker': return svg(<><path d="M6 16.5V4.2c2.2-1.3 4.2 1.3 6.4 0v6.2c-2.2 1.3-4.2-1.3-6.4 0" /></>);
     case 'insert': return svg(<><rect x="3.4" y="3.4" width="13.2" height="13.2" rx="2" strokeDasharray="2.2 2" /><path d="M10 7v6M7 10h6" /></>);
-    case 'zen': return svg(<><path d="M3.4 7.4V4.6a1.2 1.2 0 0 1 1.2-1.2h2.8M12.6 3.4h2.8a1.2 1.2 0 0 1 1.2 1.2v2.8M16.6 12.6v2.8a1.2 1.2 0 0 1-1.2 1.2h-2.8M7.4 16.6H4.6a1.2 1.2 0 0 1-1.2-1.2v-2.8" /></>);
-    case 'present': return svg(<><rect x="2.8" y="4" width="14.4" height="9.4" rx="1.6" /><path d="M10 13.4v2.4M7.4 16.4h5.2M8.4 7l3.2 1.9-3.2 1.9z" /></>);
     case 'format': return svg(<><rect x="2.8" y="3.4" width="6" height="6" rx="1.4" /><path d="M12 3.4h5.2M12 6.4h5.2M2.8 12.4h6M2.8 15.4h6" /><rect x="12" y="10.6" width="5.2" height="6" rx="1.4" /><path d="M3.6 9.4v5.6" strokeWidth="1.2" /></>);
     case 'min': return svg(<path d="M4 10h12" />, 16);
     case 'max': return svg(<rect x="4" y="4" width="12" height="12" rx="1.4" />, 16);
@@ -129,6 +129,8 @@ export default function App() {
     { kind: string; id: string; current: string; label: string } | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [panel, setPanel] = useState<Panel>('format');
+  /** 工具栏「标记 / 插入」的下拉弹层；两者互斥，点击外部或 Esc 关闭。 */
+  const [toolbarPop, setToolbarPop] = useState<ToolbarPop>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   /** Right-click menu: viewport coordinates + the exact item tree to show. */
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
@@ -138,7 +140,7 @@ export default function App() {
     title: string; label: string; value: string; onSubmit: (value: string) => void;
   } | null>(null);
   const [exportFormat, setExportFormat] = useState('svg');
-  const [panelTab, setPanelTab] = useState<'style' | 'present' | 'canvas' | null>(null);
+  const [panelTab, setPanelTab] = useState<'style' | 'canvas' | null>(null);
   const [panelPop, setPanelPop] = useState<string | null>(null);
   const [toolbarLabels, setToolbarLabels] = useState(true);
   /** 拷贝样式 / 粘贴样式 and the text clipboard live in the renderer. */
@@ -705,9 +707,30 @@ export default function App() {
       case 'insert.relation': startLink(); break;
       case 'insert.summary': addRange('summary'); break;
       case 'insert.boundary': addRange('boundary'); break;
-      case 'insert.note': setPanel('attrs'); notify('在右侧「主题属性」中编辑笔记'); break;
-      case 'insert.label': setPanel('attrs'); notify('在右侧「主题属性」中编辑标签'); break;
-      case 'insert.marker': setPanel('attrs'); notify('在右侧「主题属性」中选择标记'); break;
+      case 'insert.note': {
+        if (!need()) break;
+        setInputDialog({
+          title: '插入笔记', label: '笔记内容', value: topicOf(id)?.note ?? '',
+          onSubmit: (value) => { void run('setNote', { id, note: value }); },
+        });
+        break;
+      }
+      case 'insert.label': {
+        if (!need()) break;
+        setInputDialog({
+          title: '插入标签', label: '多个标签用逗号分隔', value: (topicOf(id)?.labels ?? []).join(', '),
+          onSubmit: (value) => {
+            const list = value.split(/[,，]/).map((v) => v.trim()).filter(Boolean);
+            void run('setLabels', { id, labels: list });
+          },
+        });
+        break;
+      }
+      case 'insert.marker': {
+        if (!need()) break;
+        setToolbarPop('marker');
+        break;
+      }
       case 'insert.image': if (need()) pickImage(id); break;
       case 'insert.linkWeb': {
         if (!need()) break;
@@ -773,11 +796,10 @@ export default function App() {
       case 'view.focusBranch': if (need()) void run('focusBranch', { id }); break;
       case 'view.zen': setZen((value) => !value); break;
       case 'view.present': setPresenting(true); break;
-      case 'view.panel.style': case 'view.panel.present': case 'view.panel.canvas':
+      case 'view.panel.style': case 'view.panel.canvas':
       case 'view.panel.skeleton': case 'view.panel.palette': {
         setPanel('format');
-        setPanelTab(action === 'view.panel.present' ? 'present'
-          : action === 'view.panel.style' ? 'style' : 'canvas');
+        setPanelTab(action === 'view.panel.style' ? 'style' : 'canvas');
         setPanelPop(null);
         const wanted = action === 'view.panel.skeleton' ? 'skeleton'
           : action === 'view.panel.palette' ? 'theme' : null;
@@ -831,6 +853,7 @@ export default function App() {
         if (dialog) { setDialog(null); return; }
         if (contextMenu) { setContextMenu(null); return; }
         if (menuOpen) { setMenuOpen(false); return; }
+        if (toolbarPop) { setToolbarPop(null); return; }
         // ZEN is a mode, not a selection: one Escape must always leave it.
         if (zen) setZen(false);
         else if (linkFrom || hrefFrom) {
@@ -890,7 +913,7 @@ export default function App() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [presenting, selected, selectedIds, selectedDecor, linkFrom, hrefFrom, zen, renameTarget,
-    menuOpen, contextMenu, dialog, inputDialog, run, startLink, addRange, saveFile, openFile,
+    menuOpen, contextMenu, dialog, inputDialog, toolbarPop, run, startLink, addRange, saveFile, openFile,
     newFile, notify, select, doAction, deleteSelection]);
 
   const setStructure = async (structure: Structure) => {
@@ -942,15 +965,44 @@ export default function App() {
     try { commit(await api.setCanvas(patch)); } catch (error) { notify(String(error)); }
   };
 
-  const setPitch = async (patch: {
-    ratio?: string; topicSlides?: string; listSlides?: string;
-    method?: string; layout?: number; style?: string;
-  }) => {
-    try { commit(await api.setPitch(patch)); } catch (error) { notify(String(error)); }
-  };
-
   const togglePanel = (next: Exclude<Panel, 'none' | 'export'>) =>
     setPanel((current) => current === next ? 'none' : next);
+
+  /** 标记与插入是真正的下拉面板，不再只是把「主题属性」侧面板开开关关。 */
+  const toggleToolPop = (next: Exclude<ToolbarPop, null>) => {
+    setMenuOpen(false);
+    setContextMenu(null);
+    setToolbarPop((current) => current === next ? null : next);
+  };
+
+  /** 插入下拉里的每一行都落到已实现的菜单动作上。 */
+  const pickInsert = (action: string) => {
+    if (action === 'insert.marker') { setToolbarPop('marker'); return; }
+    if (action === 'insert.attrs') { setToolbarPop(null); setPanel('attrs'); return; }
+    setToolbarPop(null);
+    doAction(action);
+  };
+
+  /** 直接写 topic.markers，画布角标即时刷新；弹层保持打开可连续点选。 */
+  const toggleMarker = (marker: string) => {
+    if (!selected) { notify('请先选中一个主题'); return; }
+    void run('toggleMarker', { id: selected, marker });
+  };
+
+  useEffect(() => {
+    if (!toolbarPop) return;
+    const onDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('.tool-pop') || target?.closest('[data-tool-pop]')) return;
+      setToolbarPop(null);
+    };
+    window.addEventListener('pointerdown', onDown, true);
+    return () => window.removeEventListener('pointerdown', onDown, true);
+  }, [toolbarPop]);
+
+  const activeMarkers = useMemo(() =>
+    (snapshot && selected ? findTopicById(snapshot.document, selected)?.markers : []) ?? [],
+  [snapshot, selected]);
 
   const fitKey = snapshot
     ? `${snapshot.path ?? 'new'}|${snapshot.structure}|${snapshot.document.activeSheet}|${snapshot.stats.sheets}`
@@ -1084,7 +1136,11 @@ export default function App() {
       <header className="titlebar" data-tauri-drag-region="deep">
         <div className="titlebar-left">
           <button className="menu-btn" title="主菜单"
-            onClick={(event) => { event.stopPropagation(); setMenuOpen((open) => !open); }}>
+            onClick={(event) => {
+              event.stopPropagation();
+              setToolbarPop(null);
+              setMenuOpen((open) => !open);
+            }}>
             <Icon name="menu" />
           </button>
           <div className="titlebar-title">
@@ -1126,31 +1182,24 @@ export default function App() {
                 onClick={() => addRange('boundary')}><Icon name="boundary" /></button>
               <span className="tool-label">外框</span>
             </div>
-            <div className="tool-item">
-              <button title="标记"
-                className={panel === 'attrs' ? 'on' : ''}
-                onClick={() => togglePanel('attrs')}><Icon name="marker" /></button>
+            <div className={`tool-item${toolbarPop === 'marker' ? ' on' : ''}`}>
+              <button title="标记（为选中主题添加/取消标记）" data-tool-pop="marker"
+                disabled={!selected}
+                onClick={() => toggleToolPop('marker')}><Icon name="marker" /></button>
               <span className="tool-label">标记</span>
+              {toolbarPop === 'marker' && (
+                <MarkerPop active={activeMarkers} hasTopic={!!selected} onToggle={toggleMarker} />
+              )}
             </div>
-            <div className="tool-item wide">
-              <button title="插入其他元素" onClick={() => togglePanel('attrs')}>
+            <div className={`tool-item wide${toolbarPop === 'insert' ? ' on' : ''}`}>
+              <button title="插入其他元素" data-tool-pop="insert"
+                onClick={() => toggleToolPop('insert')}>
                 <Icon name="insert" />
               </button>
               <span className="tool-label">插入</span>
-            </div>
-          </div>
-
-          <div className="tool-flex mid" />
-
-          <div className="tool-group">
-            <div className="tool-item">
-              <button title="ZEN 模式（Ctrl Alt F）" className={zen ? 'on' : ''}
-                onClick={() => setZen((value) => !value)}><Icon name="zen" /></button>
-              <span className="tool-label">ZEN</span>
-            </div>
-            <div className="tool-item">
-              <button title="演说模式（Ctrl Alt P）" onClick={() => setPresenting(true)}><Icon name="present" /></button>
-              <span className="tool-label">演说</span>
+              {toolbarPop === 'insert' && (
+                <InsertPop hasTopic={!!selected} onPick={pickInsert} />
+              )}
             </div>
           </div>
 
@@ -1344,8 +1393,7 @@ export default function App() {
               onSkeleton={(preset) => void setSkeleton(preset)}
               onWidth={(id, width) => void setWidth(id, width)}
               onCanvas={(patch) => void setCanvas(patch)}
-              onPitch={(patch) => void setPitch(patch)}
-              onPresent={() => setPresenting(true)} notify={notify} />
+              notify={notify} />
           )}
           {panel === 'attrs' && snapshot && (
             <TopicAttrs key={selected ?? 'none'} snapshot={snapshot} selected={selected}

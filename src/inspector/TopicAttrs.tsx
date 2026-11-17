@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '../lib/api';
+import { MARKER_GROUPS, markerColor, markerGlyph } from '../lib/markers';
 import type { Action } from '../lib/api';
 import type { Snapshot, Topic } from '../lib/types';
 
@@ -21,11 +22,6 @@ function findTopic(root: Topic, id: string): Topic | null {
   }
   return null;
 }
-
-const MARKERS = [
-  'priority-1', 'priority-2', 'priority-3', 'priority-4', 'priority-5', 'priority-6',
-  'task-done', 'task-start', 'flag-red', 'flag-blue', 'star-yellow',
-];
 
 export default function TopicAttrs({ snapshot, selected, onAction, onClose, notify }: Props) {
   const sheet = snapshot.document.sheets[snapshot.document.activeSheet];
@@ -97,15 +93,23 @@ export default function TopicAttrs({ snapshot, selected, onAction, onClose, noti
         </div>
 
         <div className="section-title">标记</div>
-        <div className="marker-grid">
-          {MARKERS.map((marker) => (
-            <button key={marker}
-              className={`marker-btn${(topic.markers ?? []).includes(marker) ? ' active' : ''}`}
-              onClick={() => void onAction('toggleMarker', { id, marker })}>
-              {marker.replace('priority-', 'P').replace('task-', '任务-').replace('flag-', '旗-').replace('star-', '星-')}
-            </button>
-          ))}
-        </div>
+        {MARKER_GROUPS.map((group) => (
+          <div className="marker-group" key={group.title}>
+            <div className="marker-group-title">{group.title}</div>
+            <div className="marker-grid">
+              {group.items.map((item) => (
+                <button key={item.id}
+                  className={`marker-btn${(topic.markers ?? []).includes(item.id) ? ' active' : ''}`}
+                  title={item.label}
+                  onClick={() => void onAction('toggleMarker', { id, marker: item.id })}>
+                  <span className="marker-glyph" style={{ color: markerColor(item.id) }}>
+                    {markerGlyph(item.id)}
+                  </span>{item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
 
         <div className="section-title">主题填充</div>
         <div className="swatches">

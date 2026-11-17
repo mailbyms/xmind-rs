@@ -1,3 +1,6 @@
+// LEGACY (2026-11-17): the 演说 side-panel tab was removed from the app; this
+// capture script only works against older builds. Kept as a record of the
+// original XMind pitch-panel control labels.
 // Probe the shipped 演说 tab: switch to it, list its controls, then open each
 // dropdown (and 更换风格) and dump the option labels.
 // Usage: node scripts/probe-pitch.mjs [step]

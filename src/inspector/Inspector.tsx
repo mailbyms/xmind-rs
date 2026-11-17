@@ -4,10 +4,6 @@ import type { Document, Frame, Snapshot, Structure, Topic, TopicStyle } from '..
 import { ColorPicker, Menu, Popover, TileGrid } from './Popover';
 import type { Anchor } from './Popover';
 import {
-  DEFAULT_PITCH, PITCH_METHODS, PITCH_RATIOS, PITCH_SHOW, PITCH_STYLES, PITCH_SWATCH,
-  pitchLabel,
-} from '../lib/pitch';
-import {
   ARROW_TILES, BORDER_TILES, CASE_ITEMS, FILL_TILES, FONT_FAMILIES, FONT_SIZES,
   BRANCH_PALETTES, LINE_TILES, SHAPE_TILES, SKELETON_ICONS, SKELETON_TILES, WEIGHTS,
   WIDTH_LABELS, WIDTH_STEPS,
@@ -72,28 +68,20 @@ interface Props {
     compact?: boolean; siblingAlign?: boolean; branchColors?: string[] | null;
     palette?: string | null; centerColor?: string | null;
   }) => void;
-  onPitch: (patch: {
-    ratio?: string; topicSlides?: string; listSlides?: string;
-    method?: string; layout?: number; style?: string;
-  }) => void;
-  onPresent: () => void;
   notify: (message: string) => void;
 }
 
-type Tab = 'style' | 'present' | 'canvas';
+/** 演说 tab 已移除：侧面板只保留「样式 / 画布」，演说模式仍由「查看」菜单
+ *  与 Ctrl+Alt+P 进入，使用 lib/pitch.ts 的默认配置。 */
+type Tab = 'style' | 'canvas';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'style', label: '样式' },
-  { id: 'present', label: '演说' },
   { id: 'canvas', label: '画布' },
 ];
 
 /** Six palettes the shipped panel keeps in its 3x2 quick-pick strip. */
 const QUICK_PALETTES = ['vivid-energy', 'vivid-freshness', 'vivid-vintage', 'vivid-deepsea', 'vivid-sakura', 'classic-gray'];
-
-/* ------------------------------------------------------------------ pitch */
-/* 风格库 / 长宽比 / 显示方式 / 演说方式与配色都在 lib/pitch.ts，
-   演说视图（PresentView）用的是同一份常量。 */
 
 /* ------------------------------------------------------------------ glyphs */
 const G = {
@@ -139,14 +127,6 @@ const G = {
       <rect x="1" y="4.2" width="14" height="1.1" rx=".5" />
       <rect x="6" y="7.5" width="9" height="1.1" rx=".5" />
       <rect x="1" y="10.8" width="14" height="1.1" rx=".5" />
-    </svg>
-  ),
-  slideFull: (
-    <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
-      <rect x="1.5" y="3" width="13" height="1.3" rx=".6" />
-      <rect x="1.5" y="6.1" width="13" height="1.3" rx=".6" />
-      <rect x="1.5" y="9.2" width="13" height="1.3" rx=".6" />
-      <rect x="1.5" y="12.3" width="8" height="1.3" rx=".6" />
     </svg>
   ),
 };
@@ -203,7 +183,6 @@ type PopKind =
   | 'font' | 'size' | 'weight' | 'case' | 'textColor' | 'align'
   | 'structure' | 'skeleton' | 'lineShape' | 'lineStyle' | 'arrow' | 'branchWidth'
   | 'branchPalette'
-  | 'pitchStyle' | 'pitchRatio' | 'pitchTopic' | 'pitchList' | 'pitchMethod'
   | 'branches' | 'theme' | 'background' | 'canvasFont' | 'canvasLine'
   | 'summaryColor';
 
@@ -218,7 +197,7 @@ const TOPIC_POPS = new Set<PopKind>([
 
 export default function Inspector({
   snapshot, selected, onAction, onStructure, onSkeleton, onWidth, onCanvas,
-  onPitch, onPresent, notify, requestedTab, requestedPop,
+  notify, requestedTab, requestedPop,
   summaryActive = false, summaryTargetId = null, summaryFrame = null, onSummaryStyle,
 }: Props) {
   const [tab, setTab] = useState<Tab>('style');
@@ -406,13 +385,6 @@ export default function Inspector({
   }).join(',')})`;
 
   const activeIndex = TABS.findIndex((t) => t.id === tab);
-
-  /* ----- 演说 tab ----- */
-  const pitch = doc.pitch ?? DEFAULT_PITCH;
-  const pitchRatioLabel = pitchLabel(PITCH_RATIOS, pitch.ratio, '自动');
-  const pitchMethodLabel = pitchLabel(PITCH_METHODS, pitch.method, '逐一出现并钻入');
-  const pitchSkin = PITCH_SWATCH[pitch.style] ?? PITCH_SWATCH.dark;
-  const slideLabel = (value: string) => pitchLabel(PITCH_SHOW, value, '自动');
 
   return (
     <aside className="fp">
@@ -716,76 +688,6 @@ export default function Inspector({
                 </button>
               </div>
             ) : null}
-          </>
-        ) : null}
-
-        {tab === 'present' ? (
-          <>
-            <div className="fp-section fp-section-top">
-              <div className="fp-subtitle">演说模式预览</div>
-              <div className={`fp-preview is-${pitch.style}`}
-                style={{ background: pitchSkin.bg, color: pitchSkin.ink }}>
-                <div className="fp-preview-inner">
-                  <span className="fp-preview-text">{sheet.root.title || '中心主题'}</span>
-                  <span className="fp-preview-sub" style={{ color: pitchSkin.sub }}>
-                    {(sheet.root.children ?? []).slice(0, 3).map((c) => c.title || '主题').join(' · ') || '子主题'}
-                  </span>
-                </div>
-              </div>
-              <button className="fp-btn-primary w-full" style={{ marginTop: 12 }}
-                onClick={onPresent} title="进入演说模式演示你的思维导图。 Ctrl Alt P">
-                开始演说
-              </button>
-            </div>
-
-            <div className="fp-section">
-              <button className="fp-btn-flat w-full" title="请为演说模式选择不一样的风格。"
-                onClick={open('pitchStyle')}>
-                更换风格<span className="fp-caret" style={{ marginLeft: 4 }}>{G.caret}</span>
-              </button>
-              <div className="fp-row space" style={{ marginTop: 12 }}>
-                <span className="fp-row-label auto">长宽比</span>
-                <button className="fp-select w-85" title="设置幻灯片长宽比。"
-                  onClick={open('pitchRatio')}>
-                  {pitchRatioLabel}<span className="fp-caret">{G.caret}</span>
-                </button>
-              </div>
-              <hr className="fp-divider" />
-              <div className="fp-row space">
-                <span className="fp-row-label auto">主题幻灯片</span>
-                <button className="fp-select w-85" title="选择是否在演说模式中将此主题作为幻灯片。"
-                  onClick={open('pitchTopic')}>
-                  {slideLabel(pitch.topicSlides)}<span className="fp-caret">{G.caret}</span>
-                </button>
-              </div>
-              <hr className="fp-divider" />
-              <div className="fp-row space">
-                <span className="fp-row-label auto">列表幻灯片</span>
-                <button className="fp-select w-85" title="选择是否在演说模式中将子主题作为幻灯片。"
-                  onClick={open('pitchList')}>
-                  {slideLabel(pitch.listSlides)}<span className="fp-caret">{G.caret}</span>
-                </button>
-              </div>
-              <div className="fp-field">
-                <div className="fp-label-sm">演说方式</div>
-                <button className="fp-select w-full" title="选择演说模式中列表幻灯片的演说方式。"
-                  onClick={open('pitchMethod')}>
-                  {pitchMethodLabel}
-                  <span className="fp-caret">{G.caret}</span>
-                </button>
-              </div>
-              <div className="fp-field">
-                <div className="fp-label-sm">布局</div>
-                <ul className="fp-seg">
-                  {[1, 2, 3, 4, 5].map((index) => (
-                    <li key={index}>
-                      <button className={pitch.layout === index ? 'on' : ''} title={`布局 ${index}`}
-                        onClick={() => onPitch({ layout: index })}>{G.slideFull}</button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
           </>
         ) : null}
 
@@ -1196,45 +1098,6 @@ export default function Inspector({
           </div>
         );
 
-      case 'pitchStyle':
-        return (
-          <div className="pitch-grid">
-            {PITCH_STYLES.map((entry) => (
-              <button key={entry.value} className="pitch-card" title={entry.label}
-                onClick={() => { onPitch({ style: entry.value }); close(); }}>
-                <span className={`pitch-thumb${entry.value === pitch.style ? ' on' : ''}`}>
-                  <img src={entry.src} alt="" draggable={false} />
-                </span>
-                <span className="pitch-title">{entry.label}</span>
-              </button>
-            ))}
-          </div>
-        );
-
-      case 'pitchRatio':
-        return (
-          <Menu width={width} value={pitch.ratio} items={PITCH_RATIOS}
-            onPick={(value) => { onPitch({ ratio: value }); close(); }} />
-        );
-
-      case 'pitchTopic':
-        return (
-          <Menu width={width} value={pitch.topicSlides} items={PITCH_SHOW}
-            onPick={(value) => { onPitch({ topicSlides: value }); close(); }} />
-        );
-
-      case 'pitchList':
-        return (
-          <Menu width={width} value={pitch.listSlides} items={PITCH_SHOW}
-            onPick={(value) => { onPitch({ listSlides: value }); close(); }} />
-        );
-
-      case 'pitchMethod':
-        return (
-          <Menu width={width} value={pitch.method} items={PITCH_METHODS}
-            onPick={(value) => { onPitch({ method: value }); close(); }} />
-        );
-
       case 'theme': {
         const tabDef = PALETTE_TABS.find((t) => t.id === paletteTab) ?? PALETTE_TABS[0];
         return (
@@ -1295,9 +1158,6 @@ function popWidth(kind: PopKind): number {
     case 'skeleton': return 390;
     case 'theme': return 316;
     case 'branchPalette': return 184;
-    case 'pitchStyle': return 276;
-    case 'pitchRatio': case 'pitchTopic': case 'pitchList': return 160;
-    case 'pitchMethod': return 228;
     case 'fillColor': case 'borderColor': case 'textColor': case 'background':
     case 'summaryColor': return 257;
     default: return 200;
@@ -1314,7 +1174,6 @@ function popClass(kind: PopKind): string {
   if (kind === 'skeleton') return 'is-skeleton';
   if (kind === 'theme') return 'is-themes';
   if (kind === 'branchPalette') return 'is-palette';
-  if (kind === 'pitchStyle') return 'is-pitch';
   if (kind === 'size') return 'is-menu is-compact';
   return 'is-menu';
 }

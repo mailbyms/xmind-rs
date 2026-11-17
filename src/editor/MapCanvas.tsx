@@ -3,6 +3,7 @@ import {
 } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { api } from '../lib/api';
+import { markerColor, markerGlyph } from '../lib/markers';
 import type { DecorSelection, Frame, LaidOutNode, Layout, LiveEditPhase, Side, Snapshot, Structure } from '../lib/types';
 
 export interface MapCanvasHandle {
@@ -168,14 +169,6 @@ function predictCurve(anchor: Anchor, end: { x: number; y: number }): string {
   }
   const dy = end.y - anchor.y;
   return `M ${anchor.x} ${anchor.y} C ${anchor.x} ${anchor.y + dy * 0.75}, ${end.x} ${end.y - dy * 0.5}, ${end.x} ${end.y}`;
-}
-
-function markerLabel(marker: string): string {
-  if (marker.startsWith('priority-')) return marker.slice(-1);
-  if (marker.startsWith('task-')) return 'T';
-  if (marker.startsWith('flag-')) return 'F';
-  if (marker.startsWith('star-')) return 'S';
-  return '•';
 }
 
 /** Dash pattern → `stroke-dasharray`, matched to `ARROWLINEPATTERN`. */
@@ -1147,8 +1140,9 @@ const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
               {node.markers.length > 0 && (
                 <div className="node-markers">
                   {node.markers.map((marker) => (
-                    <span key={marker} className="marker-chip" title={marker}>
-                      {markerLabel(marker)}
+                    <span key={marker} className="marker-chip" title={marker}
+                      style={{ background: markerColor(marker) }}>
+                      {markerGlyph(marker)}
                     </span>
                   ))}
                 </div>

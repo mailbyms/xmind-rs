@@ -1,7 +1,7 @@
 // Real-app verification for the three reported gaps:
 //   1. dragging a topic onto empty canvas repositions it (floating topic);
 //   2. the − / +N fold badge works on the central topic AND on branches;
-//   3. 联系 / 概要 / 外框 / ZEN toolbar buttons do real work.
+//   3. 联系 / 概要 / 外框 工具栏按钮与 ZEN 快捷键做真实的编辑操作。
 // Drives the shipped release over CDP; no direct IPC mutation of documents.
 // Usage: node scripts/ui-tools.mjs [outdir]
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -301,7 +301,9 @@ if (frameHit) {
 
 // -------------------------------------------------------------------- ZEN --
 console.log('\n[4] ZEN mode');
-ok('ZEN button is enabled', (await clickTool('ZEN')) === 'clicked');
+// 工具栏 ZEN 按钮已删除，改用 Ctrl+Alt+F（Alt=1 + Ctrl=2）。
+await press('f', 'KeyF', 70, 3);
+ok('Ctrl+Alt+F enters ZEN', await ev(`document.querySelector('.app').classList.contains('zen')`));
 ok('ZEN hides the chrome', await ev(`(() => {
   const app = document.querySelector('.app');
   return app.classList.contains('zen')

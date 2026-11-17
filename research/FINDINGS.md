@@ -2366,3 +2366,63 @@ posX   = scrollX / rangeX * (trackX - thumbW)
 `ui-skeleton-lines` 17/17、`ui-theme-style` 22/22、`ui-menu-dismiss` ALL PASS、
 `compare-skeletons` exit 0。滚动条常显占 10px 边缘，框选 / 范围手柄 /
 就地编辑 / 主题样式均未受影响。
+
+## 35. 工具栏按钮精简与「标记 / 插入」真功能（2026-11-17）
+
+### 35.1 删除项与其保留入口
+
+* 工具栏删掉 `ZEN`、`演说` 两个 `tool-item`（含 `.tool-flex.mid` 的 179px 空档
+  与两个 `Icon` glyph），标题栏只剩 `主题 / 子主题 / 联系 / 概要 / 外框 /
+  标记 / 插入 / 格式`。**功能本身没删**：ZEN 仍走 `Ctrl+Alt+F` / 查看菜单、
+  `zen-exit` 按钮；演说仍走 `Ctrl+Alt+P` / 查看菜单 → 演示，PresentView 与
+  `lib/pitch.ts` 保持可用（用默认配置）。
+* 侧面板 `Inspector` 的 `Tab` 从 `style|present|canvas` 收成 `style|canvas`；
+  一并删掉演说 tab 的预览 / 更换风格 / 长宽比 / 幻灯片 / 演说方式 / 布局 UI、
+  5 个 `pitch*` popover 分支、`is-pitch` 类名、`onPitch` / `onPresent` 两个
+  props 与 `App.setPitch()`，以及「查看 > 格式面板 > 演说」菜单行。
+  `probe-pitch.mjs` / `ui-present-layout.mjs` 标记为 LEGACY（只适配旧版）。
+* ZEN / 演说相关回归改为快捷键：`ui-tools.mjs` 用 `press('f','KeyF',70,3)`，
+  `ui-verify.mjs` 用 `chord('p','KeyP',80,3)` 并等 1200ms 让 PresentView 的
+  懒加载 chunk 挂载（280ms 会误报 `.present` 不存在）。
+
+### 35.2 「标记 / 插入」原先为何等于没用
+
+两个按钮都绑 `togglePanel('attrs')`：点「标记」只是把「主题属性」侧面板
+开开关关，点「插入」也是开同一个面板；若面板已开则直接把它关掉，且不带
+任何插入动作。菜单 `insert.note|label|marker` 也只是 `setPanel('attrs')`
++ 一句提示，没有写文档。
+
+* 新增 `src/lib/markers.ts`：11 个 XMind 原生 `markerId` 按「优先级 / 任务进度 /
+  旗帜 / 其他」分组，统一提供 `glyph` 与 `color`。画布角标
+  (`MapCanvas`)、属性面板 (`TopicAttrs`)、工具栏弹层共用同一份定义；
+  `MapCanvas` 旧的 `markerLabel()` 换成 `markerGlyph()` + 角标底色。
+* 新增 `src/shell/ToolbarPop.tsx`：`MarkerPop`（点选即
+  `run('toggleMarker', {id, marker})`，弹层保持打开可连加多个，再点取消）与
+  `InsertPop`（19 行分 4 组，复用主菜单 / 右键菜单的 `insert.*` 动作名）。
+  未选中主题时 `needsTopic` 行自动禁用，与原版一致。
+* `App` 新增 `toolbarPop` 状态；`window` 捕获阶段 `pointerdown` 关闭弹层
+  （弹层内与两个按钮用 `.tool-pop` / `[data-tool-pop]` 豁免），Esc 优先级
+  排在 ZEN 之前；`marker` 与 `insert` 两个 `tool-item` 用 `position: relative`
+  直接锚定弹层，z-index 90 压住菜单遮罩。弹层根加 `onMouseDown` 阻止冒泡，
+  避免 `data-tauri-drag-region="deep"` 把点击空白当成拖窗口。
+* `insert.note` / `insert.label` 改成真正的应用内输入弹窗，分别写
+  `setNote` / `setLabels`（可回读）；`insert.marker` 直接切到标记弹层；
+  `insert.attrs` 保留「主题属性…」入口，让属性侧面板仍可达。
+
+### 35.3 回归
+
+新增 `scripts/ui-toolbar-pop.mjs`（先跑 `new-doc.mjs`，CDP 9223）：30 项
+**ALL PASS**，含按钮/tab 精简、11 个标记按钮、点标记后画布出现 chip 且
+`doc_layout().nodes[0].markers == ["priority-1"]`、再点取消、Esc / 点空白关闭、
+19 行插入下拉、无选中时禁用、插入子主题 5→6 节点、笔记写入回读、
+主题属性面板打开、Ctrl+Alt+F / Ctrl+Alt+P 仍进入 ZEN / 演说。
+脚本开头轮询等 React 首帧（CDP 端口先于页面就绪），并在检查 tab 前确保
+「格式」面板已打开，避免上一轮遗留的 `panel='attrs'` 状态误报。
+
+全套回归：`cargo test --workspace` 全绿、`npx tsc --noEmit`、
+`npm run build:app`、`ui-menus` / `ui-marquee-summary` / `ui-rename` /
+`ui-verify` / `ui-tools` / `ui-skeleton-lines` 17-17 / `ui-theme-style` 22-22 /
+`ui-menu-dismiss` / `ui-startup-scrollbars` 20 项 ALL PASS /
+`compare-skeletons` exit 0。注意 `ui-theme-style` 必须先
+`open-sample.mjs example.xmind`，`ui-startup-scrollbars` 必须在刚启动的实例上
+第一个跑，否则会因当前文档不是「未命名」而误报。

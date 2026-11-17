@@ -1,6 +1,6 @@
 // End-to-end UI drive: build topics with the keyboard, then walk the 画布 tab
-// (骨架 / 紧凑型布局 / 同级主题对齐 / 分支配色) and the 演说 tab, dumping a
-// metric + screenshot at every step.
+// (骨架 / 紧凑型布局 / 同级主题对齐 / 分支配色) and the演说模式快捷键, dumping a
+// metric + screenshot at every step. 演说侧面板与工具栏按钮已移除。
 // Usage: node scripts/ui-verify.mjs [outdir]
 import { writeFileSync, mkdirSync } from 'node:fs';
 
@@ -44,6 +44,15 @@ const key = async (k, code, vk) => {
     await send('Input.dispatchKeyEvent', { type, key: k, code, windowsVirtualKeyCode: vk });
   }
   await wait(320);
+};
+/** Ctrl+Alt+P: the only remaining entry into 演说模式 after the tab/button removal. */
+const chord = async (k, code, vk, modifiers) => {
+  for (const type of ['keyDown', 'keyUp']) {
+    await send('Input.dispatchKeyEvent', {
+      type, key: k, code, windowsVirtualKeyCode: vk, modifiers,
+    });
+  }
+  await wait(420);
 };
 const shot = async (name) => {
   const res = await send('Page.captureScreenshot', { format: 'png' });
@@ -181,35 +190,10 @@ await wait(900);
 console.log('branch palette:', JSON.stringify(pal));
 await shot('04-branch-palette');
 
-// ---------------------------------------------------------------- 演说 tab
-await evaluate(`(() => { [...document.querySelectorAll('.fp-tabs button')].find((b) => b.textContent.trim() === '演说')?.click(); return 1; })()`);
-await wait(400);
-await shot('05-pitch-tab');
-await evaluate(`(() => {
-  const btn = [...document.querySelectorAll('.fp-btn-flat')].find((b) => b.textContent.includes('更换风格'));
-  btn?.click(); return 1;
-})()`);
-await wait(500);
-const styles = await evaluate(`(() => [...document.querySelectorAll('.pitch-card')].map((c) => c.textContent.trim()))()`);
-console.log('pitch styles:', JSON.stringify(styles));
-await shot('06-pitch-styles');
-await evaluate(`(() => { [...document.querySelectorAll('.pitch-card')].find((c) => c.textContent.includes('午夜玫瑰'))?.click(); return 1; })()`);
-await wait(600);
-await shot('07-pitch-rose');
-
-// 长宽比 dropdown
-await evaluate(`(() => {
-  [...document.querySelectorAll('.fp-select')].find((b) => b.textContent.includes('自动'))?.click(); return 1;
-})()`);
-await wait(400);
-await shot('08-pitch-ratio-menu');
-await esc();
-
 // ---------------------------------------------------------------- present mode
-await evaluate(`(() => {
-  [...document.querySelectorAll('.fp-btn-primary')].find((b) => b.textContent.includes('开始演说'))?.click(); return 1;
-})()`);
-await wait(900);
+// 侧面板「演说」tab 与工具栏「演说」按钮已删除；改用 Ctrl+Alt+P 进入。
+await chord('p', 'KeyP', 80, 3); // Alt=1 + Ctrl=2
+await wait(1200); // PresentView 是懒加载 chunk
 const present = await evaluate(`(() => {
   const el = document.querySelector('.present');
   if (!el) return 'missing';

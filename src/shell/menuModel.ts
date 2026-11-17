@@ -221,7 +221,6 @@ function viewSubmenu(ctx: MenuContext): MenuItem[] {
     item('vw.panel', '格式面板', {
       submenu: [
         item('vw.panel.style', '样式', { shortcut: 'Ctrl+]', action: 'view.panel.style' }),
-        item('vw.panel.present', '演说', { action: 'view.panel.present' }),
         item('vw.panel.canvas', '画布', { action: 'view.panel.canvas' }),
         item('vw.panel.skeleton', '骨架', { action: 'view.panel.skeleton' }),
         item('vw.panel.palette', '配色方案', { action: 'view.panel.palette' }),
