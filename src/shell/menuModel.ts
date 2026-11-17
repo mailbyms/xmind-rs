@@ -5,6 +5,10 @@
  * shortcuts are the original Chinese strings; `disabled` reflects the same
  * context-dependence the original has (no topic selected, central topic,
  * nothing folded, unsupported export targets, ...).
+ *
+ * Deliberate departure (2026-11-17): 「最近打开」is promoted from the 文件
+ * submenu to a first-level row directly below 打开. The 文件 column omits it,
+ * and ui-menus.mjs accounts for that one intentional difference.
  */
 import { item, sep, type MenuItem } from './Menu';
 
@@ -154,17 +158,29 @@ function editSubmenu(ctx: MenuContext): MenuItem[] {
   ];
 }
 
-function fileSubmenu(ctx: MenuContext): MenuItem[] {
-  const recent: MenuItem[] = ctx.recent.map((path, index) => item(`fi.recent.${index}`, path.split(/[\\/]/).pop() || path, {
-    action: 'recent.open', payload: { path },
-  }));
+/**
+ * Product change: the recent list is a first-level menu row (right below
+ * 打开), not a third-level panel under 文件 > 最近打开.
+ */
+function recentSubmenu(ctx: MenuContext): MenuItem[] {
+  const files = ctx.recent.map((path, index) =>
+    item(`m.recent.${index}`, path.split(/[\\/]/).pop() || path, {
+      action: 'recent.open', payload: { path },
+    }));
+  return [
+    ...files,
+    sep('m.recent.sep'),
+    item('m.recent.clear', '清空目录', { action: 'recent.clear' }),
+  ];
+}
+
+function fileSubmenu(): MenuItem[] {
   const notice = (id: string, label: string, extra: Partial<MenuItem> = {}) =>
     item(id, label, { action: 'file.notice', payload: { label }, ...extra });
   return [
     notice('fi.template', '从模板新建'),
     notice('fi.gallery', '从图库中新建'),
     item('fi.tab', '新建标签页', { shortcut: 'Ctrl+T', ...D() }),
-    item('fi.recent', '最近打开', { submenu: [...recent, sep('fi.recent.sep'), item('fi.recent.clear', '清空目录', { action: 'recent.clear' })] }),
     sep('fi.sep1'),
     item('fi.cache', '文件缓存', { action: 'file.notice', payload: { label: '文件缓存' } }),
     item('fi.password', '设置密码', D()),
@@ -259,6 +275,7 @@ export function buildMainMenu(ctx: MenuContext): MenuItem[] {
     sep('m.sep1'),
     item('m.new', '新建', { shortcut: 'Ctrl+N', action: 'new' }),
     item('m.open', '打开', { shortcut: 'Ctrl+O', action: 'open' }),
+    item('m.recent', '最近打开', { submenu: recentSubmenu(ctx) }),
     sep('m.sep2'),
     item('m.save', '保存', { shortcut: 'Ctrl+S', action: 'save', disabled: !ctx.dirty || ctx.saving }),
     item('m.saveAs', '另存为', { shortcut: 'Ctrl+Shift+S', action: 'saveAs' }),
@@ -279,7 +296,7 @@ export function buildMainMenu(ctx: MenuContext): MenuItem[] {
     sep('m.sep4'),
     item('m.pref', '首选项', { shortcut: 'Ctrl+Shift+P', action: 'file.notice', payload: { label: '首选项' } }),
     sep('m.sep5'),
-    item('m.file', '文件', { submenu: fileSubmenu(ctx) }),
+    item('m.file', '文件', { submenu: fileSubmenu() }),
     item('m.edit', '编辑', { submenu: editSubmenu(ctx) }),
     item('m.insert', '插入', { submenu: insertElements(ctx) }),
     item('m.tools', '工具', {

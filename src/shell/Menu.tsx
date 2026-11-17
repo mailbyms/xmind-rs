@@ -81,7 +81,7 @@ function MenuLevel({ items, x, y, depth, onAction, onClose, onDismiss }: LevelPr
     if (entry.submenu) { openSub(index, element); return; }
     // A leaf item must dismiss the *entire* menu tree. onClose here only closes
     // the current column (and is what Escape / ArrowLeft use), so clicking
-    // e.g. 文件 > 最近打开 > foo.xmind would otherwise leave the parent panels
+    // e.g. 最近打开 > foo.xmind would otherwise leave the parent panels
     // and the backdrop on screen while the document is already open.
     onAction(entry);
     onDismiss();

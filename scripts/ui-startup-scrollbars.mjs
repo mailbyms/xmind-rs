@@ -239,7 +239,7 @@ const openRecent = async () => {
   })()`);
   await clickAt(burger.x, burger.y);
   await wait(250);
-  for (const label of ['文件', '最近打开']) {
+  for (const label of ['最近打开']) {
     const at = await centre(label);
     if (!at) throw new Error(`menu item not found: ${label}`);
     await mouse('mouseMoved', at.x, at.y, { button: 'none' });

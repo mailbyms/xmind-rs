@@ -1391,7 +1391,7 @@ Ctrl+点击可继续增量选择，出现第二个 outline。
 | `scripts/capture-xmind-skeletons.mjs` | 逐个拉起原版，抓 `topic-node` / `topic-connection` 几何 |
 | `scripts/shot-xmind.mjs` | 原版截图（`target/verify/xmind-<name>.png`） |
 | `scripts/compare-skeletons.mjs` | 本应用 `doc_layout` vs 抓包，输出 `skeleton-diff.json` |
-| `scripts/open-sample.mjs` | **通过 UI**（主菜单→文件→最近打开）打开样本，React 状态才会跟着变 |
+| `scripts/open-sample.mjs` | **通过 UI**（主菜单→最近打开，§36 后不再经过「文件」）打开样本，React 状态才会跟着变 |
 | `scripts/shot-ours.mjs` / `check-fold.mjs` | 本应用截图 / 折叠圆位置与 hover 断言 |
 
 两个坑：
@@ -2426,3 +2426,50 @@ posX   = scrollX / rangeX * (trackX - thumbW)
 `compare-skeletons` exit 0。注意 `ui-theme-style` 必须先
 `open-sample.mjs example.xmind`，`ui-startup-scrollbars` 必须在刚启动的实例上
 第一个跑，否则会因当前文档不是「未命名」而误报。
+
+## 36. 「最近打开」上移一级到「打开」下面（2026-11-17）
+
+### 36.1 结构与实现
+
+原版 XMind 把「最近打开」放在 `文件` 子菜单第 4 行，且它自己还有一层子菜单，
+即要点三次（主菜单 → 文件 → 最近打开 → 文件）。产品要求把它**上移一级**，
+直接放在主菜单「打开」的正下方：
+
+```
+撤销 / 重做 / --- / 新建 / 打开 / 最近打开 / --- / 保存 / 另存为 / ...
+... / 文件 / 编辑 / 插入 / 工具 / 查看 / 帮助
+```
+
+* `src/shell/menuModel.ts`：抽出 `recentSubmenu(ctx)`（历史文件 +
+  `sep` + 清空目录），`buildMainMenu` 在 `m.open` 之后插
+  `item('m.recent', '最近打开', { submenu: ... })`；`fileSubmenu()` 删掉该行并
+  改成无参（否则 `noUnusedParameters` 报错）。子项 id 从 `fi.recent.*` 统一成
+  `m.recent.*`，`recent.open` / `recent.clear` 动作与 payload 完全不变。
+* 「文件」列删掉该行后，原来紧跟其后的 `fi.sep1` 保留，分组其它条目顺序不变。
+* `MenuLevel.activate()` 的注释同步：`最近打开 > foo.xmind`（不再经过「文件」）。
+  叶子动作的 `onDismiss()` 从根层透传，少一层后依然能关闭整棵菜单树。
+
+### 36.2 回归脚本的「有意偏离」
+
+`ui-menus.mjs` 仍以 `target/app-menu-full.json` 为原版事实来源，但明确标注这一处
+偏离：`expTop` 在「打开」后插入一行「最近打开」再与实测比较；「文件」列的
+expected 过滤掉「最近打开」。新增三条断言：`最近打开` 位于 `打开` 下一行且带
+子菜单、只展开一层面板（`panels=2`）、子菜单末项仍是「清空目录」。
+`open-sample.mjs` / `ui-menu-dismiss.mjs` / `ui-startup-scrollbars.mjs` 的 UI 路径
+从 `['文件','最近打开']` 改成 `['最近打开']`；`ui-menu-dismiss` 的 Escape 用例也
+改成 hover 新的一级行。捕获 JSON 不改，保持原版事实来源的纯粹性。
+
+### 36.3 真机验证
+
+隔离实例（CDP 9223，`target/verify-toolbar/{data,wv2}`）：`ui-menus` **ALL PASS**
+（顶层 21 行、`open=4 recent=5`、「文件」列 14 行只少「最近打开」）、
+`ui-menu-dismiss` ALL PASS、`ui-startup-scrollbars` 20 项 ALL PASS（新路径确实能
+打开 `example2.xmind`）、`open-sample example.xmind` 正常、`ui-theme-style` 22/22、
+`ui-toolbar-pop` 30 项 ALL PASS、`ui-marquee-summary` / `ui-rename` / `ui-verify` /
+`ui-tools` / `ui-skeleton-lines` 17/17 / `compare-skeletons` exit 0 全绿；
+`cargo test --workspace` 61 passed / 0 failed、`npx tsc --noEmit`、
+`npm run build:app`。截图 `target/verify/recent-menu-first-level.png`。
+
+注意 `ui-menus.mjs` 仍需在**干净新文档**上跑（先 `new-doc.mjs`），否则画布里
+找不到「分支主题」会在主题右键用例处崩；`compare-skeletons.mjs` 跑完会覆盖
+隔离目录 `settings.json` 的 recent，需写回含 `example2.xmind` 的配置。

@@ -1,4 +1,4 @@
-// Open a sample through the app's own UI (主菜单 → 文件 → 最近打开), so React
+// Open a sample through the app's own UI (主菜单 → 最近打开 → <file>), so React
 // state actually updates — invoking `doc_open` over IPC only changes the Rust
 // document and leaves the canvas showing the previous map.
 //
@@ -83,8 +83,8 @@ const burger = await ev(`(() => {
 await clickAt(burger.x, burger.y);
 await wait(250);
 
-// 2. 文件 → 最近打开
-for (const label of ['文件', '最近打开']) {
+// 2. 主菜单一级的「最近打开」（2026-11-17 从「文件」子菜单上移）
+for (const label of ['最近打开']) {
   const at = await centre(label);
   if (!at) throw new Error(`menu item not found: ${label}`);
   await move(at.x, at.y);

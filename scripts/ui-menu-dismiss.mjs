@@ -3,9 +3,10 @@
 //   CDP_PORT=9223 node scripts/ui-menu-dismiss.mjs [recent-file-name]
 //
 // Bug: MenuLevel.activate() called onClose(), which for a submenu level only
-// closed that one column, so 文件 > 最近打开 > foo.xmind opened the document
-// but left the parent panels + backdrop on screen. Needs the app's recent list
-// to contain at least one .xmind file (settings.json).
+// closed that one column, so 最近打开 > foo.xmind opened the document but left
+// the parent panels + backdrop on screen. Needs the app's recent list to
+// contain at least one .xmind file (settings.json).
+// 「最近打开」is now a first-level row directly below 打开 (2026-11-17).
 const PORT = process.env.CDP_PORT || 9223;
 const preferred = process.argv[2] || 'example2.xmind';
 
@@ -94,10 +95,9 @@ await send('Emulation.setDeviceMetricsOverride', {
 await wait(350);
 console.log('菜单动作后自动隐藏 真机验证');
 
-// --- 1. 文件 > 最近打开 > <file> -----------------------------------------
+// --- 1. 最近打开 > <file> -------------------------------------------------
 await clear();
 await openMain();
-await hover('文件');
 await hover('最近打开');
 const sample = await ev(`(() => {
   const want = ${JSON.stringify(preferred)};
@@ -137,7 +137,7 @@ if (edit) {
 // --- 3. Escape 仍能关掉整个菜单树 -----------------------------------------
 await clear();
 await openMain();
-await hover('文件');
+await hover('最近打开');
 const beforeEsc = await menuState();
 await escape();
 const afterEsc = await menuState();

@@ -2,7 +2,9 @@
 // menu, the blank-canvas context menu and the topic context menus.
 // Labels / order / separators / enabled states are diffed against the trees
 // captured from the running XMind 23.07 (target/app-menu-full.json,
-// target/ctx-menus.json). Usage: node scripts/ui-menus.mjs
+// target/ctx-menus.json). One intentional departure is accounted for below:
+// 「最近打开」was promoted from 文件 to a first-level row below 打开.
+// Usage: node scripts/ui-menus.mjs
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const PORT = process.env.CDP_PORT || 9223;
@@ -140,8 +142,16 @@ const top = await one();
 ok('汉堡菜单打开为 xm-panel 面板', top.length > 0, `${top.length} 行`);
 const expTop = labels(origMain);
 const gotTop = labels(top);
-ok('主菜单顶层条目与分隔线顺序 == 原版', JSON.stringify(gotTop) === JSON.stringify(expTop),
-  JSON.stringify(gotTop) === JSON.stringify(expTop) ? `${gotTop.length} 行` : `got ${gotTop.join('|')}`);
+// 「最近打开」上移一级：顶层「打开」下面多一行，「文件」子菜单里少一行。
+const openAt = expTop.indexOf('打开');
+const expTopAdjusted = [...expTop.slice(0, openAt + 1), '最近打开', ...expTop.slice(openAt + 1)];
+ok('主菜单顶层顺序 == 原版 + 上移的「最近打开」',
+  JSON.stringify(gotTop) === JSON.stringify(expTopAdjusted),
+  JSON.stringify(gotTop) === JSON.stringify(expTopAdjusted) ? `${gotTop.length} 行` : `got ${gotTop.join('|')}`);
+ok('「最近打开」紧跟「打开」且带子菜单',
+  gotTop.indexOf('最近打开') === gotTop.indexOf('打开') + 1
+    && top.some((r) => r.label === '最近打开' && r.submenu),
+  `open=${gotTop.indexOf('打开')} recent=${gotTop.indexOf('最近打开')}`);
 ok('主菜单 撤销/重做 快捷键', top[0]?.shortcut === 'Ctrl+Z' && top[1]?.shortcut === 'Ctrl+Y',
   `${top[0]?.shortcut} / ${top[1]?.shortcut}`);
 ok('主菜单含全部 6 个分组子菜单',
@@ -158,8 +168,10 @@ for (const group of ['文件', '编辑', '插入', '工具', '查看', '帮助']
       JSON.stringify(actual) === JSON.stringify(['快捷键命令', '关于 xmind-rs']),
       `got ${actual.join('|')}`);
   } else {
-    const expected = labels(origMain.find((i) => i.label === group)?.sub ?? []);
-    ok(`主菜单「${group}」子菜单条目 == 原版`, JSON.stringify(actual) === JSON.stringify(expected),
+    let expected = labels(origMain.find((i) => i.label === group)?.sub ?? []);
+    if (group === '文件') expected = expected.filter((l) => l !== '最近打开');
+    ok(`主菜单「${group}」子菜单条目 == 原版${group === '文件' ? '（最近打开已上移）' : ''}`,
+      JSON.stringify(actual) === JSON.stringify(expected),
       JSON.stringify(actual) === JSON.stringify(expected) ? `${actual.length} 行` : `got ${actual.join('|')}`);
   }
   await mouse('mouseMoved', 4, 4);
@@ -184,6 +196,17 @@ ok('查看 > 工具栏 有且仅有一个勾选项',
   toolbarRows.map((r) => `${r.label}:${r.checked}`).join(' '));
 await closeAll();
 ok('Escape 关闭整个菜单树', (await readMenus()).length === 0);
+
+// ---- 上移后的「最近打开」：一级行 + 只展开一层，末项仍是「清空目录」 ----
+await openMain();
+const recentPanels = await hover('最近打开');
+const recentRows = recentPanels?.[1] ?? [];
+ok('「最近打开」只在主菜单下展开一层子面板', (recentPanels ?? []).length === 2,
+  `panels=${(recentPanels ?? []).length}`);
+ok('「最近打开」子菜单末项为「清空目录」',
+  recentRows.length > 0 && recentRows.at(-1)?.label === '清空目录',
+  recentRows.map((r) => r.sep ? '---' : r.label).join('|'));
+await closeAll();
 
 // ------------------------------------------------------------ 画布右键菜单
 const blank = await emptyPoint();
