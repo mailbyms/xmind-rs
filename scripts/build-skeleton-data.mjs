@@ -5,6 +5,32 @@ import { copyFileSync, existsSync, readFileSync, unlinkSync, writeFileSync } fro
 
 const presets = JSON.parse(readFileSync('research/skeleton-presets.json', 'utf8'));
 const cards = JSON.parse(readFileSync('research/skeleton-cards.json', 'utf8'));
+// The desktop's own 43 `sheet.theme` snapshots (extracted from 8846.js).
+// They are the fact source for per-depth shapes / fills / borders.
+const themes = JSON.parse(readFileSync('research/skeleton-themes.json', 'utf8'));
+
+/** `shape-class` → short name, `border-line-width` → CSS px. */
+const shortShape = (value, fallback) => (value ? value.split('.').pop() : fallback);
+const px = (value) => {
+  if (!value) return 0;
+  const n = Number.parseFloat(String(value).replace(/pt|px/gi, ''));
+  return Number.isFinite(n) ? n : 0;
+};
+function layersOf(preset) {
+  const theme = themes[preset.id] ?? {};
+  const fallbackShapes = [preset.centralShape, preset.mainShape, preset.subShape];
+  return ['centralTopic', 'mainTopic', 'subTopic'].map((key, i) => {
+    const props = theme[key]?.properties ?? {};
+    const fill = props['svg:fill'];
+    return {
+      shape: shortShape(props['shape-class'], fallbackShapes[i] ?? 'roundedRect'),
+      // A missing `svg:fill` means XMind's colour-theme engine paints the
+      // plate; an explicit `none` / `#00000000` means no plate at all.
+      filled: !(fill === 'none' || fill === '#00000000'),
+      border: px(props['border-line-width']),
+    };
+  });
+}
 
 /** Thumbnails keep ASCII names so neither Vite nor the bundler has to deal
  *  with percent-encoded paths on disk. */
@@ -91,6 +117,7 @@ for (const [group, title] of GROUP_ORDER) {
       subWidth: preset.subWidth ?? null,
       subFill: preset.subFill ?? preset.fillPattern ?? 'solid',
       tapered: preset.tapered ?? null,
+      layers: layersOf(preset),
     });
   });
 }
@@ -133,6 +160,9 @@ export interface SkeletonPreset {
   mainWidth: string | null;
   /** \`map/properties/line-tapered\`: none | normal | tapered. */
   tapered: string | null;
+  /** Original theme's three depth layers: centralTopic / mainTopic / subTopic.
+   *  \`filled\` = no explicit \`svg:fill: none\`; \`border\` = border-line-width px. */
+  layers: { shape: string; filled: boolean; border: number }[];
   /** Exact \`org.xmind.ui.*\` classes stored in the sheet extension. */
   central: string;
   main: string | null;
@@ -151,9 +181,9 @@ export const SKELETON_GROUPS: SkeletonGroup[] = ${JSON.stringify(
     items: rows
       .filter((r) => r.group === group)
       .map(({ id, group: g, title: t, thumb, structure, handDrawn, shape, mainShape, line, centralLine, pattern, fill, central, main,
-        subLine, subShape, subPattern, subWidth, subFill, centralWidth, mainWidth, tapered }) => ({
+        subLine, subShape, subPattern, subWidth, subFill, centralWidth, mainWidth, tapered, layers }) => ({
         id, group: g, title: t, thumb, structure, handDrawn, shape, mainShape, line, centralLine, pattern, fill, central, main,
-        subLine, subShape, subPattern, subWidth, subFill, centralWidth, mainWidth, tapered,
+        subLine, subShape, subPattern, subWidth, subFill, centralWidth, mainWidth, tapered, layers,
       })),
   })),
   null,

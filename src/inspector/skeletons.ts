@@ -36,6 +36,9 @@ export interface SkeletonPreset {
   mainWidth: string | null;
   /** `map/properties/line-tapered`: none | normal | tapered. */
   tapered: string | null;
+  /** Original theme's three depth layers: centralTopic / mainTopic / subTopic.
+   *  `filled` = no explicit `svg:fill: none`; `border` = border-line-width px. */
+  layers: { shape: string; filled: boolean; border: number }[];
   /** Exact `org.xmind.ui.*` classes stored in the sheet extension. */
   central: string;
   main: string | null;
@@ -74,7 +77,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "6e8a0060db4a430f98c8d89f66",
@@ -98,7 +118,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "tapered"
+        "tapered": "tapered",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "42c88f12129a77f5482a880df3",
@@ -122,7 +159,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "ellipserect",
+            "filled": true,
+            "border": 3
+          },
+          {
+            "shape": "ellipserect",
+            "filled": true,
+            "border": 3
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "bf289133ca1b566815eabb3698",
@@ -146,7 +200,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "5pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "e179c2ffb0b8dec4f09479329d",
@@ -170,7 +241,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "1pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 5
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "309bd0497a2b02cbc22488e492",
@@ -194,7 +282,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "hachure",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "tapered"
+        "tapered": "tapered",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 5
+          },
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 3
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 2
+          }
+        ]
       },
       {
         "id": "037bdacd906b00c163d38baac4",
@@ -218,7 +323,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 3
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "9e7a72076c5b995963b13bdae4",
@@ -242,7 +364,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 3
+          },
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "eb688e2c7c6b16ac265c088302",
@@ -266,7 +405,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "5pt",
         "mainWidth": "2",
-        "tapered": "normal"
+        "tapered": "normal",
+        "layers": [
+          {
+            "shape": "ellipse",
+            "filled": true,
+            "border": 5
+          },
+          {
+            "shape": "ellipse",
+            "filled": true,
+            "border": 4
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "bdc9e305d53995ffe2579809bc",
@@ -290,7 +446,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": "1pt",
-        "tapered": "normal"
+        "tapered": "normal",
+        "layers": [
+          {
+            "shape": "rect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "singlebreakangle",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       }
     ]
   },
@@ -320,7 +493,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "c1fbada1b45ba2e3bfc3b8b57b",
@@ -344,7 +534,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 3
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "69e995eafceaa75d4772db83ca",
@@ -368,7 +575,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "742a0094a75af3d82d6aebec36",
@@ -392,7 +616,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "1pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "stack",
+            "filled": false,
+            "border": 1
+          },
+          {
+            "shape": "singlebreakangle",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "435b94254499a365f53b38c686",
@@ -416,7 +657,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "ellipserect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 2
+          }
+        ]
       },
       {
         "id": "63f9e6f1d8a855fd7d88783d7d",
@@ -440,7 +698,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": "1pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "ellipticrectangle",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "2f7a92d35e78bb028393d81c91",
@@ -464,7 +739,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "hachure-thin",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 2
+          },
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          }
+        ]
       }
     ]
   },
@@ -494,7 +786,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 2
+          }
+        ]
       },
       {
         "id": "0fd8201f7fe8e282fa35fa4750",
@@ -518,7 +827,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "doubleunderline",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "doubleunderline",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "3928167d3ffa2e83c2382a0644",
@@ -542,7 +868,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "roundedhexagon",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "c49a76edff28fe9e497b49499a",
@@ -566,7 +909,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": null,
-        "tapered": "normal"
+        "tapered": "normal",
+        "layers": [
+          {
+            "shape": "ellipticrectangle",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "doubleunderline",
+            "filled": true,
+            "border": 2
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       }
     ]
   },
@@ -596,7 +956,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3",
         "mainWidth": "2",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "889beaa46659843b5b615bbf98",
@@ -620,7 +997,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 2
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "fcb8419de37a2e68d873f8b781",
@@ -644,7 +1038,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedhexagon",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedhexagon",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "e4aac349e2f87621626278de47",
@@ -668,7 +1079,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "1pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "d179fb8de49871c40103ca1720",
@@ -692,7 +1120,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "hachure-thin",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "tapered"
+        "tapered": "tapered",
+        "layers": [
+          {
+            "shape": "rect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "rect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "rect",
+            "filled": true,
+            "border": 0
+          }
+        ]
       }
     ]
   },
@@ -722,7 +1167,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "8318d7b395b90814c9c76a601c",
@@ -746,7 +1208,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "doubleunderline",
+            "filled": false,
+            "border": 2
+          },
+          {
+            "shape": "doubleunderline",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "886bcf346678a4dbed25d89d03",
@@ -770,7 +1249,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "stack",
+            "filled": true,
+            "border": 2
+          },
+          {
+            "shape": "stack",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "a92988ac13baf149b576ca0b54",
@@ -794,7 +1290,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "ellipticrectangle",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "ellipticrectangle",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "31891a966b2afb371280b93c09",
@@ -818,7 +1331,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "crossing",
         "centralWidth": "2pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "underline",
+            "filled": true,
+            "border": 2
+          },
+          {
+            "shape": "roundedhexagon",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "underline",
+            "filled": true,
+            "border": 0
+          }
+        ]
       }
     ]
   },
@@ -848,7 +1378,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2",
-        "tapered": "normal"
+        "tapered": "normal",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 3
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "85188f38c3ba2741c61ba94de8",
@@ -872,7 +1419,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "circle",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "cf2bb698b7199f86e41ffbe381",
@@ -896,7 +1460,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "circle",
+            "filled": true,
+            "border": 3
+          },
+          {
+            "shape": "underline",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "e56bba21bd999bd979e0aaa696",
@@ -920,7 +1501,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 3
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "0faa01d612f995b9198b39a769",
@@ -944,7 +1542,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "1pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "doubleunderline",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "rect",
+            "filled": true,
+            "border": 2
+          },
+          {
+            "shape": "rect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       }
     ]
   },
@@ -974,7 +1589,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "squareBracket",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "rect",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "rect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "401842e4d049428cfe841a1879",
@@ -998,7 +1630,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "doubleunderline",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "roundedRect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "233845a43c18f189d5ecc83e36",
@@ -1022,7 +1671,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "hachure-thin",
         "centralWidth": "2pt",
         "mainWidth": "2pt",
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "roundedhexagon",
+            "filled": false,
+            "border": 3
+          },
+          {
+            "shape": "roundedhexagon",
+            "filled": false,
+            "border": 2
+          },
+          {
+            "shape": "roundedRect",
+            "filled": true,
+            "border": 0
+          }
+        ]
       }
     ]
   },
@@ -1052,7 +1718,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "rect",
+            "filled": true,
+            "border": 2
+          },
+          {
+            "shape": "rect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "rect",
+            "filled": true,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "6c59046c172871b866ad4892e2",
@@ -1076,7 +1759,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "3pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "rect",
+            "filled": false,
+            "border": 2
+          },
+          {
+            "shape": "rect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "rect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       }
     ]
   },
@@ -1106,7 +1806,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "rect",
+            "filled": true,
+            "border": 2
+          },
+          {
+            "shape": "rect",
+            "filled": true,
+            "border": 0
+          },
+          {
+            "shape": "rect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       },
       {
         "id": "e3eabc5d4cbbbc26c2a8f811e1",
@@ -1130,7 +1847,24 @@ export const SKELETON_GROUPS: SkeletonGroup[] = [
         "subFill": "solid",
         "centralWidth": "2pt",
         "mainWidth": null,
-        "tapered": "none"
+        "tapered": "none",
+        "layers": [
+          {
+            "shape": "rect",
+            "filled": false,
+            "border": 2
+          },
+          {
+            "shape": "rect",
+            "filled": false,
+            "border": 0
+          },
+          {
+            "shape": "rect",
+            "filled": false,
+            "border": 0
+          }
+        ]
       }
     ]
   }

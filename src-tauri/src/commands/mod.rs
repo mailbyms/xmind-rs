@@ -6,7 +6,7 @@ use serde::Serialize;
 use std::path::PathBuf;
 use tauri::State;
 use xmind_core::{
-    ops, Document, Layout, Side, Structure, ThemeId, TopicStyle, ALL_STRUCTURES,
+    ops, Document, Layout, Side, SkeletonLayers, Structure, ThemeId, TopicStyle, ALL_STRUCTURES,
 };
 
 fn mutate<F>(state: &State<'_, AppState>, action: F) -> Result<Snapshot, String>
@@ -106,6 +106,9 @@ pub fn doc_new(state: State<'_, AppState>) -> Result<Snapshot, String> {
         .sheet_mut()
         .extra
         .insert("theme".into(), xmind_file::theme_for(theme));
+    // A new map starts on the first 思维导图 skeleton (all three layers are
+    // solid rounded rectangles), so levels 3/4/5 have plates too.
+    ops::set_skeleton_layers(&mut document, &SkeletonLayers::mind_map());
     state.replace_document(document, None, None);
     Ok(state.snapshot())
 }
@@ -600,6 +603,9 @@ pub fn doc_apply_skeleton(
     main_width: Option<String>,
     central_width: Option<String>,
     tapered: Option<String>,
+    // Three depth layers from the original desktop theme bytes. Stored at
+    // sheet level so newly created topics inherit the preset.
+    layers: SkeletonLayers,
 ) -> Result<Snapshot, String> {
     let branch_class = |value: Option<String>| {
         format!("org.xmind.branchConnection.{}", value.unwrap_or_else(|| "curve".into()))
@@ -641,6 +647,7 @@ pub fn doc_apply_skeleton(
     let tapered = tapered.map(|value| value == "tapered");
     mutate(&state, |doc| {
         doc.set_skeleton(structure, &central, main.as_deref());
+        ops::set_skeleton_layers(doc, &layers);
         ops::apply_skeleton_styles(doc, &centre, &first, &deeper, tapered);
     })
 }

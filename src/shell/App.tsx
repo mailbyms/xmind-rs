@@ -935,6 +935,7 @@ export default function App() {
         mainWidth: preset.mainWidth ?? null,
         centralWidth: preset.centralWidth ?? null,
         tapered: preset.tapered ?? null,
+        layers: preset.layers,
       }));
       // The shipped panel stays open and applies on every click, so there is
       // no toast — only the canvas changes.

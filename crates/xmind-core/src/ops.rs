@@ -2,6 +2,7 @@
 //! truth; the WebView only sends intent and receives a fresh layout.
 
 use crate::{Document, Position, Sheet, Side, Structure, Topic, TopicStyle};
+use crate::theme_style::{SkeletonLayers, SKELETON_KEY};
 use serde_json::{json, Map, Value};
 use std::collections::HashSet;
 
@@ -467,6 +468,17 @@ pub fn clear_style(doc: &mut Document, id: &str) -> bool {
 ///
 /// Floating / summary / callout topics keep their own theme layers and are
 /// deliberately not touched here.
+/// Persist the active 骨架 preset's three depth layers on the sheet.  XMind
+/// stores a skeleton in `sheet.theme`, i.e. it is a *sheet-level* style that
+/// automatically covers topics added later.  `apply_skeleton_styles` still
+/// writes the per-topic patches (so a file opened in real XMind keeps them),
+/// but this key is what our renderer reads by depth.
+pub fn set_skeleton_layers(doc: &mut Document, layers: &SkeletonLayers) {
+    if let Ok(value) = serde_json::to_value(layers) {
+        doc.sheet_mut().extra.insert(SKELETON_KEY.into(), value);
+    }
+}
+
 pub fn apply_skeleton_styles(
     doc: &mut Document,
     central: &TopicStyle,

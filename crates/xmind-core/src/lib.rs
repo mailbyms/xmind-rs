@@ -13,3 +13,4 @@ pub mod theme_style;
 pub use layout::{compute_layout, palette, Decor, Edge, EffectiveStyle, LaidOutNode, Layout, ThemePalette};
 pub use model::*;
 pub use ops::*;
+pub use theme_style::{SkeletonLayer, SkeletonLayers, SKELETON_KEY};

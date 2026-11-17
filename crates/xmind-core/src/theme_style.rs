@@ -39,7 +39,7 @@
 //! XMind writes transparent fills as `#RRGGBBAA`, e.g. `#00000000`.  Those
 //! are normalised to `none` so the WebView and the SVG exporter agree.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 
@@ -129,6 +129,54 @@ fn default_value(depth: u32, key: &str) -> Option<&'static str> {
         _ => DEFAULT_SUB,
     };
     table.iter().find(|(k, _)| *k == key).map(|(_, v)| *v)
+}
+
+/// `sheet.extra` key holding the active 骨架 preset's per-depth style.  XMind
+/// keeps a skeleton in `sheet.theme` layers, so *every* topic of a depth gets
+/// it — including topics created after the preset was applied.  Our first
+/// implementation only patched the topics that existed at click time, which
+/// is why a freshly added third-level topic lost the preset's plate.
+pub const SKELETON_KEY: &str = "xmindRsSkeleton";
+
+/// One depth layer of a 骨架 preset, derived from the shipped desktop's own
+/// `sheet.theme` bytes (`research/skeleton-themes.json`, FINDINGS §27).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SkeletonLayer {
+    /// Short shape name consumed by `shape::outline`.
+    pub shape: String,
+    /// False when the original theme layer says `svg:fill: none` (no plate).
+    /// True = no `svg:fill` key, so XMind's colour-theme engine paints it.
+    pub filled: bool,
+    /// `border-line-width` in CSS px (0 = no outline).
+    pub border: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SkeletonLayers {
+    pub central: SkeletonLayer,
+    pub main: SkeletonLayer,
+    /// Everything at depth >= 2 (none of the 43 shipped presets has a level3
+    /// layer, so the subTopic layer covers levels 3, 4, 5 … too).
+    pub sub: SkeletonLayer,
+}
+
+impl SkeletonLayers {
+    /// The shipped default new map is the first 思维导图 card: all three
+    /// layers are solid rounded rectangles with no explicit fill/border.
+    pub fn mind_map() -> Self {
+        let plate = || SkeletonLayer { shape: "roundedRect".into(), filled: true, border: 0.0 };
+        Self { central: plate(), main: plate(), sub: plate() }
+    }
+
+    pub fn from_value(value: Option<&Value>) -> Option<Self> {
+        serde_json::from_value(value?.clone()).ok()
+    }
+
+    pub fn layer(&self, depth: u32) -> &SkeletonLayer {
+        match depth { 0 => &self.central, 1 => &self.main, _ => &self.sub }
+    }
 }
 
 /// Parsed `sheet.theme`, carried inside `ThemePalette` so every layout helper

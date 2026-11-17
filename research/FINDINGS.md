@@ -2519,3 +2519,102 @@ ALL PASS、`open-sample example.xmind`（72 节点）、`ui-rename` ALL PASS；
 `npx tsc --noEmit`、`cargo test --workspace`、`npm run build:app` 全绿，
 构建产物里已没有 `PresentView` / `pitch` 分块。
 
+
+## 38. 骨架按层级形状：第 3 级及以下必须是实心圆角矩形（2026-11-17）
+
+### 38.1 现象与两个根因
+
+用户反馈：新建画布后逐级添加子主题，原版在「思维导图」第一个骨架下
+**每一级**都是实心圆角矩形；本应用第 3 级及以下变成纯文字。
+
+实测（`scripts/probe-level-shapes.mjs`，43 preset × 两种时序 × 5 级）：
+
+```
+思维导图 1  appliedLast  L1 roundedRect/#000229  L2 roundedRect/#0098B9
+                         L3..L5 roundedRect/none
+            appliedFirst L1..L5 全部 roundedRect/none（骨架样式没传下来）
+```
+
+两个独立根因：
+
+1. **`doc_apply_skeleton` 只把样式写进「当时已存在」的主题**
+   （`ops::apply_skeleton_styles` 遍历 root → 一级 → 所有二级以下 attached）。
+   XMind 的骨架是 `sheet.theme` 的 **centralTopic / mainTopic / subTopic
+   三层**，按 depth 解析，所以切换骨架之后新建的主题自动带上该层样式。
+   本应用把它降格成了 per-topic `topic.style`，于是「先选骨架、再加子主题」
+   这条路径从第 2 级开始就完全丢失预设。
+2. **`style_for` 的 depth >= 2 基线写死 `fill: "none"`**。就算骨架把所有
+   已存在主题的 `shape-class` 改成 `roundedRect`，也没有任何东西给它填充；
+   外来主题才走 `apply_theme_layer` 的分支色引擎（§29），新建文档不走。
+
+### 38.2 事实来源（原版桌面版，不是推测）
+
+* `research/skeleton-themes.json`：从本机 XMind 23.07 bundle `8846.js` 抽出的
+  **43 份完整 `sheet.theme`**。三层 `shape-class` 分布见 §27。
+* 三层 `svg:fill` 只有两种取值：**缺键 48 处**（交给配色主题引擎画板）与
+  **显式 `none` 81 处**（不画板）；没有任何一层写死颜色。第 1 个思维导图
+  骨架 `db4a5df4…` 三层都是 `roundedRect` + 缺 `svg:fill`，即三级以下同样
+  是实心板。`level3` 层在这 43 套里**一次都没出现**，所以 depth 2/3/4/5
+  共用 `subTopic`。
+* 缺 `svg:fill` 时每级填充来自分支色引擎，色值由 §29.1 原版 DOM 实测给出：
+  中心近黑、一级实心分支色、二级及以下 20% 洗色 + 40% 暗墨。
+* 本轮原版 CDP 9222 实例起不来（环境把 `WMIC.exe` 列入程序黑名单，
+  XMind 主进程 10 秒后自行退出），因此**没有新拍的 9222 截图**；上面的
+  主题字节与 §24/§29/§30 的历史 DOM 实测都是既有事实来源。
+
+### 38.3 实现
+
+* `theme_style.rs` 新增 `SkeletonLayer { shape, filled, border }` /
+  `SkeletonLayers { central, main, sub }`，`SKELETON_KEY =
+  "xmindRsSkeleton"`。这是一份**sheet 级**样式，存在 `sheet.extra`；
+  `parse_sheet` / `sheet_to_json` 都会原样保留，存盘再打开不丢。
+* `scripts/build-skeleton-data.mjs` 从 43 份主题生成每套 preset 的
+  `layers`：短形状名、`filled`（`svg:fill` 不是 `none`）、
+  `border`（`border-line-width` 去 pt 取 px）。`skeletons.ts` 同步重生成；
+  `api.applySkeleton` / `App.setSkeleton` 多带一个 `layers` 参数；
+  `doc_apply_skeleton` 用 `ops::set_skeleton_layers` 落到 sheet。
+  `apply_skeleton_styles` 的 per-topic 补丁保留（真实 XMind 打开我们存的
+  文件时仍读得到三层样式）。
+* `doc_new` 写入 `SkeletonLayers::mind_map()`（三层实心 roundedRect），
+  即新画布默认就是「思维导图 1」。
+* `compute_layout` 把 sheet 上的 layers 挂到 `ThemePalette.skeleton`；
+  `style_for` 在 `sheet.theme` 之后、用户 `topic.style` 之前按 depth 应用：
+  `filled=true` → depth 0 中心色 / 1 分支色 / >=2 `blend_over(branch, #fff, .2)`
+  + `darken(branch, .4)` 墨色；`filled=false` → 无填充，`border>0` 时描分支色边；
+  下划线形状不画板，规则色宽沿用 `underlineColor/underlineWidth`。
+  `bare_cell()` 仍覆盖树型表格 / 矩阵图单元格。
+* 回归：`crates/xmind-core/tests/skeleton_levels.rs` 3 项（5 级全实心、
+  后来新增的第 5 级也继承、下划线骨架仍无板、sheet 往返）；
+  `crates/xmind-file/tests/roundtrip.rs` 增 1 项 `.xmind` 存读不丢 layers；
+  `scripts/probe-level-shapes.mjs` 采集 44 行 × 2 时序 × 5 级；
+  `scripts/ui-level-shapes.mjs` 按 43 份原版主题逐项断言形状 + 是否有板；
+  `scripts/ui-level-plates.mjs` 用键盘 Tab 连加 4 级并直读 DOM
+  `<path fill=…>` 与圆角路径。
+
+### 38.4 对比结果（至少到第 5 级）
+
+| 阶段 | 与 43 份原版主题比对 |
+| --- | --- |
+| 修复前 | 28 / 43 套骨架存在层级差异（第 3–5 级缺板、显式 `svg:fill: none` 的中心/一级反而画了板、先选骨架再加主题时整条链丢失预设） |
+| 修复后 | 44 行（43 骨架 + 默认新画布）× 2 时序 × 5 级 = **932 项断言全绿** |
+
+**三种结构性例外**（原版 DOM 实测，见 §24 / §12.3 / §15.5，回归里显式编码，
+不是漏测）：括号图主题只留文字、大括号承担结构；树型表格所有主题是透明
+单元格；矩阵图是白色横幅 + 文字列头 + 二级下划线。它们的填充由结构决定，
+不跟 `sheet.theme` 走。
+
+**仍未还原**（沿用 §27 的既有清单，不属于本次层级形状问题）：
+`stack` / `singlebreakangle` / `squareBracket` 等异形路径仍回退圆角矩形、
+手绘笔刷的 hachure 纹理、18 种箭头、pt→px 字体度量、矩阵列头整列色带。
+另外本轮没有新的原版 9222 DOM 截图，不能声称像素级一致。
+
+### 38.5 真机验证
+
+`npm run build:app` / `npx tsc --noEmit` / `cargo test --workspace`（65 项）
+全绿。CDP 9235/9236/9237 隔离实例：`ui-level-shapes` 932 项 ALL PASS、
+`ui-level-plates` 5 级 `fill=#000229 / #0098B9 / #cceaf1 ×3` 且路径均为
+`M 8 0 H … A 8 8 …`、`ui-menus` / `ui-toolbar-pop` 30 / `ui-tools` /
+`ui-rename` / `ui-marquee-summary` / `ui-verify` / `ui-menu-dismiss` /
+`ui-skeleton-lines` 17/17 / `ui-theme-style` 22/22（先 `open-sample
+example.xmind`）/ `ui-startup-scrollbars` 20 项全绿。
+`compare-skeletons.mjs` 本轮未跑（需要原版 9222 实例）。

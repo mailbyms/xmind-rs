@@ -121,6 +121,7 @@ for (const preset of ALL_SKELETONS) {
     centralLine: preset.centralLine,
     pattern: preset.pattern,
     fillPattern: preset.fill,
+    layers: preset.layers,
   });
   let bad = 0;
   const cells = [];

@@ -4,7 +4,7 @@
 //! timelines, brace maps, tree tables and matrices.
 
 use crate::{theme_style, Document, Side, Structure, ThemeId, Topic, TopicStyle};
-use crate::theme_style::{key as sk, SheetTheme};
+use crate::theme_style::{key as sk, SheetTheme, SkeletonLayers, SKELETON_KEY};
 use serde::Serialize;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -46,6 +46,11 @@ pub struct ThemePalette {
     /// document we created from scratch; a real `.xmind` carries its own.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sheet_theme: Option<SheetTheme>,
+    /// Active 骨架 preset's three depth layers (FINDINGS §38).  Unlike the
+    /// per-topic patches written by `apply_skeleton_styles`, this applies to
+    /// topics created *after* the preset was chosen.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skeleton: Option<SkeletonLayers>,
 }
 
 fn s(value: &str) -> String { value.to_string() }
@@ -61,6 +66,7 @@ pub fn palette(theme: ThemeId) -> ThemePalette {
             center: s("#000229"),
             edge: s("#c8d2e2"),
             sheet_theme: None,
+            skeleton: None,
         },
         ThemeId::Dark => ThemePalette {
             bg: s("#141922"), panel: s("#1c2330"), border: s("#2c3646"), grid: s("#232c3a"),
@@ -69,6 +75,7 @@ pub fn palette(theme: ThemeId) -> ThemePalette {
             center: s("#000229"),
             edge: s("#3a465e"),
             sheet_theme: None,
+            skeleton: None,
         },
         ThemeId::Ocean => ThemePalette {
             bg: s("#eef7fa"), panel: s("#ffffff"), border: s("#d7e8ee"), grid: s("#cfe9ef"),
@@ -77,6 +84,7 @@ pub fn palette(theme: ThemeId) -> ThemePalette {
             center: s("#000229"),
             edge: s("#b7d8e0"),
             sheet_theme: None,
+            skeleton: None,
         },
         ThemeId::Forest => ThemePalette {
             bg: s("#f4f8f2"), panel: s("#ffffff"), border: s("#dfe9d9"), grid: s("#d5e6cd"),
@@ -85,6 +93,7 @@ pub fn palette(theme: ThemeId) -> ThemePalette {
             center: s("#000229"),
             edge: s("#c8dcc1"),
             sheet_theme: None,
+            skeleton: None,
         },
     }
 }
@@ -715,6 +724,43 @@ fn style_for(topic: &Topic, depth: u32, branch: usize, pal: &ThemePalette) -> Ef
         explicit_color = apply_theme_layer(
             &mut style, theme, depth, &pal.branches[branch % pal.branches.len()],
         );
+    }
+    // 骨架 layers sit between `sheet.theme` and the user's own style.  They
+    // live at sheet level, so a topic added *after* the preset was chosen has
+    // exactly the same plate as one that existed at click time (FINDINGS §38).
+    if let Some(layers) = &pal.skeleton {
+        let skeleton_branch = pal.branches[branch % pal.branches.len()].clone();
+        let layer = layers.layer(depth);
+        if !layer.shape.is_empty() { style.shape = layer.shape.clone(); }
+        let closed = !matches!(style.shape.as_str(), "underline" | "doubleunderline");
+        if !closed {
+            // Underline shapes have no area.  The CSS rule below takes its
+            // colour/width from `stroke`/`stroke_width`, which is reset by the
+            // underline fix-up at the end of this function.
+            style.fill = "none".into();
+        } else if layer.filled {
+            // No `svg:fill` in the original theme = XMind's colour-theme
+            // engine paints the plate.  Measured on the shipped 23.x build
+            // (FINDINGS §29): main = solid branch hue, depth >= 2 = 20% wash
+            // of it with a 40%-darkened ink.
+            let plate = match depth {
+                0 => pal.center.clone(),
+                1 => skeleton_branch.clone(),
+                _ => blend_over(&skeleton_branch, "#ffffff", 0.2),
+            };
+            style.fill = plate.clone();
+            style.color = if depth >= 2 { darken(&skeleton_branch, 0.4) } else { readable_on(&plate).into() };
+            explicit_color = true;
+        } else {
+            // `svg:fill: none` — no plate at all.  A non-zero
+            // `border-line-width` still draws the shape's outline.
+            style.fill = "none".into();
+            style.color = if depth >= 2 { darken(&skeleton_branch, 0.4) } else { s("#0D0D0D") };
+        }
+        if layer.border > 0.0 {
+            style.stroke = skeleton_branch.clone();
+            style.stroke_width = layer.border;
+        }
     }
     if let Some(patch) = &topic.style {
         // User styles also use XMind's `#RRGGBBAA` spelling and the literal
@@ -2771,6 +2817,9 @@ pub fn compute_layout(doc: &Document) -> Layout {
     }
     let sheet = doc.sheet();
     let mut pal = palette(doc.theme);
+    // 骨架 is a sheet-level style, exactly like `sheet.theme`: read it once
+    // here so every depth layer (including newly added topics) sees it.
+    pal.skeleton = SkeletonLayers::from_value(sheet.extra.get(SKELETON_KEY));
     // FINDINGS §26 option A: read `sheet.theme` through the official StyleKey
     // cascade instead of painting every file with our own hard-coded palette.
     let sheet_theme = SheetTheme::from_value(sheet.extra.get("theme"));

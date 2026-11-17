@@ -149,6 +149,20 @@ fn new_document_writes_valid_xmind_container() {
     let _ = fs::remove_file(&target);
 }
 
+#[test]
+fn skeleton_layers_survive_a_save_and_reopen() {
+    let mut document = xmind_core::Document::new("骨架往返");
+    xmind_core::set_skeleton_layers(&mut document, &xmind_core::SkeletonLayers::mind_map());
+    let target = std::env::temp_dir().join("xmind-rs-skeleton.xmind");
+    write_xmind(&target, &document, &[], None).unwrap();
+    let again = read_xmind(&target).unwrap();
+    let value = again.document.sheet().extra.get(xmind_core::SKELETON_KEY).cloned()
+        .expect("sheet-level skeleton layers must be written into content.json");
+    let layers = xmind_core::SkeletonLayers::from_value(Some(&value)).expect("read back");
+    assert_eq!(layers, xmind_core::SkeletonLayers::mind_map());
+    let _ = fs::remove_file(&target);
+}
+
 fn entry_text(path: &std::path::Path, name: &str) -> String {
     let file = fs::File::open(path).unwrap();
     let mut zip = zip::ZipArchive::new(file).unwrap();

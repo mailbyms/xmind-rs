@@ -97,6 +97,8 @@ export const api = {
     mainWidth: string | null; centralWidth: string | null;
     /** `map/properties/line-tapered`. */
     tapered: string | null;
+    /** Three depth layers from the original desktop theme (shape / fill / border). */
+    layers: { shape: string; filled: boolean; border: number }[];
   }) => call<Snapshot>('doc_apply_skeleton', preset),
   setWidth: (id: string, width: number | null) => call<Snapshot>('doc_set_width', { id, width }),
   setCanvas: (patch: {
