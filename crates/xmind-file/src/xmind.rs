@@ -326,10 +326,19 @@ pub fn from_content_json(text: &str) -> Result<Document, FileError> {
         branch_colors: None,
         palette: None,
         center_color: None,
+        palette_variant: None,
         palette_dirty: false,
         extra: Default::default(),
     };
     document.ensure_sheet();
+    // The six quick themes below the drop-down are ours, so their index travels
+    // in a private sheet key.  Real XMind ignores unknown keys on open.
+    document.palette_variant = document
+        .sheets
+        .first()
+        .and_then(|s| s.extra.get("xmindRsPaletteVariant"))
+        .and_then(Value::as_u64)
+        .map(|v| (v as u8).min(5));
     // 配色方案 lives in `sheet.theme` (see `theme::read_palette`). Reading it
     // back means a saved map reopens with the palette it was painted with
     // instead of falling back to the default one.
@@ -704,6 +713,11 @@ fn sheet_to_json(sheet: &Sheet, doc: &Document) -> Value {
     }
     sync_alignment_by_level(&mut theme, doc.sibling_align);
     obj.insert("theme".into(), theme);
+    insert_or_remove(
+        &mut obj,
+        "xmindRsPaletteVariant",
+        doc.palette_variant.map(|v| json!(v)),
+    );
     Value::Object(obj)
 }
 

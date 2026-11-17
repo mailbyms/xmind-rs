@@ -246,10 +246,17 @@ pub fn to_svg(doc: &Document) -> String {
             // Underline shapes have no plate: the rule is the topic itself.
             // Its ink comes from the theme's border-line-color (or the branch
             // hue), not from the neutral canvas edge colour.
+            // The shipped renderer puts this stroke on the very bottom of the
+            // topic box, spanning its whole width; keep it in lockstep with
+            // `.node.underline::after` and `layout::branch_anchor_y` so the
+            // exported SVG/PNG/PDF matches the canvas (FINDINGS §40).
+            // Only 下划线 topics have the CSS ::after rule; transparent
+            // table cells keep their historical 2px inset separator.
+            let rule_y = node.y + node.height - if style.underline { 0.0 } else { 2.0 };
             out.push_str(&format!(
                 "<line x1=\"{x:.1}\" y1=\"{y:.1}\" x2=\"{x2:.1}\" y2=\"{y:.1}\" stroke=\"{c}\" stroke-width=\"{w:.1}\"/>\n",
                 x = node.x,
-                y = node.y + node.height - 2.0,
+                y = rule_y,
                 x2 = node.x + node.width,
                 c = xml_escape(&style.underline_color),
                 w = style.underline_width,

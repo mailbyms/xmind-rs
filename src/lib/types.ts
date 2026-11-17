@@ -86,6 +86,8 @@ export interface Document {
   palette?: string | null;
   /** Central-topic fill supplied by the active 配色方案. */
   centerColor?: string | null;
+  /** Which of the six quick themes below the drop-down is active (0..5). */
+  paletteVariant?: number | null;
   [key: string]: unknown;
 }
 

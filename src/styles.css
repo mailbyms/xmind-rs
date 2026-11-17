@@ -392,6 +392,21 @@ button { cursor: pointer; }
    selection). The class stays as a state hook for the inspector and UI tests. */
 .node.selected { box-shadow: none; }
 .node.underline { box-shadow: none; }
+/* The shipped XMind draws 下划线 / 双下划线 as a *zero-height stroke on the
+   bottom of the topic box*, spanning the whole box width.  CDP over
+   example.xmind: all 126 connectors end at `rect.bottom`, and the
+   `topic-node-border` bbox is `{ w: rect.w, h: 0 }`.  So the rule must not hug
+   the label: a label-width border-bottom left the connector poking past the
+   rule, and put the two strokes in different coordinate spaces (SVG edges vs
+   a DOM element above them).  One pseudo-element on the box keeps the rule,
+   the connector endpoint and the SVG exporter in the same geometry. */
+.node.underline::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0;
+  height: var(--ulw, 1.5px); background: var(--ul, currentColor);
+  /* Stroke centre sits exactly on box.bottom (translateY(50%) moves the
+     half-height bar down by half its own height). */
+  transform: translateY(50%); pointer-events: none; z-index: 1;
+}
 /* Rubber band + per-topic outlines, both in stage space and click-through. */
 .selection-layer {
   position: absolute; left: 0; top: 0; overflow: visible;
@@ -425,9 +440,9 @@ button { cursor: pointer; }
 }
 .node-shape { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
 .node.underline .node-title {
-  /* 下划线骨架的线要贴合文字，不能拉满整个主题盒。 */
-  width: auto; flex: 0 1 auto;
-  border-bottom: var(--ulw, 1.5px) solid var(--ul, currentColor); padding-bottom: 2px;
+  /* The rule is painted by .node.underline::after at box.bottom; the label
+     itself keeps its shrink-to-fit width and must not draw a second line. */
+  width: auto; flex: 0 1 auto; padding-bottom: 2px;
 }
 /* 形状是一层绝对定位的 <svg>，按 CSS 绘制顺序会盖住文档流里的标题文字，
    所以标题必须自己建立层叠上下文（否则导图里只有彩色空块）。 */
@@ -457,7 +472,8 @@ button { cursor: pointer; }
   resize: none; overflow: hidden;
   white-space: pre-wrap; overflow-wrap: anywhere;
 }
-.node.underline .node-title-input { border-bottom: var(--ulw, 1.5px) solid var(--ul, currentColor); }
+/* In-place editing uses the same box-bottom rule as the static label (the
+   ::after above), so the textarea must not draw its own label-width border. */
 /* 原版把主题盒的水平内边距平均分到文字两侧（实测中心/一级/二级 29/18/6px），
    之前只把 hpad 加在盒宽上，左对齐文字会贴着左边框、右边却留一大块空白。
    这里只给左对齐主题内缩，同时用「加宽元素 + 负右外边距」把文字的可用宽度

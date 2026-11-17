@@ -90,12 +90,19 @@ const dom = await ev(`(() => {
   const first = underlined[0];
   const title = first?.querySelector('.node-title');
   const path = first?.querySelector('.node-shape path');
-  const cs = title ? getComputedStyle(title) : null;
+  // The rule is a box-bottom, full-width ::after stroke (FINDINGS §40), not
+  // a border-bottom on the label: a label-width rule cannot meet the branch.
+  const cs = first ? getComputedStyle(first, '::after') : null;
   return {
     nodes: nodes.length,
     underlined: underlined.length,
-    borderColor: cs?.borderBottomColor ?? null,
-    borderWidth: cs?.borderBottomWidth ?? null,
+    ruleColor: cs?.backgroundColor ?? null,
+    ruleHeight: cs?.height ?? null,
+    ruleLeft: cs?.left ?? null,
+    ruleRight: cs?.right ?? null,
+    ruleBottom: cs?.bottom ?? null,
+    ruleTransform: cs?.transform ?? null,
+    titleBorder: title ? getComputedStyle(title).borderBottomStyle : null,
     pathFill: path?.getAttribute('fill') ?? null,
     pathStroke: path?.getAttribute('stroke') ?? null,
     canvasBg: getComputedStyle(document.querySelector('.canvas')).backgroundColor,
@@ -103,9 +110,14 @@ const dom = await ev(`(() => {
 })()`);
 
 ok('DOM marks underline topics', dom.underlined > 10, `${dom.underlined}/${dom.nodes}`);
-ok('DOM rule has a real colour', /^rgb\(/.test(dom.borderColor ?? '') && dom.borderColor !== 'rgba(0, 0, 0, 0)',
-  String(dom.borderColor));
-ok('DOM rule width matches the theme', ['1.5px', '2px'].includes(dom.borderWidth), String(dom.borderWidth));
+ok('DOM rule has a real colour', /^rgb\(/.test(dom.ruleColor ?? '') && dom.ruleColor !== 'rgba(0, 0, 0, 0)',
+  String(dom.ruleColor));
+ok('DOM rule width matches the theme', ['1.5px', '2px'].includes(dom.ruleHeight), String(dom.ruleHeight));
+ok('DOM rule spans the whole box bottom',
+  dom.ruleLeft === '0px' && dom.ruleRight === '0px' && dom.ruleBottom === '0px'
+    && /matrix/.test(dom.ruleTransform ?? ''),
+  `left=${dom.ruleLeft} right=${dom.ruleRight} bottom=${dom.ruleBottom} transform=${dom.ruleTransform}`);
+ok('DOM label draws no second rule', dom.titleBorder === 'none', String(dom.titleBorder));
 ok('DOM outline is not filled', dom.pathFill === 'none' && dom.pathStroke === 'none',
   `${dom.pathFill} / ${dom.pathStroke}`);
 ok('DOM canvas uses the theme background', dom.canvasBg === 'rgb(247, 247, 250)', String(dom.canvasBg));

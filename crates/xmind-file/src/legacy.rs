@@ -147,6 +147,7 @@ pub fn from_content_xml(text: &str) -> Result<Document, FileError> {
         branch_colors: None,
         palette: None,
         center_color: None,
+        palette_variant: None,
         palette_dirty: false,
         extra: Default::default(),
     };

@@ -950,7 +950,7 @@ export default function App() {
   const setCanvas = async (patch: {
     background?: string; fontFamily?: string; lineWidth?: number; rainbow?: boolean;
     compact?: boolean; siblingAlign?: boolean; branchColors?: string[] | null;
-    palette?: string | null; centerColor?: string | null;
+    palette?: string | null; centerColor?: string | null; paletteVariant?: number | null;
   }) => {
     try { commit(await api.setCanvas(patch)); } catch (error) { notify(String(error)); }
   };

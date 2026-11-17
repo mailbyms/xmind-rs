@@ -416,8 +416,10 @@ pub fn doc_set_canvas(
     branch_colors: Option<Vec<String>>,
     palette: Option<String>,
     center_color: Option<String>,
+    palette_variant: Option<u8>,
 ) -> Result<Snapshot, String> {
-    let palette_touched = palette.is_some() || center_color.is_some() || branch_colors.is_some();
+    let palette_touched = palette.is_some() || center_color.is_some()
+        || branch_colors.is_some() || palette_variant.is_some();
     mutate(&state, |doc| {
         if let Some(value) = background {
             doc.background = if value.is_empty() || value == "default" { None } else { Some(value) };
@@ -440,7 +442,10 @@ pub fn doc_set_canvas(
         if let Some(value) = center_color {
             doc.center_color = if value.is_empty() || value == "default" { None } else { Some(value) };
         }
-        // Any of the three palette fields means the user repainted the map, so
+        if let Some(value) = palette_variant {
+            doc.palette_variant = Some(value.min(5));
+        }
+        // Any of the palette fields means the user repainted the map, so
         // `sheet.theme` has to be rewritten on the next save.
         if palette_touched {
             doc.palette_dirty = true;

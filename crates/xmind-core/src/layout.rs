@@ -1687,6 +1687,39 @@ fn root_line_class(doc: &Document, pal: &ThemePalette) -> String {
     raw.rsplit('.').next().unwrap_or("").to_string()
 }
 
+/// Y where a horizontal branch meets a topic box.
+///
+/// For a normal (filled) shape this is the box centre.  For 下划线 / 双下划线
+/// the shipped renderer puts the connector **on the rule**: CDP over
+/// `example.xmind` measured all 126 attach points at `rect.bottom`, with
+/// `topic-node-border` a zero-height stroke whose width equals the whole
+/// `rect.w`.  So both ends of the connector land on the topic's own rule,
+/// reading as one continuous line rather than cutting through the text.
+///
+/// Three painters must agree on this (see FINDINGS §40):
+///   * CSS `.node.underline::after` — full box width, stroke centred on
+///     `box.bottom` (`styles.css`);
+///   * `export.rs` — `<line x1=box.left x2=box.right y=box.bottom>`;
+///   * here — the connector endpoint.
+/// The old code used a label-width `border-bottom` inside the box, which made
+/// the endpoint poke past the rule by ~7px on x and ~3px on y.
+fn branch_anchor_y(node: &LaidOutNode) -> f64 {
+    if node.style.underline {
+        node.y + node.height
+    } else {
+        node.y + node.height / 2.0
+    }
+}
+
+/// X where a branch leaves its parent.  A filled shape keeps the historical
+/// text-area inset; an underline shape has a full-width rule, so the branch
+/// must leave from the box edge (= the rule's end), as measured on the
+/// shipped XMind (all 126 attach points had `dx <= 0.71` from the box edge).
+fn branch_start_x(parent: &LaidOutNode, right: bool, m: Metrics) -> f64 {
+    let inset = if parent.style.underline { 0.0 } else { h_pad(parent.depth) * m.pad };
+    if right { parent.x + parent.width - inset } else { parent.x + inset }
+}
+
 fn build_edges(
     placed: &[Placed], pal: &ThemePalette, vertical: bool, upward: bool, m: Metrics,
     anchors: &Anchors,
@@ -1718,14 +1751,19 @@ fn build_edges(
             let cy = if upward { node.y + node.height } else { node.y };
             ((parent.x + parent.width / 2.0, py), (node.x + node.width / 2.0, cy))
         } else {
+            // Both ends sit on the topics' own anchor line: a filled shape
+            // uses its centre, an underline shape uses its full-width bottom
+            // rule (measured on the shipped XMind, see `branch_anchor_y`).
+            let start_y = branch_anchor_y(parent);
+            let end_y = branch_anchor_y(node);
             match node.side {
                 Side::Right => (
-                    (parent.x + parent.width - h_pad(parent.depth) * m.pad, parent.y + parent.height / 2.0),
-                    (node.x, node.y + node.height / 2.0),
+                    (branch_start_x(parent, true, m), start_y),
+                    (node.x, end_y),
                 ),
                 Side::Left => (
-                    (parent.x + h_pad(parent.depth) * m.pad, parent.y + parent.height / 2.0),
-                    (node.x + node.width, node.y + node.height / 2.0),
+                    (branch_start_x(parent, false, m), start_y),
+                    (node.x + node.width, end_y),
                 ),
             }
         };

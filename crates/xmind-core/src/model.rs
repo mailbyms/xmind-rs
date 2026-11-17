@@ -404,6 +404,10 @@ pub struct Document {
     /// Central-topic fill supplied by the active 配色方案 (last swatch).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub center_color: Option<String>,
+    /// Which of the six quick themes below the 配色方案 drop-down is active.
+    /// 0 is the scheme itself (multi-colour), 1..5 are single-accent themes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub palette_variant: Option<u8>,
     /// Set when the user changed the 配色方案 in this session.  Only then is
     /// `sheet.theme` rewritten on save, so a file painted by real XMind keeps
     /// its theme bytes untouched.
@@ -448,6 +452,7 @@ impl Document {
             branch_colors: None,
             palette: None,
             center_color: None,
+            palette_variant: None,
             palette_dirty: false,
             extra: Extras::new(),
         }

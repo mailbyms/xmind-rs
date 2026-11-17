@@ -12,8 +12,9 @@ import { ALL_SKELETONS, SKELETON_GROUPS } from './skeletons';
 import type { SkeletonPreset } from './skeletons';
 import {
   PALETTE_TABS, paletteBranches, paletteById, paletteByColors, paletteCenter,
+  paletteVariants,
 } from './palettes';
-import type { PaletteDef } from './palettes';
+import type { PaletteDef, PaletteVariant } from './palettes';
 
 /** Depth-first lookup that also covers detached, summary and callout children. */
 function findTopic(root: Topic, id: string): Topic | null {
@@ -65,8 +66,9 @@ interface Props {
   onWidth: (id: string, width: number | null) => void;
   onCanvas: (patch: {
     background?: string; fontFamily?: string; lineWidth?: number; rainbow?: boolean;
-    compact?: boolean; siblingAlign?: boolean; branchColors?: string[] | null;
+    compact?: boolean; siblingAlign?: boolean;     branchColors?: string[] | null;
     palette?: string | null; centerColor?: string | null;
+    paletteVariant?: number | null;
   }) => void;
   notify: (message: string) => void;
 }
@@ -79,8 +81,9 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'canvas', label: '画布' },
 ];
 
-/** Six palettes the shipped panel keeps in its 3x2 quick-pick strip. */
-const QUICK_PALETTES = ['vivid-energy', 'vivid-freshness', 'vivid-vintage', 'vivid-deepsea', 'vivid-sakura', 'classic-gray'];
+/** The shipped panel's new-map default scheme; also the fallback when a file
+ *  carries no `palette` id.  Its six quick themes are what the strip shows. */
+const DEFAULT_SCHEME = () => paletteById('vivid-rainbow') ?? PALETTE_TABS[0].groups[0];
 
 /* ------------------------------------------------------------------ glyphs */
 const G = {
@@ -233,6 +236,12 @@ export default function Inspector({
   const style = node?.style;
   const locked = !node;
   const activePalette = paletteById(doc.palette) ?? paletteByColors(doc.branchColors ?? null);
+  /** The six cards are owned by the scheme in the drop-down, not a fixed list
+   *  of unrelated palettes (FINDINGS §39): switching the scheme re-renders
+   *  all six, and card 0 is the scheme's own multi-colour theme. */
+  const scheme = activePalette ?? DEFAULT_SCHEME();
+  const variants = paletteVariants(scheme);
+  const activeVariant = Math.min(5, Math.max(0, doc.paletteVariant ?? 0));
 
   /** Apply a 配色方案: its last swatch paints the centre, the rest cycle over
    *  the main branches.  The shipped board stays open, exactly like the
@@ -242,6 +251,24 @@ export default function Inspector({
       palette: entry.id,
       centerColor: paletteCenter(entry),
       branchColors: paletteBranches(entry),
+      rainbow: true,
+      paletteVariant: 0,
+    });
+  };
+
+  /** Card 0 restores the scheme itself; cards 1..5 are its single-accent
+   *  quick themes.  The drop-down keeps showing the scheme name. */
+  const applyVariant = (index: number) => {
+    if (!scheme) return;
+    if (index === 0) { applyPalette(scheme); return; }
+    const variant: PaletteVariant | undefined = variants[index];
+    if (!variant) return;
+    onCanvas({
+      palette: scheme.id,
+      paletteVariant: index,
+      centerColor: variant.center,
+      branchColors: variant.branches,
+      background: variant.bg,
       rainbow: true,
     });
   };
@@ -732,21 +759,22 @@ export default function Inspector({
                     </svg>
                   </button>
                 </div>
-                {/* Six quick picks: the shipped 3x2 strip of saved 配色方案. */}
-                <div className="fp-bone-grid">
-                  {QUICK_PALETTES.map((id) => {
-                    const entry = paletteById(id);
-                    if (!entry) return null;
-                    const on = activePalette?.id === entry.id;
-                    return (
-                      <button key={id} className={`fp-bone-card is-pal${on ? ' on' : ''}`}
-                        title={entry.name} onClick={() => applyPalette(entry)}>
-                        {/* Whole little map per palette, like the shipped strip. */}
-                        <img className="fp-thumb" src={`/tiles/palettes/${entry.id}.svg`} alt=""
-                          draggable={false} />
-                      </button>
-                    );
-                  })}
+                {/* Six quick themes owned by the selected scheme (FINDINGS §39).
+                    Card 0 is the scheme's full palette; 1..5 are single-accent
+                    themes built from its swatches. */}
+                <div className="fp-bone-grid" data-scheme={scheme?.id ?? ''}>
+                  {variants.map((_variant, index) => (
+                    <button key={index}
+                      className={`fp-bone-card is-pal${activeVariant === index ? ' on' : ''}`}
+                      data-variant={index}
+                      title={`${scheme?.name ?? '配色方案'} ${index + 1}`}
+                      onClick={() => applyVariant(index)}>
+                      <img className="fp-thumb" alt="" draggable={false}
+                        src={index === 0
+                          ? `/tiles/palettes/${scheme?.id ?? ''}.svg`
+                          : `/tiles/palette-variants/${scheme?.id ?? ''}-${index}.svg`} />
+                    </button>
+                  ))}
                 </div>
               </div>
 

@@ -105,6 +105,7 @@ export const api = {
     background?: string; fontFamily?: string; lineWidth?: number;
     rainbow?: boolean; compact?: boolean; siblingAlign?: boolean;
     branchColors?: string[] | null; palette?: string | null; centerColor?: string | null;
+    paletteVariant?: number | null;
   }) => call<Snapshot>('doc_set_canvas', {
     background: patch.background ?? null,
     fontFamily: patch.fontFamily ?? null,
@@ -115,6 +116,7 @@ export const api = {
     branchColors: patch.branchColors ?? null,
     palette: patch.palette ?? null,
     centerColor: patch.centerColor ?? null,
+    paletteVariant: patch.paletteVariant ?? null,
   }),
 
   addSheet: () => call<Snapshot>('doc_add_sheet'),

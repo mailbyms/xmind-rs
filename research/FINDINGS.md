@@ -2618,3 +2618,91 @@ ALL PASS、`open-sample example.xmind`（72 节点）、`ui-rename` ALL PASS；
 `ui-skeleton-lines` 17/17 / `ui-theme-style` 22/22（先 `open-sample
 example.xmind`）/ `ui-startup-scrollbars` 20 项全绿。
 `compare-skeletons.mjs` 本轮未跑（需要原版 9222 实例）。
+
+## 39. 画布 > 配色方案：下拉每个选项对应 6 个单色变体（2026-11-17）
+
+**问题**：侧面板「画布 → 配色方案」把下拉（缤纷 / 经典两套画廊）与下方
+3×2 快捷卡写死成 6 个固定方案，切换下拉选项时下方卡片不变，逻辑不成立。
+
+**原版事实**（CDP 9222，不带独立 profile 直接带文件路径启动即可）：
+弹层 `.smart-color-theme-group` 分「缤纷 / 经典」两组画廊；选中一个方案后
+下方固定 6 张 `.uk-card.uk-card-selectable`，是**该方案 6 个主色各自作为主色
+的单色变体**（「永恒」= `#3949AB / #E53935 / #C0CA33 / #00897B / #1E88E5 /
+#8E24AA`）。选方案时保持多彩（card 0 active），**点某张卡片**才切到单色搭配。
+`research/asar-src/renderer/2907.js` 内嵌 513 个 theme 预设（`tags` 分组 +
+`colorFieldsMap` + `theme`），按 `tags` 且 `!hidden` 过滤得到 32 套可见方案，
+每套 6 个变体。
+
+**实现**：`scripts/build-palette-data.mjs` 由 bundle 生成
+`src/inspector/palettes.ts` 的 `variants`（禁手改生成文件）与
+`public/tiles/palette-variants/` 共 192 张 SVG 缩略图；`Inspector.tsx` 的
+`QUICK_PALETTES` 换成 `activePalette.variants`，6 张卡随下拉即时联动。
+变体索引持久化到 `sheet.extra["xmindRsPaletteVariant"]`，经
+`Document.palette_variant` → `doc_set_canvas` → `api.setCanvas` 全链路往返，
+`.xmind` 存读不丢（`roundtrip.rs::palette_variant_roundtrips`）。
+回归 `scripts/ui-palette-variants.mjs` 31/31（含真机存盘往返）。
+
+## 40. 下划线主题：连线端点必须与下划线重合（2026-11-17）
+
+**用户猜测**：「当主题显示样式为下划线时，与该主题连接的线，都与它的
+下划线垂直对齐」。原版 DOM 实测证明成立，且比猜测更严格。
+
+**原版事实**（CDP 9222 + `example.xmind`，采集脚本
+`scripts/probe-orig-underline.mjs`，结果 `target/verify/underline/
+orig-underline.json` / `orig-attach.json`）：
+
+| 量 | 实测 |
+| --- | --- |
+| 端点总数 | 126（63 条连线 × start/end），全部是下划线主题 |
+| 端点 y | **126 / 126 满足 `y == rect.bottom == underlineY`**（盒底） |
+| 端点 x | `dx <= 0.71`，即落在 `rect.x` 或 `rect.x + rect.w`（盒左右边缘） |
+| 下划线本体 | `topic-node-border` 零高度水平描边，`border.w == rect.w`（满盒宽）、`border.y == rect.y + rect.h`（盒底） |
+
+也就是说：原版下划线是**主题盒底一条满宽的零高度 SVG 描边**，连线两端
+正好落在它的左右端，视觉上是连续的一笔（见 `orig-underline.png`）。
+
+**本应用此前的偏差**（`app-before.png` 对照）：
+
+1. 下划线是 `.node-title` 的 CSS `border-bottom`，`width: auto` 只贴合文字，
+   比盒窄 4~6.7px（左对齐一级主题左侧还差 18.85px）；
+2. 位置在 label 底边，比盒底高 3.19px（单行）/ 6.06px（多行）；
+3. 连线端点 x 按**主题盒边缘**算，而 CSS 下划线端点在**文字边缘** ——
+   坐标空间不同，线从下划线末端「戳出去」；
+4. 连线在 `.edges` SVG 层，下划线是 DOM 元素（`z-index: 1`）盖在其上，
+   无法「续接」；
+5. 导出 SVG 反倒画的是满盒宽、盒底 -2px 的线，与画布又不一致。
+
+第 1 轮只把端点 y 从盒中心挪到 label 底边（`branch_anchor_y` 的
+`(height + title_height)/2`），用户反馈「有所改善，但没完全改对」——
+y 接近了，x 与三者一致性没解决。
+
+**修复（三处统一到盒底 + 满盒宽）**：
+
+- `src/styles.css`：`.node.underline::after` 绝对定位
+  `left: 0; right: 0; bottom: 0; height: var(--ulw);
+  background: var(--ul); transform: translateY(50%)` —— 描边中心正好落在
+  `box.bottom`。移除 `.node.underline .node-title[/-input]` 的
+  `border-bottom`，避免第二条贴合文字的线。
+- `crates/xmind-core/src/layout.rs::branch_anchor_y`：下划线主题直接返回
+  `node.y + node.height`（盒底），普通实心形状仍用盒中心。
+  新增 `branch_start_x`：父主题是下划线时去掉历史的 `h_pad * pad` 内缩，
+  让出线点落在盒边缘（下划线端点）；实心父主题保持原内缩不变。
+- `crates/xmind-file/src/export.rs`：下划线 `<line>` 的 y 从
+  `box.bottom - 2` 改到 `box.bottom`；`fill == "transparent"` 的表格单元格
+  保留原 2px 内缩分隔线（它们没有 CSS `::after`，不是下划线主题）。
+
+**绘制/计算顺序**（回答用户提问）：
+- 计算：`compute_layout` 先摆主题盒 → `build_edges` 由盒派生端点 →
+  `build_braces` / `build_decorations` → 组装 `Layout`。端点由主题派生。
+- 绘制：`.stage` 内全部 `position: absolute` 且大多无 `z-index`，层叠由
+  DOM 顺序决定：`edges` → `decor-layer` → `nodes` → `drop-layer` →
+  `selection-layer`（线在底、主题在上，与原版一致，不是问题所在）。
+  真正的问题是下划线从 SVG 描边变成了 DOM/CSS 元素且宽度收窄。
+
+**回归**：`crates/xmind-core/tests/underline_edges.rs` 2 项（端点 y/x 精确
+落在盒底与盒左右边缘；下划线父主题的出线点也在自己的规则上；实心主题
+仍保持中心连接）。`scripts/ui-underline-align.mjs` 校验后端端点、DOM
+`::after` 几何、导出 SVG `<line>` 三者一致并出截图。
+`scripts/ui-theme-style.mjs` 的下划线 DOM 断言由读 `.node-title` 的
+`borderBottom` 改为读 `::after` 的 background / height / left / right /
+bottom / transform，并新增「label 不再画第二条线」。

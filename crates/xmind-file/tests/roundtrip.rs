@@ -163,6 +163,24 @@ fn skeleton_layers_survive_a_save_and_reopen() {
     let _ = fs::remove_file(&target);
 }
 
+/// FINDINGS §39: the six quick themes below the 配色方案 drop-down are chosen
+/// per scheme, so the active index must survive a save/reopen.
+#[test]
+fn palette_variant_survives_a_save_and_reopen() {
+    let mut document = xmind_core::Document::new("配色方案往返");
+    document.palette = Some("classic-classic".into());
+    document.palette_variant = Some(3);
+    document.palette_dirty = true;
+    let target = std::env::temp_dir().join("xmind-rs-palette-variant.xmind");
+    write_xmind(&target, &document, &[], None).unwrap();
+    let content = entry_text(&target, "content.json");
+    assert!(content.contains("xmindRsPaletteVariant"), "private key missing: {content}");
+    let again = read_xmind(&target).unwrap();
+    assert_eq!(again.document.palette_variant, Some(3));
+    assert_eq!(again.document.palette.as_deref(), Some("classic-classic"));
+    let _ = fs::remove_file(&target);
+}
+
 fn entry_text(path: &std::path::Path, name: &str) -> String {
     let file = fs::File::open(path).unwrap();
     let mut zip = zip::ZipArchive::new(file).unwrap();
