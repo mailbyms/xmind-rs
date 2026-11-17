@@ -103,6 +103,12 @@ function countCharacters(document: Document): number {
 
 const loading = <div className="loading">正在加载模块…</div>;
 
+/** Label used by the title bar and the native window: XMind shows the bare
+ *  file name, and "未命名" for a fresh canvas that has never been saved. */
+function docLabel(path: string | null | undefined): string {
+  return path ? path.split(/[\\/]/).pop() || '未命名' : '未命名';
+}
+
 export default function App() {
   const win = getCurrentWindow();
   const [info, setInfo] = useState<AppInfo | null>(null);
@@ -248,9 +254,16 @@ export default function App() {
   // The chrome uses XMind's measured palette (styles.css); the document theme
   // only affects canvas content, so nothing writes CSS variables here.
   useEffect(() => {
-    const name = snapshot?.path ? snapshot.path.split(/[\\/]/).pop() : '未命名';
-    document.title = `${snapshot?.dirty ? '● ' : ''}${name} - XMind RS`;
+    document.title = `${snapshot?.dirty ? '● ' : ''}${docLabel(snapshot?.path)} - XMind RS`;
   }, [snapshot]);
+
+  // Windows draws the taskbar button / Alt-Tab entry from the *native* window
+  // title; the WebView's document.title never reaches it. Only a different file
+  // path changes the label, so ignore the many dirty/layout snapshots emitted
+  // while typing — that would otherwise fire an IPC on every keystroke.
+  useEffect(() => {
+    void getCurrentWindow().setTitle(docLabel(snapshot?.path)).catch(() => undefined);
+  }, [snapshot?.path]);
 
   // Debounced crash recovery, entirely on the Rust side.
   useEffect(() => {
@@ -940,7 +953,7 @@ export default function App() {
     ? `${snapshot.path ?? 'new'}|${snapshot.structure}|${snapshot.document.activeSheet}|${snapshot.stats.sheets}`
     : 'boot';
 
-  const docName = snapshot?.path ? snapshot.path.split(/[\\/]/).pop()! : '未命名';
+  const docName = docLabel(snapshot?.path);
   const topicCount = snapshot?.stats.topics ?? 0;
   const activeSheet = snapshot?.document.activeSheet ?? 0;
   const idList = snapshot ? collectIds(snapshot.document) : [];
