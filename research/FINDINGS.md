@@ -2154,3 +2154,77 @@ stroke-width 8.17px（5pt×4/3 + 选中态 1.5）；点工具栏「概要」后 
 `ours-wrap-{before,after}.json`、`ours-help-menu.json`。
 脚本：`probe-orig-click.mjs` / `shot-selected.mjs` / `check-help-menu.mjs` /
 `expr-orig-wrap.js` / `expr-ours-wrap.js` / `simulate-wrap.mjs`。
+
+---
+
+## 32. Windows 任务栏显示文档名（2026-11-17）
+
+### 现象与根因
+
+任务栏按钮 / Alt-Tab 一直显示 `XMind RS`。`App.tsx` 里只有
+`document.title = "● example2.xmind - XMind RS"`，那是 **WebView 页面标题**；
+Windows 读的是**原生窗口标题**（`GetWindowText`），由 `tauri.conf.json`
+的 `app.windows[0].title = "XMind RS"` 决定，运行期从未被改过。
+`src-tauri/capabilities/default.json` 其实早已授予
+`core:window:allow-set-title`，只是前端没有调用。
+
+### 实现（`src/shell/App.tsx`）
+
+```ts
+function docLabel(path: string | null | undefined): string {
+  return path ? path.split(/[\\/]/).pop() || '未命名' : '未命名';
+}
+
+// document.title 保持原样（页面标题仍带 ● 与 " - XMind RS"）。
+useEffect(() => {
+  void getCurrentWindow().setTitle(docLabel(snapshot?.path)).catch(() => undefined);
+}, [snapshot?.path]);
+```
+
+* 任务栏只放**裸文件名**，不加 `●`、不加 `- XMind RS`：与自绘标题栏
+  `.doc-name` 一致，未保存画布为 `未命名`；编辑状态由 `.doc-status`
+  （空 / 已编辑 / 保存中...）单独表达，不污染任务栏。
+* effect **只依赖 `snapshot.path`**：就地编辑每次按键都会产生新的 dirty /
+  layout snapshot，若依赖整个 `snapshot` 会每键发一次 IPC；
+  打开、另存为、新建、最近文件切换都会改变 `path`，四种路径全覆盖。
+* `docLabel()` 同时供 `document.title`、`.doc-name` 与 `setTitle` 复用，
+  避免三处 basename 逻辑漂移；`split(/[\\/]/)` 兼容 Windows 反斜杠与
+  IPC 可能返回的斜杠路径。
+* 权限已就位，无需改 capabilities / Rust；`setTitle()` 的 Promise 显式
+  `.catch()`，避免权限缺失时产生未处理 rejection。
+
+### 真机验证（`MainWindowTitle` 才是任务栏文字来源）
+
+CDP 只能读 `document.title`，不能读原生窗口标题；用进程对象
+`MainWindowTitle` 属性实测（PowerShell `Get-Process`）：
+
+| 场景 | MainWindowTitle |
+| --- | --- |
+| 启动（空白画布） | `未命名` |
+| 打开 `example2.xmind` | `example2.xmind` |
+| 切到 `example.xmind` | `example.xmind` |
+| Ctrl+N 新建 | `未命名` |
+| 打开文档后编辑置 dirty | `example2.xmind`（不变，符合预期） |
+
+注意终端表格输出偶尔会在末尾多打印一个 `X`（控制台噪声），
+精确值用 `ConvertTo-Json` 复核：
+`{"Title":"未命名","Length":3,"Codes":"26410,21629,21517"}`。
+
+最终又用**从 GitHub Release 下载的 exe**（`gh release download v0.1`，
+sha256 `4fee1c56…`）在独立数据目录启动复测：空白 `未命名` →
+打开 `example2.xmind` 后 `example2.xmind`，端到端通过。
+
+### 回归与发布
+
+`npx tsc --noEmit`、`npm run build:app` 全绿；`ui-menus` ALL PASS、
+`ui-marquee-summary` ALL PASS、`ui-rename` all checks passed、
+`ui-verify` 0 FAIL、`ui-skeleton-lines` 17/17、`ui-theme-style` 22/22、
+`compare-skeletons` exit 0。
+`ui-marquee-summary` 在 `ui-menus` 之后直接跑会因残留选中/菜单状态
+FAIL 3 项（外框范围手柄），先 `scripts/new-doc.mjs` 重跑即 ALL PASS，
+与本次改动无关。
+
+提交 `d6468dc`，推送 `main`。Release `v0.1` 的三个资产用
+`gh release upload --clobber` 覆盖为新二进制，`RELEASE_NOTES.md` 顶部
+加修订说明、`SHA256SUMS.txt` 更新（下载数 <3，避免制造版本碎片）；
+`gh release download` 回拉校验哈希一致。
