@@ -169,8 +169,18 @@ for (const group of ['文件', '编辑', '插入', '工具', '查看', '帮助']
       `got ${actual.join('|')}`);
   } else {
     let expected = labels(origMain.find((i) => i.label === group)?.sub ?? []);
-    if (group === '文件') expected = expected.filter((l) => l !== '最近打开');
-    ok(`主菜单「${group}」子菜单条目 == 原版${group === '文件' ? '（最近打开已上移）' : ''}`,
+    let note = '';
+    if (group === '文件') {
+      expected = expected.filter((l) => l !== '最近打开');
+      note = '（最近打开已上移）';
+    }
+    if (group === '查看') {
+      // 刻意偏离：ZEN / 演说 两个模式已整体删除，夹在中间的两个分隔线合并为一个。
+      const kept = expected.filter((l) => l !== 'ZEN 模式' && l !== '演说模式');
+      expected = kept.filter((l, i) => l !== '---' || kept[i - 1] !== '---');
+      note = '（ZEN / 演说 已移除）';
+    }
+    ok(`主菜单「${group}」子菜单条目 == 原版${note}`,
       JSON.stringify(actual) === JSON.stringify(expected),
       JSON.stringify(actual) === JSON.stringify(expected) ? `${actual.length} 行` : `got ${actual.join('|')}`);
   }
@@ -189,6 +199,11 @@ ok('帮助菜单只有两项且都可用',
   helpRows.map((r) => `${r.label}:${r.disabled}`).join(' | '));
 
 const viewPanels = await hover('查看');
+// 刻意偏离原版：ZEN / 演说 两个模式已整体删除，查看菜单里不应再有这两行。
+const viewRows = viewPanels?.[1] ?? [];
+ok('查看菜单无 ZEN / 演说 行',
+  viewRows.every((r) => !/ZEN|演说/.test(r.label ?? '')),
+  viewRows.map((r) => (r.sep ? '---' : r.label)).join('|'));
 const toolPanels = await hover('工具栏', 1);
 const toolbarRows = toolPanels?.[2] ?? [];
 ok('查看 > 工具栏 有且仅有一个勾选项',

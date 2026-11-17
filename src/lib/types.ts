@@ -86,17 +86,7 @@ export interface Document {
   palette?: string | null;
   /** Central-topic fill supplied by the active 配色方案. */
   centerColor?: string | null;
-  pitch?: PitchSettings;
   [key: string]: unknown;
-}
-
-export interface PitchSettings {
-  ratio: string;
-  topicSlides: string;
-  listSlides: string;
-  method: string;
-  layout: number;
-  style: string;
 }
 
 export interface ThemePalette {

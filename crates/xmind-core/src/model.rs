@@ -361,38 +361,6 @@ pub struct Sheet {
     pub extra: Extras,
 }
 
-/// 演说 (pitch) settings shown in the right panel's 演说 tab.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase", default)]
-pub struct PitchSettings {
-    /// `auto` / `16:9` / `4:3` / `9:16` / `3:4`.
-    pub ratio: String,
-    /// Whether a topic gets its own slide: `auto` / `show` / `hide`.
-    pub topic_slides: String,
-    /// Whether child topics become a list slide: `auto` / `show` / `hide`.
-    pub list_slides: String,
-    /// `drill` (逐一出现并钻入) / `fade` (逐一出现) / `all` (一次性出现).
-    pub method: String,
-    /// Slide layout 1..5.
-    pub layout: u8,
-    /// Pitch style id, one of `light` / `dark` / `innocence` / `shape-for-you`
-    /// / `midnight-rose` / `hubble-bubble` / `hand-drawn`.
-    pub style: String,
-}
-
-impl Default for PitchSettings {
-    fn default() -> Self {
-        Self {
-            ratio: "auto".into(),
-            topic_slides: "auto".into(),
-            list_slides: "auto".into(),
-            method: "drill".into(),
-            layout: 1,
-            style: "dark".into(),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Document {
@@ -441,9 +409,6 @@ pub struct Document {
     /// its theme bytes untouched.
     #[serde(default)]
     pub palette_dirty: bool,
-    /// 演说 tab settings.
-    #[serde(default)]
-    pub pitch: PitchSettings,
     #[serde(rename = "__extra", default)]
     pub extra: Extras,
 }
@@ -484,7 +449,6 @@ impl Document {
             palette: None,
             center_color: None,
             palette_dirty: false,
-            pitch: PitchSettings::default(),
             extra: Extras::new(),
         }
     }

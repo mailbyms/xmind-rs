@@ -115,18 +115,6 @@ export const api = {
     centerColor: patch.centerColor ?? null,
   }),
 
-  setPitch: (patch: {
-    ratio?: string; topicSlides?: string; listSlides?: string;
-    method?: string; layout?: number; style?: string;
-  }) => call<Snapshot>('doc_set_pitch', {
-    ratio: patch.ratio ?? null,
-    topicSlides: patch.topicSlides ?? null,
-    listSlides: patch.listSlides ?? null,
-    method: patch.method ?? null,
-    layout: patch.layout ?? null,
-    style: patch.style ?? null,
-  }),
-
   addSheet: () => call<Snapshot>('doc_add_sheet'),
   removeSheet: (index: number) => call<Snapshot>('doc_remove_sheet', { index }),
   renameSheet: (index: number, title: string) => call<Snapshot>('doc_rename_sheet', { index, title }),

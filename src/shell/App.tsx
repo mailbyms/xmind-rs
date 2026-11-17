@@ -17,7 +17,6 @@ const AiPanel = lazy(() => import('../ai/AiPanel'));
 const Inspector = lazy(() => import('../inspector/Inspector'));
 const TopicAttrs = lazy(() => import('../inspector/TopicAttrs'));
 const ExportDialog = lazy(() => import('../io/ExportDialog'));
-const PresentView = lazy(() => import('./PresentView'));
 
 type Panel = 'none' | 'ai' | 'format' | 'attrs' | 'export';
 type ToolbarPop = 'marker' | 'insert' | null;
@@ -123,7 +122,6 @@ export default function App() {
   const [hrefFrom, setHrefFrom] = useState<string | null>(null);
   /** Selected relationship / boundary / summary (mutually exclusive with a topic). */
   const [selectedDecor, setSelectedDecor] = useState<DecorSelection | null>(null);
-  const [zen, setZen] = useState(false);
   /** In-app rename box for a 联系 / 外框 (WebView2 has no reliable prompt()). */
   const [renameTarget, setRenameTarget] = useState<
     { kind: string; id: string; current: string; label: string } | null>(null);
@@ -150,7 +148,6 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [scale, setScale] = useState(1);
   const [viewMode, setViewMode] = useState<'map' | 'outline'>('map');
-  const [presenting, setPresenting] = useState(false);
   const [outlineScale, setOutlineScale] = useState(100);
   const [zoomMenu, setZoomMenu] = useState<{ right: number; bottom: number } | null>(null);
   /** 保存进行中：标题栏显示「保存中...」，同时锁住菜单里的保存项。 */
@@ -794,8 +791,6 @@ export default function App() {
       case 'view.zoomReset': canvasRef.current?.reset(); break;
       case 'view.fit': canvasRef.current?.fit(); break;
       case 'view.focusBranch': if (need()) void run('focusBranch', { id }); break;
-      case 'view.zen': setZen((value) => !value); break;
-      case 'view.present': setPresenting(true); break;
       case 'view.panel.style': case 'view.panel.canvas':
       case 'view.panel.skeleton': case 'view.panel.palette': {
         setPanel('format');
@@ -837,8 +832,6 @@ export default function App() {
   // XMind-compatible keyboard map. Every menu row has its shortcut here too.
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      // 演说模式自己有完整的键盘映射，这里整体让位。
-      if (presenting) return;
       const target = event.target as HTMLElement | null;
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
       const mod = event.ctrlKey || event.metaKey;
@@ -854,18 +847,14 @@ export default function App() {
         if (contextMenu) { setContextMenu(null); return; }
         if (menuOpen) { setMenuOpen(false); return; }
         if (toolbarPop) { setToolbarPop(null); return; }
-        // ZEN is a mode, not a selection: one Escape must always leave it.
-        if (zen) setZen(false);
-        else if (linkFrom || hrefFrom) {
+        if (linkFrom || hrefFrom) {
           setLinkFrom(null); setHrefFrom(null); notify('已取消联系');
         } else if (selectedDecor) setSelectedDecor(null);
         else if (renameTarget) setRenameTarget(null);
         else if (selectedIds.length > 1) select(selected);
         return;
       }
-      if (mod && alt && key === 'p') { event.preventDefault(); setPresenting(true); }
-      else if (mod && alt && key === 'f') { event.preventDefault(); setZen((value) => !value); }
-      else if (mod && alt && key === 'n') fire('insert.sheet');
+      if (mod && alt && key === 'n') fire('insert.sheet');
       else if (mod && alt && key === 'c') fire('edit.copyStyle');
       else if (mod && alt && key === 'v') fire('edit.pasteStyle');
       else if (mod && alt && key === '0') fire('edit.resetStyle');
@@ -912,7 +901,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [presenting, selected, selectedIds, selectedDecor, linkFrom, hrefFrom, zen, renameTarget,
+  }, [selected, selectedIds, selectedDecor, linkFrom, hrefFrom, renameTarget,
     menuOpen, contextMenu, dialog, inputDialog, toolbarPop, run, startLink, addRange, saveFile, openFile,
     newFile, notify, select, doAction, deleteSelection]);
 
@@ -1073,7 +1062,6 @@ export default function App() {
       saving,
       hasPath: Boolean(snapshot?.path),
       viewMode,
-      zen,
       toolbarLabels,
       hasStyle: Boolean(topic?.style && Object.keys(topic.style).length > 0),
       hasHref: Boolean(topic?.href),
@@ -1081,7 +1069,7 @@ export default function App() {
       isFloating: Boolean(node && node.depth > 0 && !node.parentId),
       recent: snapshot?.recent ?? [],
     };
-  }, [snapshot, selected, selectedIds, viewMode, zen, toolbarLabels, saving]);
+  }, [snapshot, selected, selectedIds, viewMode, toolbarLabels, saving]);
 
   /** MapCanvas reports right clicks; which menu appears depends on the target. */
   const openContextMenu = useCallback((x: number, y: number, topicId: string | null) => {
@@ -1105,12 +1093,7 @@ export default function App() {
   }, [menuContext, selected, selectedIds, select, snapshot]);
 
   return (
-    <div className={`app${zen ? ' zen' : ''}${toolbarLabels ? '' : ' icons-only'}`}>
-      {zen && (
-        <button className="zen-exit" title="退出 ZEN 模式（Esc）" onClick={() => setZen(false)}>
-          退出 ZEN
-        </button>
-      )}
+    <div className={`app${toolbarLabels ? '' : ' icons-only'}`}>
       {renameTarget && (
         <div className="modal-backdrop" onPointerDown={() => setRenameTarget(null)}>
           <div className="rename-dialog" onPointerDown={(event) => event.stopPropagation()}>
@@ -1401,12 +1384,6 @@ export default function App() {
           )}
         </Suspense>
       </div>
-
-      {presenting && snapshot && (
-        <Suspense fallback={null}>
-          <PresentView document={snapshot.document} onExit={() => setPresenting(false)} />
-        </Suspense>
-      )}
 
     </div>
   );

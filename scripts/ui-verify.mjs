@@ -1,6 +1,6 @@
 // End-to-end UI drive: build topics with the keyboard, then walk the 画布 tab
-// (骨架 / 紧凑型布局 / 同级主题对齐 / 分支配色) and the演说模式快捷键, dumping a
-// metric + screenshot at every step. 演说侧面板与工具栏按钮已移除。
+// (骨架 / 紧凑型布局 / 同级主题对齐 / 分支配色), dumping a metric + screenshot at
+// every step. ZEN 与演说模式已整体移除，末尾只确认它们不再出现。
 // Usage: node scripts/ui-verify.mjs [outdir]
 import { writeFileSync, mkdirSync } from 'node:fs';
 
@@ -45,7 +45,7 @@ const key = async (k, code, vk) => {
   }
   await wait(320);
 };
-/** Ctrl+Alt+P: the only remaining entry into 演说模式 after the tab/button removal. */
+/** Ctrl+Alt+P — kept only to prove the removed 演说 entry no longer fires. */
 const chord = async (k, code, vk, modifiers) => {
   for (const type of ['keyDown', 'keyUp']) {
     await send('Input.dispatchKeyEvent', {
@@ -190,26 +190,11 @@ await wait(900);
 console.log('branch palette:', JSON.stringify(pal));
 await shot('04-branch-palette');
 
-// ---------------------------------------------------------------- present mode
-// 侧面板「演说」tab 与工具栏「演说」按钮已删除；改用 Ctrl+Alt+P 进入。
+// --------------------------------------------------- present mode (removed)
+// 演说模式已整体删除：Ctrl+Alt+P 不应再打开任何播放层。
 await chord('p', 'KeyP', 80, 3); // Alt=1 + Ctrl=2
-await wait(1200); // PresentView 是懒加载 chunk
-const present = await evaluate(`(() => {
-  const el = document.querySelector('.present');
-  if (!el) return 'missing';
-  return { title: document.querySelector('.ps-cover-title')?.textContent, count: document.querySelector('.present-count')?.textContent };
-})()`);
-console.log('present:', JSON.stringify(present));
-await shot('09-present-cover');
-await key('ArrowRight', 'ArrowRight', 39);
-await wait(500);
-console.log('slide 2:', await evaluate(`(() => document.querySelector('.ps-title')?.textContent + ' | bullets: ' + [...document.querySelectorAll('.ps-item')].length)()`));
-await shot('10-present-slide2');
-await key('ArrowRight', 'ArrowRight', 39);
-await wait(500);
-await shot('11-present-slide3');
-await key('Escape', 'Escape', 27);
-await wait(500);
-console.log('present closed:', await evaluate(`(() => document.querySelector('.present') ? 'still open' : 'closed')()`));
+await wait(800);
+console.log('present:', await evaluate(`(() => document.querySelector('.present') ? 'still present' : 'removed')()`));
+await shot('09-present-removed');
 
 ws.close();

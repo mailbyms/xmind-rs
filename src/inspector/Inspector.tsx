@@ -71,8 +71,7 @@ interface Props {
   notify: (message: string) => void;
 }
 
-/** 演说 tab 已移除：侧面板只保留「样式 / 画布」，演说模式仍由「查看」菜单
- *  与 Ctrl+Alt+P 进入，使用 lib/pitch.ts 的默认配置。 */
+/** 侧面板只保留「样式 / 画布」；演说模式已整体移除。 */
 type Tab = 'style' | 'canvas';
 
 const TABS: { id: Tab; label: string }[] = [

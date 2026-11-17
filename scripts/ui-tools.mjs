@@ -1,7 +1,7 @@
 // Real-app verification for the three reported gaps:
 //   1. dragging a topic onto empty canvas repositions it (floating topic);
 //   2. the − / +N fold badge works on the central topic AND on branches;
-//   3. 联系 / 概要 / 外框 工具栏按钮与 ZEN 快捷键做真实的编辑操作。
+//   3. 联系 / 概要 / 外框 工具栏按钮做真实的编辑操作；ZEN / 演说的残留已清空。
 // Drives the shipped release over CDP; no direct IPC mutation of documents.
 // Usage: node scripts/ui-tools.mjs [outdir]
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -299,20 +299,15 @@ if (frameHit) {
   ok('clicking a frame selects it', await ev(`document.querySelectorAll('.decor-frame.selected').length`) === 1);
 }
 
-// -------------------------------------------------------------------- ZEN --
-console.log('\n[4] ZEN mode');
-// 工具栏 ZEN 按钮已删除，改用 Ctrl+Alt+F（Alt=1 + Ctrl=2）。
+// ------------------------------------------------------- ZEN / 演说 已移除 --
+console.log('\n[4] ZEN / 演说 removed');
+// 两个模式已整体删除：快捷键不再生效，DOM 里也不该出现对应节点。
 await press('f', 'KeyF', 70, 3);
-ok('Ctrl+Alt+F enters ZEN', await ev(`document.querySelector('.app').classList.contains('zen')`));
-ok('ZEN hides the chrome', await ev(`(() => {
-  const app = document.querySelector('.app');
-  return app.classList.contains('zen')
-    && getComputedStyle(document.querySelector('.titlebar')).display === 'none'
-    && getComputedStyle(document.querySelector('.statusbar')).display === 'none';
-})()`));
-await shot('6-zen');
-await press('Escape', 'Escape', 27);
-ok('Escape leaves ZEN', await ev(`!document.querySelector('.app').classList.contains('zen')`));
+ok('Ctrl+Alt+F no longer enters ZEN', await ev(`!document.querySelector('.app').classList.contains('zen')`));
+ok('no ZEN exit button', await ev(`!document.querySelector('.zen-exit')`));
+await press('p', 'KeyP', 80, 3);
+await wait(600);
+ok('Ctrl+Alt+P no longer opens 演说', await ev(`!document.querySelector('.present')`));
 
 console.log(fail.length === 0 ? '\nall checks passed' : `\n${fail.length} failed: ${fail.join(', ')}`);
 ws.close();

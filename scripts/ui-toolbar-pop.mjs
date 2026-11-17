@@ -6,8 +6,8 @@
 //      Rust command (canvas chip + doc_layout agree), and toggles off.
 //   3. 插入 opens a real dropdown whose rows perform the corresponding insert
 //      actions (子主题 / 笔记 / 主题属性…), not just an attrs-panel toggle.
-//   4. Esc and outside clicks dismiss the popovers; ZEN / 演说 modes are still
-//      reachable through Ctrl+Alt+F / Ctrl+Alt+P.
+//   4. Esc and outside clicks dismiss the popovers; ZEN / 演说 are gone for
+//      good (Ctrl+Alt+F / Ctrl+Alt+P do nothing).
 //
 //   Run against a clean document:  node scripts/new-doc.mjs
 //   CDP_PORT=9223 node scripts/ui-toolbar-pop.mjs
@@ -200,17 +200,13 @@ ok('打开侧面板后下拉已关闭', await ev(`!document.querySelector('.tool
 await ev(`document.querySelector('.panel-close')?.click()`);
 await wait(200);
 
-// ------------------------------------------------------------------ 6. modes still reachable
+// ------------------------------------------------- 6. ZEN / 演说 fully removed
 await press('f', 'KeyF', 70, 3);
-ok('Ctrl+Alt+F 仍可进入 ZEN', await ev(`document.querySelector('.app').classList.contains('zen')`));
-await press('Escape', 'Escape', 27);
-ok('Esc 退出 ZEN', await ev(`!document.querySelector('.app').classList.contains('zen')`));
+ok('Ctrl+Alt+F 不再进入 ZEN', await ev(`!document.querySelector('.app').classList.contains('zen')`));
+ok('无 ZEN 退出按钮', await ev(`!document.querySelector('.zen-exit')`));
 await press('p', 'KeyP', 80, 3);
-await wait(1200); // PresentView 是懒加载 chunk
-ok('Ctrl+Alt+P 仍可进入演说模式', await ev(`!!document.querySelector('.present')`));
-await press('Escape', 'Escape', 27);
-await wait(500);
-ok('Esc 退出演说模式', await ev(`!document.querySelector('.present')`));
+await wait(800);
+ok('Ctrl+Alt+P 不再进入演说模式', await ev(`!document.querySelector('.present')`));
 
 console.log(fail.length === 0 ? '\nALL PASS' : `\n${fail.length} FAILED: ${fail.join(', ')}`);
 ws.close();

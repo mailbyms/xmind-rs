@@ -141,7 +141,7 @@ button { cursor: pointer; }
 .tool-group + .tool-group { margin-left: 16px; }
 .tool-flex { flex: 1 1 0; min-width: 8px; }
 /* The shipped bar keeps a flexible void before 格式 so the main tool cluster
-   lands on the window centre. ZEN / 演说 buttons were removed from the bar. */
+   lands on the window centre. */
 .tool-flex.end { flex: 0 1 89px; }
 
 .tool-item {
@@ -332,16 +332,6 @@ button { cursor: pointer; }
 .decor-frame.selected > path:first-child,
 .decor-link.selected > path:first-child { filter: drop-shadow(0 0 3px var(--accent)); }
 .canvas.link-pick .node { cursor: crosshair; }
-
-/* ZEN: chrome-free canvas, Esc or the floating button restores it. */
-.app.zen .titlebar, .app.zen .statusbar, .app.zen .panel { display: none; }
-.zen-exit {
-  position: fixed; right: 16px; top: 14px; z-index: 60; cursor: pointer;
-  border: 1px solid var(--line); border-radius: 6px; background: var(--chrome);
-  color: var(--text); padding: 5px 12px; font-size: 12px; opacity: .35;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
-}
-.zen-exit:hover { opacity: 1; }
 
 /* In-app rename box for 联系 / 外框 (WebView2 has no reliable prompt()). */
 .modal-backdrop {
@@ -751,14 +741,11 @@ button { cursor: pointer; }
 .fp-note {
   margin-top: 6px; font-size: 11px; line-height: 16.5px; color: var(--text-faint);
 }
-/* Section-level bold caption ("导图样式" / "高级布局" / 演说预览). */
+/* Section-level bold caption ("导图样式" / "高级布局"). */
 .fp-subtitle {
   font-size: 13px; font-weight: 700; color: var(--text); line-height: 18px;
   padding-bottom: 12px;
 }
-.fp-section-top { padding-bottom: 0; }
-/* The preview caption carries its own 12px gap below; the block sets none. */
-.fp-section-top .fp-subtitle { padding-bottom: 0; }
 
 .fp-seg-row { padding-bottom: 12px; }
 .fp-seg-row.last { padding-bottom: 0; }
@@ -851,38 +838,6 @@ button { cursor: pointer; }
 .fp-check-line .fp-check-row { height: 14px; }
 .fp-check-line.last { padding-bottom: 0; }
 
-/* ------------------------------------------------- panel: 演说 tab blocks */
-/* 228x128 slide preview: the bone render is letterboxed on black. */
-.fp-preview {
-  width: 228px; height: 128px; margin-top: 12px; border-radius: 10px;
-  background: #000; overflow: hidden; display: flex;
-  align-items: center; justify-content: center;
-  transition: background-color .18s ease, color .18s ease;
-}
-.fp-preview-inner {
-  width: 100%; height: 100%; display: flex; flex-direction: column; gap: 6px;
-  align-items: center; justify-content: center; padding: 0 18px;
-}
-.fp-preview-text {
-  font-size: 13px; font-weight: 700; color: currentColor; max-width: 100%;
-  text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.fp-preview-sub {
-  font-size: 11px; max-width: 100%; text-align: center;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-/* .is-<风格> only tweaks the chrome the inline swatch cannot express. */
-.fp-preview.is-hand-drawn { border-radius: 4px; }
-.fp-preview.is-innocence .fp-preview-text { letter-spacing: .5px; }
-.fp-preview.is-shape-for-you .fp-preview-text { font-weight: 600; }
-/* Flat white button (更换风格) — no inner shadow in the shipped panel. */
-.fp-btn-flat {
-  height: 22px; width: 100%; border: 0; border-radius: 4px; padding: 0 16px;
-  background: #fff; color: var(--text); font-size: 13px; font-weight: 500;
-  box-shadow: 0 .5px 1px 0 rgba(0, 0, 0, .1),
-    inset 0 0 1.5px .25px rgba(0, 0, 0, .4), inset 0 0 2px .25px rgba(0, 0, 0, .05);
-}
-.fp-btn-flat:disabled { cursor: default; }
 /* 重设样式 / 自定义风格: white with a hairline border. */
 .fp-btn-default {
   height: 22px; border: .5px solid rgba(0, 0, 0, .1); border-radius: 4px; padding: 0 16px;
@@ -1270,102 +1225,3 @@ button { cursor: pointer; }
 .node.cell:hover { filter: none; }
 .node.cell.selected { box-shadow: inset 0 0 0 2px var(--accent); border-radius: 0; }
 
-/* ------------------------------------------------------------- 演说风格
-   原版弹层 276×412，内边距 20/20/8，两列 112 宽、缩略图 112×63 + 标题。 */
-.pop.is-pitch { padding: 20px 20px 8px; }
-.pitch-grid {
-  display: grid; grid-template-columns: repeat(2, 112px);
-  column-gap: 12px; row-gap: 18px; justify-content: space-between;
-}
-.pitch-card {
-  width: 112px; padding: 0; border: 0; background: transparent;
-  display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;
-}
-.pitch-thumb {
-  width: 112px; height: 63px; border-radius: 4px; overflow: hidden; display: block;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, .08);
-}
-.pitch-thumb img { width: 112px; height: 63px; object-fit: cover; display: block; }
-.pitch-card:hover .pitch-thumb { box-shadow: 0 0 0 1px rgba(0, 0, 0, .18); }
-.pitch-thumb.on { box-shadow: 0 0 0 2px var(--accent); }
-.pitch-title { font-size: 13px; line-height: 18px; color: var(--text); }
-
-/* ------------------------------------------------------------- 演说模式
-   全屏播放：舞台居中，幻灯片按长宽比缩放，底部一条极简控制条。 */
-.present {
-  position: fixed; inset: 0; z-index: 400; display: flex;
-  flex-direction: column; align-items: center; justify-content: center;
-  animation: present-in .18s ease-out;
-}
-@keyframes present-in { from { opacity: 0; } to { opacity: 1; } }
-.present-stage {
-  flex: 1; width: 100%; display: flex; align-items: center;
-  justify-content: center; padding: 24px 24px 0; cursor: pointer;
-}
-.present-slide {
-  border-radius: 12px; overflow: hidden; display: flex;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .06);
-  animation: slide-in .22s cubic-bezier(.22, .8, .3, 1);
-}
-@keyframes slide-in { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: none; } }
-.ps-cover {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 18px; padding: 8% 10%; text-align: center;
-}
-.ps-cover-title {
-  font-size: clamp(30px, 5.4vw, 76px); font-weight: 700; line-height: 1.16;
-  letter-spacing: .5px; max-width: 92%;
-}
-.ps-cover-sub { font-size: clamp(12px, 1.2vw, 18px); letter-spacing: 2px; }
-.ps-body {
-  flex: 1; display: flex; flex-direction: column; gap: 4%;
-  padding: 7% 9%; min-width: 0;
-}
-.ps-title {
-  font-size: clamp(22px, 3.4vw, 48px); font-weight: 700; line-height: 1.2;
-  padding-bottom: 3%; border-bottom: 1px solid currentColor; border-color: currentColor;
-  opacity: .96;
-}
-.present-slide.kind-list .ps-title { border-bottom-color: rgba(127, 127, 127, .35); }
-.ps-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2.2vh; }
-.ps-item {
-  display: flex; align-items: flex-start; gap: 12px;
-  font-size: clamp(16px, 2.1vw, 30px); line-height: 1.4;
-  animation: bullet-in .2s ease-out;
-}
-@keyframes bullet-in { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
-.ps-item.is-current .ps-text { font-weight: 600; }
-.ps-item:not(.is-current) .ps-text { opacity: .72; }
-.ps-dot { width: .42em; height: .42em; border-radius: 50%; margin-top: .52em; flex: none; }
-.present-bar {
-  width: 100%; height: 52px; display: flex; align-items: center; gap: 14px;
-  padding: 0 20px; color: rgba(255, 255, 255, .82); font-size: 12px; position: relative;
-}
-.present-exit {
-  height: 24px; padding: 0 12px; border: 0; border-radius: 4px; cursor: pointer;
-  background: rgba(255, 255, 255, .14); color: #fff; font-size: 12px;
-}
-.present-exit:hover { background: rgba(255, 255, 255, .24); }
-.present-count { font-variant-numeric: tabular-nums; }
-.present-hint { opacity: .55; }
-.present-track {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
-  background: rgba(255, 255, 255, .12);
-}
-.present-track span { display: block; height: 100%; background: var(--accent); transition: width .18s ease; }
-
-/* 演说的五种「布局」只改幻灯片内部排布，不动标题层级。 */
-.present-slide.layout-2 .ps-body { flex-direction: row; gap: 6%; align-items: flex-start; }
-.present-slide.layout-2 .ps-title { flex: 0 0 38%; border-bottom: 0; border-right: 1px solid rgba(127, 127, 127, .35); padding: 0 4% 0 0; }
-.present-slide.layout-2 .ps-list { flex: 1; }
-.present-slide.layout-3 .ps-body { align-items: center; text-align: center; }
-.present-slide.layout-3 .ps-title { border-bottom: 0; }
-.present-slide.layout-3 .ps-list { align-items: center; }
-.present-slide.layout-3 .ps-item { justify-content: center; }
-.present-slide.layout-4 .ps-list { flex-wrap: wrap; flex-direction: row; }
-.present-slide.layout-4 .ps-item { flex: 0 0 46%; }
-.present-slide.layout-5 .ps-body { justify-content: center; }
-.present-slide.layout-5 .ps-title { border-bottom: 0; text-align: center; }
-.present-slide.layout-5 .ps-list { flex-direction: row; flex-wrap: wrap; gap: 1.4vh 2.4vw; justify-content: center; }
-.present-slide.layout-5 .ps-item { background: rgba(127, 127, 127, .12); border-radius: 999px; padding: .4em 1em; }
-.present-slide.layout-5 .ps-dot { display: none; }

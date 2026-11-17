@@ -74,7 +74,6 @@ pub fn run() {
             commands::doc_clear_style,
             commands::doc_set_width,
             commands::doc_set_canvas,
-            commands::doc_set_pitch,
             commands::doc_set_side,
             commands::doc_set_image,
             commands::doc_toggle_fold,

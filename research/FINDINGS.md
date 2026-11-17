@@ -2473,3 +2473,49 @@ expected 过滤掉「最近打开」。新增三条断言：`最近打开` 位�
 注意 `ui-menus.mjs` 仍需在**干净新文档**上跑（先 `new-doc.mjs`），否则画布里
 找不到「分支主题」会在主题右键用例处崩；`compare-skeletons.mjs` 跑完会覆盖
 隔离目录 `settings.json` 的 recent，需写回含 `example2.xmind` 的配置。
+
+## 37. ZEN / 演说 两个模式整体删除（2026-11-17）
+
+§35 只摘掉了工具栏按钮与侧面板入口，功能本体（ZEN 模式切换、`PresentView`
+播放层）仍挂在 `Ctrl+Alt+F` / `Ctrl+Alt+P` 与「查看」菜单上。本次把两个模式
+的代码全部清空，应用里不再有任何进入路径。
+
+### 37.1 删除清单
+
+* 前端文件：`src/shell/PresentView.tsx`、`src/lib/pitch.ts`（PITCH_* 常量 +
+  `buildSlides` 幻灯片推导）、`public/pitch/*.svg`（7 张风格缩略图，仅演说面板用）。
+* `App.tsx`：`zen` / `presenting` 两个 state、`PresentView` 懒加载、
+  `view.zen` / `view.present` 两个 action 分支、`if (presenting) return;` 的
+  键盘让位、Escape 里的 ZEN 退出分支、`Ctrl+Alt+F` / `Ctrl+Alt+P` 两条快捷键、
+  `.app.zen` 类名与 `zen-exit` 浮层、`menuContext.zen`。
+* `menuModel.ts`：`MenuContext.zen`、「查看 > ZEN 模式」、「查看 > 演说模式」
+  子菜单（演示 / 在窗口中演示 / 演说者视图）、快捷键表里的 `Ctrl+Alt+F / P` 行。
+  删掉两行后原本夹在中间的两个分隔线合并为一个（`vw.sep3` 保留、`vw.sep4` 去掉）。
+* `styles.css`：`.app.zen` / `.zen-exit`、`.pop.is-pitch` 与 `.pitch-*`、
+  `.present*` / `.ps-*` 五大布局（共 5027 字符尾部块）、以及演说页签遗留的
+  `.fp-preview*` / `.fp-btn-flat` / `.fp-section-top`。
+* `types.ts` / `api.ts`：`PitchSettings`、`Document.pitch`、`api.setPitch`。
+* Rust：`xmind_core::model::PitchSettings` 与 `Document.pitch` 字段、
+  `commands::doc_set_pitch` 及其注册、`xmind-file` 两处 `pitch: Default::default()`。
+  `pitch` 从未写进 `.xmind`（两份读取路径都只给默认值），是纯内存死状态；
+  serde 默认忽略未知字段，旧快照 / 旧导出里若还带 `pitch` 也不会报错。
+* 脚本：删除 `probe-pitch.mjs`、`ui-present-layout.mjs`（原本已标 LEGACY）。
+
+### 37.2 回归脚本的反向断言
+
+`ui-tools.mjs` 第 4 段、`ui-toolbar-pop.mjs` 第 6 段从「仍可进入」改成
+「不再生效」：按 `Ctrl+Alt+F` 后 `.app.zen` 不存在、`zen-exit` 不存在，
+按 `Ctrl+Alt+P` 后 `.present` 不存在。`ui-verify.mjs` 末尾只打印
+`present: removed` 并截图。`ui-menus.mjs` 新增两条有意偏离断言：
+「查看」子菜单比对先剔除 `ZEN 模式` / `演说模式` 并合并连续分隔线，
+再单独断言整列不含这两个词。
+
+### 37.3 真机验证（CDP 9233，`target/verify-zen/{data,wv2}`）
+
+`ui-toolbar-pop` 30 项 ALL PASS、`ui-menus` ALL PASS（「查看」20 行，
+无 ZEN / 演说；`got` 列里 `仅显示该分支|---|导航面板` 说明分隔线已合并）、
+`ui-tools` all checks passed、`ui-verify` 正常、`ui-startup-scrollbars` 20 项
+ALL PASS、`open-sample example.xmind`（72 节点）、`ui-rename` ALL PASS；
+`npx tsc --noEmit`、`cargo test --workspace`、`npm run build:app` 全绿，
+构建产物里已没有 `PresentView` / `pitch` 分块。
+

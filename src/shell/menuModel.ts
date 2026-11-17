@@ -26,7 +26,6 @@ export interface MenuContext {
   saving: boolean;
   hasPath: boolean;
   viewMode: 'map' | 'outline';
-  zen: boolean;
   toolbarLabels: boolean;
   hasStyle: boolean;
   hasHref: boolean;
@@ -217,15 +216,6 @@ function viewSubmenu(ctx: MenuContext): MenuItem[] {
     sep('vw.sep2'),
     item('vw.focus', '仅显示该分支', { shortcut: 'Ctrl+;', action: 'view.focusBranch', disabled: !ctx.hasTopic || ctx.isRoot }),
     sep('vw.sep3'),
-    item('vw.zen', 'ZEN 模式', { shortcut: 'Ctrl+Alt+F', checked: ctx.zen, action: 'view.zen' }),
-    item('vw.present', '演说模式', {
-      submenu: [
-        item('vw.present.play', '演示', { shortcut: 'Ctrl+Alt+P', action: 'view.present' }),
-        item('vw.present.window', '在窗口中演示', D()),
-        item('vw.present.view', '演说者视图', D()),
-      ],
-    }),
-    sep('vw.sep4'),
     item('vw.nav', '导航面板', {
       submenu: [
         item('vw.nav.topic', '主题', D()),
@@ -402,7 +392,6 @@ export const SHORTCUTS: [string, string][] = [
   ['大纲 / 思维导图', '状态栏按钮'],
   ['放大 / 缩小 / 实际大小', 'Ctrl++ / Ctrl+- / Ctrl+0'],
   ['仅显示该分支', 'Ctrl+;'],
-  ['ZEN 模式 / 演说模式', 'Ctrl+Alt+F / Ctrl+Alt+P'],
   ['快捷键命令', 'Ctrl+Shift+/'],
   ['框选多个主题', '在画布空白处按住左键拖动'],
   ['增量选择', 'Ctrl / Shift + 点击主题'],

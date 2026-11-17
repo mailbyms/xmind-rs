@@ -445,27 +445,6 @@ pub fn doc_set_canvas(
     })
 }
 
-/// 演说 tab: patch the pitch settings one field at a time.
-#[tauri::command]
-pub fn doc_set_pitch(
-    state: State<'_, AppState>,
-    ratio: Option<String>,
-    topic_slides: Option<String>,
-    list_slides: Option<String>,
-    method: Option<String>,
-    layout: Option<u8>,
-    style: Option<String>,
-) -> Result<Snapshot, String> {
-    mutate(&state, |doc| {
-        if let Some(value) = ratio { doc.pitch.ratio = value; }
-        if let Some(value) = topic_slides { doc.pitch.topic_slides = value; }
-        if let Some(value) = list_slides { doc.pitch.list_slides = value; }
-        if let Some(value) = method { doc.pitch.method = value; }
-        if let Some(value) = layout { doc.pitch.layout = value.clamp(1, 5); }
-        if let Some(value) = style { doc.pitch.style = value; }
-    })
-}
-
 #[tauri::command]
 pub fn doc_clear_style(state: State<'_, AppState>, id: String) -> Result<Snapshot, String> {
     mutate(&state, |doc| {

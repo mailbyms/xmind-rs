@@ -148,7 +148,6 @@ pub fn from_content_xml(text: &str) -> Result<Document, FileError> {
         palette: None,
         center_color: None,
         palette_dirty: false,
-        pitch: Default::default(),
         extra: Default::default(),
     };
     document.ensure_sheet();
