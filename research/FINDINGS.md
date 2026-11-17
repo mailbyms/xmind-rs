@@ -2228,3 +2228,65 @@ FAIL 3 项（外框范围手柄），先 `scripts/new-doc.mjs` 重跑即 ALL PAS
 `gh release upload --clobber` 覆盖为新二进制，`RELEASE_NOTES.md` 顶部
 加修订说明、`SHA256SUMS.txt` 更新（下载数 <3，避免制造版本碎片）；
 `gh release download` 回拉校验哈希一致。
+
+---
+
+## 33. 菜单动作后自动隐藏整个菜单树（2026-11-17）
+
+### 现象与根因
+
+`文件 > 最近打开 > example2.xmind`：文档确实打开了（`.doc-name` 变成
+`example2.xmind`、15 个节点），但屏幕上残留 **2 个 `.xm-panel` 和
+`.xm-backdrop`**，遮住画布并吞掉后续点击。
+
+`Menu.tsx` 的 `MenuLevel.activate()` 是：
+
+```ts
+onAction(entry);   // 执行动作（打开文档）
+onClose();         // 但子菜单层的 onClose 只是 setSub(null) + focus 父层
+```
+
+`onClose` 是**逐层**回调：根层是 App 的 `setMenuOpen(false)`，子层是
+父 `MenuLevel` 传下来的 `() => { setSub(null); ref.current?.focus(); }`。
+所以从 depth=2 的「最近打开」列点叶子项，只关掉了 depth=2 那一列，
+depth=0/1 面板和 backdrop 全留着。键盘 Enter 走同一个 `activate()`，
+同样中招。这个 bug 影响**所有子菜单叶子动作**，不只是最近打开。
+
+### 修复（`src/shell/Menu.tsx`）
+
+把两种语义拆开，新增贯穿整棵菜单树的 `onDismiss`：
+
+```ts
+interface LevelProps {
+  ...
+  onClose: () => void;     // 只关当前层：Escape / ArrowLeft / 焦点回父层
+  onDismiss: () => void;   // 叶子项激活后关掉整个 popup
+}
+
+const activate = (index, element) => {
+  if (entry.submenu) { openSub(index, element); return; }
+  onAction(entry);
+  onDismiss();
+};
+```
+
+* 根 `Menu` 把 `onClose` 同时作为 `onDismiss` 传给 depth=0 列；
+  子级 `MenuLevel` 原样透传 `onDismiss`。
+* `onClose` 完全不动：`MenuKeyBridge`（Escape 关全部）、ArrowLeft
+  只退一层、hover 打开子菜单的行为都保持原样。
+* 不把关闭塞进 `App.handleMenuAction`：键盘快捷键也走 `handleMenuAction`
+  （`kbd:*`），在那里无条件关菜单语义不精确；关闭属于 Menu 组件职责。
+
+### 回归
+
+新增 `scripts/ui-menu-dismiss.mjs`（`CDP_PORT=9223 node scripts/ui-menu-dismiss.mjs`），
+用真实 UI 点击断言：最近打开项 → 文档已打开 + `panels=0` + `backdrop=false`；
+另一子菜单叶子动作（编辑 > 全选）同样关闭；Escape 仍能关掉整个菜单树
+（`before=2 after=0`）。修复前复现为 `panels=2 backdrop=true`，修复后
+**ALL PASS**。
+
+其余回归全绿：`npx tsc --noEmit`、`npm run build:app`、
+`ui-menus` ALL PASS、`ui-marquee-summary` ALL PASS、`ui-rename`、
+`ui-verify` 0 FAIL、`ui-skeleton-lines` 17/17、`ui-theme-style` 22/22、
+`compare-skeletons` exit 0。`scripts/open-sample.mjs` 截图前的
+Escape + 空白点击保留为兜底，注释改为指向本回归脚本。

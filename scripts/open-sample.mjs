@@ -103,7 +103,9 @@ const nodes = await ev('document.querySelectorAll(".node").length');
 console.log(`open ${target}: title=${title} nodes=${nodes}`);
 
 if (out) {
-  // Dismiss the menu so it does not sit on top of the map.
+  // Leaf menu items now dismiss the whole popup (see ui-menu-dismiss.mjs);
+  // Escape + blank click stay as a belt-and-braces fallback so a leftover
+  // `.xm-backdrop` can never swallow later pointer events / :hover.
   await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
   await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
   await wait(250);

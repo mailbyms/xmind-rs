@@ -24,11 +24,14 @@ interface LevelProps {
   y: number;
   depth: number;
   onAction: (item: MenuItem) => void;
+  /** Close only this level (Escape / ArrowLeft / parent focus restore). */
   onClose: () => void;
+  /** Dismiss the whole popup tree after an item is activated. */
+  onDismiss: () => void;
 }
 
 /** A single popup column. Submenus are further <MenuLevel> columns. */
-function MenuLevel({ items, x, y, depth, onAction, onClose }: LevelProps) {
+function MenuLevel({ items, x, y, depth, onAction, onClose, onDismiss }: LevelProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ x, y });
   const [focus, setFocus] = useState(-1);
@@ -76,8 +79,12 @@ function MenuLevel({ items, x, y, depth, onAction, onClose }: LevelProps) {
     const entry = items[index];
     if (!entry || entry.label === null || entry.disabled) return;
     if (entry.submenu) { openSub(index, element); return; }
+    // A leaf item must dismiss the *entire* menu tree. onClose here only closes
+    // the current column (and is what Escape / ArrowLeft use), so clicking
+    // e.g. 文件 > 最近打开 > foo.xmind would otherwise leave the parent panels
+    // and the backdrop on screen while the document is already open.
     onAction(entry);
-    onClose();
+    onDismiss();
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -141,6 +148,7 @@ function MenuLevel({ items, x, y, depth, onAction, onClose }: LevelProps) {
           y={sub.y}
           depth={depth + 1}
           onAction={onAction}
+          onDismiss={onDismiss}
           onClose={() => { setSub(null); ref.current?.focus(); }}
         />
       )}
@@ -176,7 +184,7 @@ export default function Menu({ items, x, y, onAction, onClose }: MenuProps) {
       <div className="xm-backdrop" onPointerDown={onClose} onContextMenu={(event) => {
         event.preventDefault(); onClose();
       }} />
-      <MenuLevel items={items} x={x} y={y} depth={0} onAction={onAction} onClose={onClose} />
+      <MenuLevel items={items} x={x} y={y} depth={0} onAction={onAction} onClose={onClose} onDismiss={onClose} />
     </>
   );
 }
