@@ -3317,3 +3317,45 @@ image_height / marker_size / marker_pad`，但旧 `to_svg()` 只消费了标题�
 - `cargo test --workspace --offline` 全绿（roundtrip 17/17），
   `npm run build:app` 成功，`ui-render-align.mjs` 51/51，
   `ui-export-raster.mjs` ALL PASS。
+
+## §52 Windows「打开方式」传入文件未加载
+
+### 52.1 现象
+
+用户右键 `.xmind` →「打开方式」选择本应用，窗口正常启动，但里面是默认的
+「未命名」导图，并非所选文件。用构建后的 exe 加文件路径参数、隔离
+`XMIND_RS_DATA_DIR` / WebView 用户目录与 CDP 端口可稳定复现：修复前
+`document.title = "未命名 - XMind RS"`，正文只有「中心主题 / 分支主题 1..4」，
+没有 `test.xmind` 里的「超出范围了」。
+
+### 52.2 根因
+
+`src-tauri/src/lib.rs::run()` 完全没有读取 `std::env::args_os()`，`AppInfo`
+里也没有启动文件字段；前端 bootstrap 固定走 `api.info() → api.newDoc()`。
+Explorer 传入的路径虽然到了进程参数里，却没有任何代码消费它。
+
+### 52.3 修复
+
+- 新增 `src-tauri/src/cli.rs`：
+  `startup_file()` 从 `env::args_os().skip(1)` 中挑第一个「文件存在且扩展名在
+  打开对话框白名单（`xmind/json/md/txt/opml`，大小写不敏感）」的参数；
+  flag、不存在的路径、不支持的扩展名一律跳过。Windows 上 Rust 的
+  `args_os()` 已经处理命令行引号，因此带空格与中文的路径也能正确解析。
+- `AppState` 增加 `startup_file` 字段；`AppInfo` 以 camelCase 暴露
+  `startupFile`；`run()` 把识别到的路径写进 `startup.log`。
+- 前端 bootstrap：若 `appInfo.startupFile` 存在就先 `api.open()`，失败时提示并
+  回退到 `api.newDoc()`；没有启动文件时行为完全不变。
+- 未引入单实例插件：已有进程时再次「打开方式」会新开一个窗口并各自加载文件，
+  这与当前应用没有单实例能力的既有行为一致。
+
+### 52.4 验证
+
+- 新增 3 个 Rust 单测：扩展名大小写识别、跳过 flag 找到真实文件、忽略不存在或
+  不支持的文件；`cargo test --workspace --locked` 全绿（roundtrip 17/17），
+  `npx tsc --noEmit` 通过，`npm run build:app` 成功。
+- 重建后用同样命令启动，`document.title = "test.xmind - XMind RS"`，正文包含
+  `超出范围了`；`startup.log` 记录
+  `startup file from command line: C:\...\test.xmind`。
+- 再验证含空格与中文的复制路径
+  `target\verify-openarg\My Maps\测试 地图.xmind`，同样成功加载，
+  `document.title = "测试 地图.xmind - XMind RS"`。

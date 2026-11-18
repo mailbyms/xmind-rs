@@ -284,6 +284,7 @@ export interface StructureInfo { id: Structure; label: string }
 export interface AppInfo {
   version: string;
   dataDir: string;
+  startupFile?: string | null;
   theme: ThemeId;
   recent: string[];
   structures: StructureInfo[];

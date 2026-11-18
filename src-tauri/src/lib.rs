@@ -7,6 +7,7 @@ compile_error!(
      (or `cargo build --release --features custom-protocol`)"
 );
 
+mod cli;
 mod commands;
 mod paths;
 mod state;
@@ -29,6 +30,9 @@ pub fn run() {
         "startup mode: {} | webview: OS-provided | eager work: settings.json only",
         if cfg!(dev) { "DEV / external Vite server" } else { "PRODUCTION / embedded frontend" }
     ));
+    if let Some(path) = &state.startup_file {
+        startup_log(&format!("startup file from command line: {}", path.display()));
+    }
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())

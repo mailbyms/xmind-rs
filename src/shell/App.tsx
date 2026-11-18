@@ -250,10 +250,12 @@ export default function App() {
     return { startId: best[0].id, endId: best[best.length - 1].id };
   }, [selectedIds]);
 
-  // Bootstrap: XMind always opens on a clean, unsaved "未命名" map (one
+  // Bootstrap: XMind normally opens on a clean, unsaved "未命名" map (one
   // central topic + four main topics), never on the document left behind by
-  // the previous session. Recovery snapshots are still written on edit and can
-  // be loaded through `doc_restore`, but startup must not consume them.
+  // the previous session. The one exception is a file passed on the command
+  // line (Explorer "Open with"), which is opened after the WebView is ready.
+  // Recovery snapshots are still written on edit and can be loaded through
+  // `doc_restore`, but startup must not consume them.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -261,7 +263,19 @@ export default function App() {
         const appInfo = await api.info();
         if (cancelled) return;
         setInfo(appInfo);
-        const initial = await api.newDoc();
+        let initial;
+        if (appInfo.startupFile) {
+          try {
+            initial = await api.open(appInfo.startupFile);
+            if (cancelled) return;
+            notify('已打开（未知字段会原样保留）');
+          } catch (error) {
+            notify(`打开启动文件失败：${String(error)}`);
+            initial = await api.newDoc();
+          }
+        } else {
+          initial = await api.newDoc();
+        }
         if (cancelled) return;
         commit(initial);
         select(initial.document.sheets[initial.document.activeSheet].root.id);

@@ -65,6 +65,8 @@ pub struct EditSession {
 
 pub struct AppState {
     pub layout: DataLayout,
+    /// File handed over by Explorer "Open with" / a command-line launch.
+    pub startup_file: Option<PathBuf>,
     pub document: Mutex<Document>,
     pub current_path: Mutex<Option<PathBuf>>,
     pub dirty: AtomicBool,
@@ -104,6 +106,7 @@ impl AppState {
             ai: Arc::new(AiHub::new(layout.ai_config.clone())),
             resources: ResourceStore::new(layout.resources.clone()),
             layout,
+            startup_file: crate::cli::startup_file(),
             document: Mutex::new(document),
             current_path: Mutex::new(None),
             dirty: AtomicBool::new(false),

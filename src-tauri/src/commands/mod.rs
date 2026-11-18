@@ -107,6 +107,7 @@ pub struct StructureInfo {
 pub struct AppInfo {
     pub version: &'static str,
     pub data_dir: String,
+    pub startup_file: Option<String>,
     pub theme: ThemeId,
     pub recent: Vec<String>,
     pub structures: Vec<StructureInfo>,
@@ -118,6 +119,10 @@ pub fn app_info(state: State<'_, AppState>) -> Result<AppInfo, String> {
     Ok(AppInfo {
         version: env!("CARGO_PKG_VERSION"),
         data_dir: state.layout.root.to_string_lossy().to_string(),
+        startup_file: state
+            .startup_file
+            .as_ref()
+            .map(|path| path.to_string_lossy().to_string()),
         theme: settings.theme,
         recent: settings.recent.clone(),
         structures: ALL_STRUCTURES
