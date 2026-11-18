@@ -515,8 +515,14 @@ fn parse_markers(value: Option<&Value>) -> Vec<String> {
         .unwrap_or_default()
 }
 
-fn parse_labels(value: Option<&Value>) -> Vec<String> {
-    value
+/// XMind stores markers as objects — `[{"markerId":"priority-1"}]` — never as
+/// bare strings: the desktop app silently rejects the whole file (canvas stays
+/// empty) when it meets a string array.
+fn markers_json(markers: &[String]) -> Value {
+    Value::Array(markers.iter().map(|m| json!({ "markerId": m })).collect())
+}
+
+fn parse_labels(value: Option<&Value>) -> Vec<String> {    value
         .and_then(Value::as_array)
         .map(|items| items.iter().filter_map(value_string).collect())
         .unwrap_or_default()
@@ -670,6 +676,7 @@ pub fn parse_topic(value: &Value) -> Topic {
         markers,
         labels,
         image,
+        image_size: None,
         style,
         side,
         structure_class,
@@ -784,6 +791,7 @@ pub fn topic_to_json(topic: &Topic, is_root: bool) -> Value {
         parsed_key: &str,
         raw_key: &str,
         current: &[String],
+        to_json: fn(&[String]) -> Value,
     ) {
         if unchanged(extra, parsed_key, &json!(current)) {
             if let Some(raw) = extra.get(raw_key) {
@@ -792,11 +800,26 @@ pub fn topic_to_json(topic: &Topic, is_root: bool) -> Value {
             }
         }
         if !current.is_empty() || obj.contains_key(key) {
-            obj.insert(key.into(), json!(current));
+            obj.insert(key.into(), to_json(current));
         }
     }
-    sync_list(&mut obj, &topic.extra, "markers", "__parsedMarkers", "__rawMarkers", &topic.markers);
-    sync_list(&mut obj, &topic.extra, "labels", "__parsedLabels", "__rawLabels", &topic.labels);
+    // Markers get their own path: an unedited raw array is only worth keeping when
+    // it already uses `markerId` objects. Bare strings (what this app used to write,
+    // and what the desktop app refuses) must be re-emitted in the object form so a
+    // load + save repairs such a file instead of copying the defect forward.
+    let raw_markers_usable = topic
+        .extra
+        .get("__rawMarkers")
+        .and_then(Value::as_array)
+        .is_some_and(|entries| entries.iter().all(|m| m.get("markerId").is_some()));
+    if unchanged(&topic.extra, "__parsedMarkers", &json!(topic.markers)) && raw_markers_usable {
+        if let Some(raw) = topic.extra.get("__rawMarkers") {
+            obj.insert("markers".into(), raw.clone());
+        }
+    } else if !topic.markers.is_empty() || obj.contains_key("markers") {
+        obj.insert("markers".into(), markers_json(&topic.markers));
+    }
+    sync_list(&mut obj, &topic.extra, "labels", "__parsedLabels", "__rawLabels", &topic.labels, |v| json!(v));
 
     match &topic.image {
         Some(id) => {

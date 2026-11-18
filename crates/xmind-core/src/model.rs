@@ -283,6 +283,12 @@ pub struct Topic {
     pub labels: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image: Option<String>,
+    /// Intrinsic pixel size of the artwork, read from the resource bytes when
+    /// the file is opened.  XMind sizes an image topic from its artwork (a
+    /// 140×140 sticker makes a 178×198 card), not from the label.  Derived
+    /// data only — `topic_to_json` never writes it into `content.json`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_size: Option<(f64, f64)>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub style: Option<TopicStyle>,
     /// Which half of a balanced map this root-child belongs to.
@@ -336,6 +342,7 @@ impl Default for Topic {
             markers: Vec::new(),
             labels: Vec::new(),
             image: None,
+            image_size: None,
             style: None,
             side: None,
             structure_class: None,

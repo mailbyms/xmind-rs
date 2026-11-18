@@ -70,6 +70,7 @@ pub fn run() {
             commands::doc_set_note,
             commands::doc_set_labels,
             commands::doc_toggle_marker,
+            commands::doc_set_markers,
             commands::doc_set_style,
             commands::doc_clear_style,
             commands::doc_set_width,

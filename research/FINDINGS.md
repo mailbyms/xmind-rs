@@ -2706,3 +2706,455 @@ y 接近了，x 与三者一致性没解决。
 `scripts/ui-theme-style.mjs` 的下划线 DOM 断言由读 `.node-title` 的
 `borderBottom` 改为读 `::after` 的 background / height / left / right /
 bottom / transform，并新增「label 不再画第二条线」。
+
+## 41. 工具栏「标记」面板（原版代码事实）
+
+事实来源：`research/asar-src/renderer/2907.js` 的标记注册表 / 分组名 /
+英文标记名，`761.js` 与 `9869.js` 的 `marker-panel` 组件，以及
+`editor.js` 的 `workbench.toggleMarkerPanel` 命令实现。
+
+- 原版工具栏「标记」的命令是 `workbench.toggleMarkerPanel`，打开的是右侧
+  `QN.IMAGE` 图标面板的 `MARKER` 页，不是工具栏正下方的小型下拉。本应用
+  保留自己的工具栏锚定弹层，但内容按该官方面板还原。
+- 官方分组顺序由 `mA` 决定；过滤 `group.hidden === true` 后可见 7 组：
+  标签(8)、优先级(7)、任务(7)、旗帜(7)、星星(7)、人像(7)、符号(15)，
+  共 58 个可见标记。每个标记再过滤 `hidden === true`。
+- 面板 DOM：`.marker-module > ul.group-list > li.group > h5.group-title`
+  加 `.uk-flex.uk-flex-wrap` 图标容器；每个图标是 26×26 的 `.icon-image-item`，
+  内含 24×24 `<img>`，间距 6px。顶部有「显示图例 / 隐藏图例」按钮。
+- 点击标记走 `editor.addMarker` → `mutate:addMarker`：先把同 id 去重，再追加
+  到数组末尾；已存在时无变化，因此是**幂等添加**，不是双击取消。移除由
+  `editor.removeMarker` / 主题属性面板负责。
+- `scripts/build-marker-data.mjs` 从 2907.js 提取注册表与名称，从
+  `C:/Users/DM/AppData/Local/Programs/Xmind/resources/app.asar` 提取 58 个
+  官方 SVG，生成 `src/lib/marker-data.ts` 与 `public/markers/**`。两者都是
+  生成文件，禁止手工修改。
+
+## 42. 标记面板的真机 CDP 9222 复核（2026-11-17）
+
+用户关闭可见窗口后仍有残留 `Xmind.exe`（无窗口、PID 21704）会接管新进程；
+从本会话 `Stop-Process` 被拒绝访问。最终用本机直接启动
+`env -u ELECTRON_RUN_AS_NODE -u NODE_OPTIONS Xmind.exe --remote-debugging-port=9222
+--allow-file-access-from-files example.xmind`（不指定 `--user-data-dir`）成功拿到
+`editor.html` 调试页；若再遇到接管，需由用户手工结束残留 `Xmind.exe`。
+
+原版选中中心主题并点工具栏「标记」后的面板 DOM 实测：
+
+- 面板是 `.icon-panel.uk-icon-module`，`getBoundingClientRect().width === 268px`，
+  `right: 28px`；顶部 `.uk-tab` 一行是三个 **72×20** 页签，图标分别来自
+  app.asar 的 `static/assets/images/icon-module/{marker,sticker,illustration}.svg`
+  （16×16），最右是 20×20 的关闭按钮；页签下方一条 `<hr>`。
+- 图例按钮是 `button.legend-toggle-btn.uk-button-floating.uk-width-1-1`，
+  文案在「显示图例 / 隐藏图例」间切换，点击后列出本图已用标记与说明；
+  按钮不是搜索框。
+- `.marker-module` 内仍是 §41 记录的 7 组 / 58 个 26×26 图标格（24×24 `<img>`、
+  gap 6px）。点击标记后图标 DOM 上**没有** added/active/selected 类，官方面板
+  不显示选中高亮；同 id 重复点击仍为幂等添加。
+- 本应用据此补齐：`.tp-tabs` 三个官方 16px 页签、`.tp-close` 关闭按钮、
+  268px 面板宽度、圆角图例按钮，并移除 `.tp-mark.on` 选中高亮。
+  `scripts/build-marker-data.mjs` 同时生成 `public/markers/ui/*.svg` 与
+  `MARKER_UI`，仍是生成文件。真机回归见 `scripts/ui-toolbar-pop.mjs`。
+
+## 43. 标记：每组一个 + 画在主题文本框里（2026-11-17）
+
+### 43.1 真机事实（CDP 9222，example.xmind）
+
+`scripts/probe-orig-marker-layout.mjs` 从工具栏点标记，逐次读
+`[data-view-id^="topic-node:"]` 的 `topic-content` 子树：
+
+- 同组替换、跨组累加：中心主题点 `tag-red` → 只有 `topic-marker:…:tag-red`；
+  再点 `tag-orange` → 同一槽只剩 `tag-orange`；再点 `priority-1` →
+  `topic-marker-group` 里同时有 `tag-orange`（x=0）与 `priority-1`（x=40）；
+  再点 `priority-2` → 第二槽变成 `priority-2`。原版不显示面板选中态，
+  所以「幂等添加」（§41）只指同 id 重复点击，**不是**每组可累加。
+- 主题盒内只有一个 `topic-marker-group` 和一个 `topic-title`（另外才是
+  `topic-image-group` 这类内容），二者同处 `topic-content`，标记在左、同一行。
+- 标记本体：36×36 `<image href="data:image/svg+xml;base64,…">`（官方 24×24
+  SVG 放大）+ `topic-marker-border` 圆形描边 `stroke=rgba(255,255,255,1)`
+  `stroke-width=6`，变换 `translate(6,6)`；圆环视觉直径 42px。
+- 几何：每个标记槽 40px（SVG 用户单位），后续标记 `translate(40n,0)`；
+  标题起点相对 `topic-content` 为 x=58（1 个标记）和 x=98（2 个标记），
+  即 `40n + 18`，末尾标记到文字净距 13px。主题盒从 181.6px 增到 209.54px
+  （屏幕坐标，视图缩放 69%），标题 `foreignObject width=144` 始终不变——
+  标记撑大盒子，不压缩标题折行上限。
+
+### 43.2 实现
+
+- 目录映射与互斥规则在 `src/lib/markers.ts`：`markerGroupOf()`、
+  `addMarkerExclusive()`（同组原位替换、跨组追加、同 id 不变）、
+  `toggleMarkerExclusive()`（属性面板点已选标记则移除）。
+- 新增 `ops::set_markers` + `doc_set_markers` IPC（`src-tauri/src/lib.rs`
+  注册、`src/lib/api.ts`、`App` 动作分派），一次写入完整数组 = 一次撤销；
+  保留 `doc_toggle_marker` 仅作兼容，工具栏和属性面板不再调用它。
+- `layout.rs`：`MARKER_SLOT=40`、`MARKER_TRAIL=18`，
+  `marker_width()` 返回 `n*40+18`（n=0 时为 0），`LaidOutNode.marker_width`
+  让 `make_node`/`resize_node` 以 `width - marker_width` 作为文字可用宽度，
+  盒宽与折行上限同步且互不挤压（紧凑布局沿用 `m.pad` 缩放）。
+- 画布：`.node-markers` 从绝对定位的左上角角标改为 `.node-title` 之前的
+  flex 子项；40px 槽、36px 官方 SVG、`box-shadow:0 0 0 3px #fff` 白环、
+  图标 `translateX(4px)`、行尾 18px 间距，整体随 `.node` 的
+  `justifyContent` 对齐。未改动 edges → decor → nodes 的绘制顺序。
+
+### 43.3 回归
+
+`CDP_PORT=9223 node scripts/ui-marker-inbox.mjs` 13/13：盒宽 +98、
+`markerWidth=98`、折行数不变、两枚 40px 槽、36px 图标与白环、
+行在盒内且位于标题左侧同一行、两次同组点击均为替换。
+`ui-toolbar-pop.mjs` 38/38、`cargo test --workspace` 全绿。
+对比截图：`target/verify/marker-layout/03-priority-1.png`（原版）与
+`target/verify/marker-inbox/inbox.png`（本应用）。
+
+调试注记：debug exe 走 Vite `localhost:1421`，必须先 `npm run dev`；
+直接 CDP `invoke('doc_set_markers')` 只更新 Rust 文档而绕过 React，
+回归必须驱动真实工具栏点击。
+
+## 44. 工具栏「插入」：原版 5 项 + 三页签素材面板（2026-11-18）
+
+### 44.1 原版行为（CDP 9222 + ffmpeg 全屏截图）
+
+原版「插入」是 Electron **原生置顶菜单**，CDP target 数和 DOM 都搜不到下拉，
+只能靠 `ffmpeg -f gdigrab -i desktop` 截系统屏幕（见 §42 的启动方式）。
+`target/verify/insert-menu/menu-zoom3.png` 确认完整菜单为 9 项、3 组、2 条分隔线：
+
+1. 笔记 / 标签 / 链接▶
+2. 附件 / 语音备注
+3. 贴纸 / 插画 / 本地图片 / 方程
+
+按需求只保留 **笔记、标签、贴纸、插画、本地图片**，去掉链接、附件、语音备注、
+方程；分隔线落在「笔记·标签」与「贴纸·插画·本地图片」之间。
+
+逐项真机操作（`target/verify/insert-actions/*.png`）：
+
+- **笔记**：在选中主题**下方**出现浮动富文本编辑器（`01-note.png`），顶部有
+  B/I/U、对齐、列表按钮，内容写入该主题的 note；不是应用自己的模态输入框。
+  已有笔记的主题在盒子右上角挂一枚**折角纸页图标**，点击可重新打开笔记。
+- **标签**：同样在主题下方浮动（`02-label.png`），标题「标签」，提示
+  「多个标签请用半角逗号隔开」，内容写入 topic.labels。
+- **贴纸**：打开右侧 `uk-icon-module` 图标面板的**第 2 页签**（`06-sticker.png`），
+  页签下方是「类别：全部」下拉 + 5 列网格；点击后主题盒左上角出现小图
+  （`sticker-applied.png`），面板**保持打开**，无 active/selected 高亮。
+- **插画**：同一面板**第 3 页签**（`07-illustration.png`），同样带类别筛选；
+  13 组 468 张贴纸与 5 组 40 张插画由 `scripts/build-icon-assets.mjs` 从
+  asar + 面板 DOM 生成到 `src/lib/icon-data.ts` 与 `public/{stickers,illustrations}/`。
+- **本地图片**：Windows 原生「打开」对话框，过滤 `*.png;*.jpg;*.jpeg`。
+
+### 44.2 实现
+
+- `src/shell/ToolbarPop.tsx`：`INSERT_GROUPS` 从旧 19 行改为 5 行；`MarkerPop`
+  扩展成三页签共享面板：标记页保持 7 组 58 个与「显示图例」，贴纸/插画页
+  增加「类别」下拉、5 列 36px 图标网格与滚动区。图标模式按原版固定在窗口
+  右侧（`right:28px; top:56px`），点击素材后面板不关闭。
+- `src/lib/icon-data.ts` 增加导出的 `IconItem` 类型；生成器
+  `scripts/build-icon-assets.mjs` 同步修改（生成文件仍禁手改内容）。
+- `src/shell/App.tsx`：
+  - 笔记/标签改为主题下方就地浮层 `topic-inline-editor`，跟随画布 pan/zoom；
+    `MapCanvas` 通过 `onViewChange` 上报视图，关闭时一次性写回 note/labels。
+  - `MapCanvas` 在 `node.note` 非空时渲染 `.node-note` 折角纸页角标（右上角、
+    17×17、z-index 3），点击选中主题并重新打开笔记浮层；角标不进入布局，
+    不改变盒宽与折行。
+  - 贴纸/插画走 `fetch(SVG) → Blob → data URL → api.resourcePut → run('setImage')`，
+    与本地图片共用 content-addressed 资源链路，因此 `.xmind` 保存后资源随文档走。
+  - 插入 > 贴纸/插画直接以 `markerTab` 打开共享面板的对应页签。
+- `src/editor/MapCanvas.tsx`：新增 `onViewChange` 回调；绘制层级未变。
+- `src/styles.css`：三页签按钮 reset、`.tp-icon-*` 网格、`.topic-inline-editor`
+  浮层样式。
+
+### 44.3 回归
+
+`CDP_PORT=9223 node scripts/ui-toolbar-pop.mjs` 全绿（含 5 项精确断言、
+禁用态、笔记/标签写入回读、笔记纸页角标与点击重开、类别筛选、
+贴纸/插画写入 `topic.image` 资源、面板不自动关闭、Esc/外部点击）。
+`npm run build` 与
+`CARGO_INCREMENTAL=0 cargo test --workspace` 全绿（仅一个既存 unused 警告）。
+截图：`target/verify/toolbar-insert-pop.png`、
+`target/verify/toolbar-icon-panel-sticker.png`、
+`target/verify/toolbar-icon-panel-illustration.png`、
+`target/verify/insert-note-badge.png`（以及放大图 `-zoom2.png`）。
+
+未做像素级承诺：笔记浮层未还原富文本 B/I/U 的实际格式化语义（仅保留原版
+视觉工具条），笔记/标签浮层位置按主题盒下方锚定而非原版内部布局引擎坐标。
+
+## 45. 标记在 content.json 里必须是对象数组（2026-11-18，原版打不开本应用文件）
+
+### 45.1 症状
+
+本应用保存的 `.xmind`（含标记）用原版 XMind 23.07 打开：画布空白、状态栏
+`主题: 0`、大纲停在「加载中......」，没有错误弹窗。去掉 `markers` 的同结构
+文件能正常打开（`主题: 1 / 5`），只留 `markers` 就复现，与具体 marker id 无关
+（`tag-orange`/`priority-2`/`task-oct`/`flag-red`/`star-red`/`people-orange`
+逐个单测全部失败）。
+
+### 45.2 根因
+
+原版写出器在 `research/asar-src/renderer/2907.js`：
+
+```js
+D.length && (N.markers = D.map((e) => ({ markerId: e })))
+```
+
+即 `markers` 是**对象数组** `[{"markerId":"priority-3"}, ...]`。本应用此前用
+`json!(Vec<String>)` 写成字符串数组 `["priority-3"]`。读取侧早已两种都认
+（`parse_markers` 同时接受字符串与 `markerId`/`id` 对象），所以是我们单方面
+写出错。字符串形式（含 `org.xmind.ui.marker.*` 前缀）原版一律整份拒收。
+
+### 45.3 修复
+
+`crates/xmind-file/src/xmind.rs`：
+
+- 新增 `markers_json()`：`[{ "markerId": <id> }]`。
+- `markers` 不再走通用 `sync_list`（那会把 `__rawMarkers` 原样回填，把缺陷
+  抄下去）；只有原始数组**每项都含 markerId** 时才原样保留，否则按对象重写。
+  于是「读入旧的字符串写法 → 保存」即可修复文件。
+- `labels` 仍是字符串数组，不受影响。
+
+回归：`markers_are_written_as_marker_id_objects`、
+`resaving_repairs_legacy_string_markers`（`cargo test -p xmind-file` 15/15）。
+
+### 45.4 验证
+
+- `target/verify/resaved.xmind`（本应用读入旧 test.xmind 再保存）在原版打开
+  为 `主题: 5`，截图 `target/verify/xmind-resaved.png`：中心主题左侧 6 个标记、
+  分支主题 1 的优先级+旗帜、贴纸图片、标签「超出范围了」、笔记角标 `≡` 全部正常。
+- 本应用读回同一文件：`markers` 解析为字符串数组，`image` 正常。
+
+### 45.5 复现/核对脚本（新增）
+
+- `scripts/launch-orig-xmind.py`：**必须传绝对路径**（原版按自身 cwd 解析，
+  相对路径会静默不打开，页面停在「加载中」），脚本已 `abspath` 化。
+- `scripts/open-check.sh` / `scripts/orig-windows.mjs`：逐文件重启原版并读
+  `主题: N` 判定是否加载成功（真正的加载指标；「加载中......」是大纲面板占位，
+  不代表失败）。原版有多窗口会叠加，按 URL 里的 `source=file:///...` 区分。
+- `scripts/probe-orig-console.mjs`：抢在加载前 attach 所有 target 抓 console；
+  实测原版对这类解析失败**不打印任何 console/异常**。
+
+## 46. `test.xmind` 双端截图对照与渲染对齐（2026-11-18，跨账号恢复 session 后）
+
+原版 XMind 23.07（CDP 9222，`launch-orig-xmind.py` 传绝对路径）与 xmind-rs 隔离实例
+（CDP 9226，`XMIND_RS_DATA_DIR` + 全新 `WEBVIEW2_USER_DATA_FOLDER`）打开同一
+`test.xmind`，视口 1280×820、100% 缩放。截图 `target/verify/orig-test.png`、
+`ours-test-initial.png`、`ours-test-final.png`，并排/叠加页
+`target/verify/compare-render.html`（`scripts/compare-render.mjs` 生成）。
+
+### 46.1 原版 DOM 实测（`probe-orig-svg.mjs` / `probe-orig-geom.mjs`）
+
+| 元素 | 几何 / 样式 |
+| --- | --- |
+| 画布 | `rgb(244,248,242)` = `map/properties/svg:fill` `#f4f8f2` |
+| 中心主题 | 盒 228×70，marker `<image>` 30×30 at (5,5)，文本 `foreignObject` 120×40 |
+| 分支 1 / 2 | 盒 150×46 / 155×46，文本 84/89×24，内边距左 20 上 12 |
+| 笔记角标 | 盒**内**右缘 18×18（`topic-info-button`，字形 `≡`），不是右上角外部 |
+| 标签 | 盒**外**下方 78×23，`rgba(255,255,255,.7)` 填充 + `rgba(0,0,0,.1)` 描边 |
+| 图片主题 | 贴纸 SVG 自带 `width/height` 140×140 / 60×60；原版按原生尺寸绘制 |
+
+图片主题的盒规则（两个样本交叉验证）：内容内边距 **20 / 12 / 18 / 10**，
+内容宽 `max(图宽, 标题宽)`，内容高 `图高 + 12 + 24(标题)`，
+盒 = `内容宽 + 38` × `内容高 + 22`。140×140 → **178×198**，60×60 →
+**128×118**（60 那张标题盒 90px，比图宽，故盒宽由标题决定）。
+
+### 46.2 四个根因与修复
+
+1. **背景白掉**：`SheetTheme::from_value` 用 `colorThemeId` 前缀判 `foreign`，
+   `test.xmind` 是外来主题但被本应用改过配色写成 `XMindRS-Forest` →
+   `has_theme=false` → 整份 theme 不参与渲染 → 画布白。
+   修法：`compute_layout` 把 `sheet_theme.background()` 移出 `has_theme` 分支
+   （画布色是 sheet 属性，不属于 style cascade，且 `doc.background` 仍在其后覆盖）。
+   没有放宽 `foreign` 判据本身，避免影响 `theme_for()` 写回主题与既有回归。
+2. **图片被压成 22px 行内图标**：资源其实已由 `resource_data` 正确读出
+   （`naturalWidth` 60/140），但 `.node-image` CSS 限 `max-height:22px`，
+   `node_size` 只给图片 `height += 26`。
+   修法：`Topic.image_size: Option<(f64,f64)>`（派生数据，`topic_to_json` 不写出）；
+   `doc_open` 从资源字节解析 SVG 根 `width/height`（PNG 走 IHDR），
+   `doc_set_image` 从资源文件补测；`node_size` 按 §46.1 规则定盒，
+   多给 6px 标题余量防裁切；`LaidOutNode` 下发 `imageWidth/imageHeight`；
+   前端 `.node.has-image` 改 column 卡片（图上、标题下），
+   并把 inline `justifyContent` 让位给 CSS。
+3. **笔记角标在盒外右上**：改 `.node-note` 为 `right:19px; top:50%` 的
+   18×18 `≡`；`node_size` 为它预留 28px 宽（原版 150/155 盒宽由此复现）。
+4. **标签样式与占位**：改白底浅描边、`top: calc(100% + 5px)` 左对齐；
+   删掉 `node_size` 里 `labels → height += 18`（原版标签不进盒高）。
+
+### 46.3 验证
+
+- `scripts/ui-render-align.mjs`：**15/15 PASS**（背景 layout + DOM、中心/分支盒、
+  两张图片卡片盒、原生尺寸、角标数、标签数），`CDP_PORT=9226`。
+- `cargo test --workspace` 全绿（含 15 项 `xmind-file` roundtrip）、
+  `tsc --noEmit`、`npm run build:app` 成功。
+- 修复后：`#f4f8f2`、236×70 / 149×44 / 149×44 / 178×198 / 129×118。
+
+### 46.4 残余差异（禁称像素级一致）
+
+自研布局引擎的分支垂直间距与原版不同（原版右侧两分支中心距中心 ±65，
+本应用 -75/+5），分支标题原版左对齐而本应用居中，中心标记 36px vs 30px。
+`50%` 叠加图 `target/verify/render-overlay.png`（平移 +123/−35 后）里的重影
+主要来自这些项与两套应用工具栏；改这些常量会波及 17 种骨架与既有回归，本轮未动
+（已在 §47 继续处理）。
+
+## 47. 三项残余渲染差异的收敛（2026-11-18，续 §46）
+
+用户要求继续调整 §46.4 的三项差异，不动应用工具栏。原版重启后 CDP 9222，
+本应用隔离实例 CDP 9229（`cmp6-data` / `cmp6-wv2`），同一 `test.xmind`、
+1280×820、100%。截图 `orig-test-cur.png` / `ours-test-final.png`（上轮）/
+`ours-final3.png`（本轮），对比页 `target/verify/compare-render-v2.html`，
+叠加图 `render-overlay3.png`。
+
+### 47.1 视口陷阱：原版 DOM 坐标会随 `Emulation` 改变
+
+`shot-orig.mjs` 调用 `Emulation.setDeviceMetricsOverride(1280,820)` 且该设置持续生效。
+**截图前** `probe-orig-geom.mjs` 量到中心盒 `(626,436,228,70)`；**截图后**再量变成
+`(526,385,228,70)`，整体偏移 `(−100,−51)`。做叠加图必须以后一次为准，否则
+平移量会错 100px。本轮正确平移是 `(+119,+20)`（本应用中心盒中心 `521,400`
+→ 原版 `640,420`），不是 §46 用的 `(+123,−35)`。
+
+视口统一后的原版盒（中心 `640,420`）：中心 `526,385,228×70`；
+右分支 `805,332,150×46` / `805,462,155×46`（中心 y `355 / 485` = ±65）；
+左分支 `347,263,128×118` / `297,418,178×198`（中心 y `322 / 517` = −98/+97）。
+**关键**：XMind 对称的是「分支中心」，不是「该侧包围盒中心」——两侧盒高不同时
+这两个中心并不重合，这是 §46 误判为「栈心偏 19.5px」的原因。
+
+### 47.2 三个根因与修法
+
+1. **分支标题居中**：`test.xmind` 的 `mainTopic/properties/fo:text-align` 明确是
+   `left`，但 `SheetTheme::from_value` 因 `colorThemeId: XMindRS-Forest` 判定
+   `foreign=false → has_theme=false`，整份 theme 不进 `style_for`。
+   §46 只放行背景，样式层仍被跳过。
+   修法：`ThemePalette.theme_align: [Option<String>;3]`，`compute_layout` 用
+   `sheet_theme.get(depth, fo:text-align)`（**不用 `resolve`**，避免 `defaultStyles`
+   回退把无主题文件也改掉）无条件注入；`style_for` 在 sheet.theme 之前应用，
+   骨架层与 per-topic patch 仍可覆盖。刻意**不整份放行** theme：其
+   `line-class: roundedElbow` / `line-tapered: none` 会改掉已匹配的曲线连线。
+2. **中心标记 36px vs 30px**：原版对该文件画 `<image width=30 height=30
+   transform(5,5)>`；§43 的 36px / 40px 槽来自原生主题文件，两者并不矛盾——
+   主题无法解析时原版回退到 30px。
+   修法：`Metrics.marker_icon`（默认 36，`compute_layout` 在
+   `!has_theme && sheet.extra 有 theme` 时置 30）；`marker_width()` 用
+   `n*(icon+4)+18`，得 40px / 34px 槽；`LaidOutNode.marker_size` 下发，
+   前端 `--marker-size` 变量驱动 `.marker-chip` 与图标。中心盒 236 → **230**
+   （原版 228，差 2px），原生文件保持 §43 的 36/40 不变。
+3. **分支垂直分布**：`test.xmind` 实际结构是 `clockwise`（sheet 无
+   `structureClass`，`xmind.rs` 从 root 推断），不是 `Balanced`——第一版条件写
+   `== Balanced` 导致规则没触发。原版按分支中心对称且小分支有 130px 最小节距：
+   右侧两 46px 盒中心 ±65（节距 130 = 46 + 84），左侧 118/198 卡片 ±97.5
+   （节距 195 = 158 + 37，自然堆叠，不触发最小节距）。
+   本应用原逻辑把每侧**包围盒**居中于中心主题**顶边**（§24.5 实测规则），
+   得到右 −75/+5、左 −152/+42。
+   修法：`compute_layout` 的水平堆叠分支中，当结构为
+   `Balanced | Clockwise | Anticlockwise`、两侧均分、且一级分支全为叶子时，
+   改用 `gaps[i] = max((h_i+h_{i+1})/2 + v_gap, MIN_BRANCH_PITCH=130)`，
+   并把分支中心从 `−span/2` 依次按 gap 递进（自动关于根中心对称）。
+   **带子树的文件继续走 §24.5 的顶边堆叠**，因此 17 种骨架的既有 bbox 对照不受影响。
+
+### 47.3 验证与残余
+
+- `scripts/ui-render-align.mjs` 扩到 **23/23 PASS**（新增标记尺寸 layout+DOM、
+  分支对齐 layout+DOM、左右节距、两侧对称性）；中心盒容差收紧到 ±3。
+- `cargo test --workspace` 全绿、`tsc --noEmit` 通过、`npm run build:app` 成功。
+- 本轮实测：中心 `230×70`、marker `30`、分支 `149×44` 且 `align=left`、
+  右节距 `130`（±65）、左节距 `194`（±97）、两侧相对根中心偏移均为 `0`。
+- `render-overlay3.png` 中导图主体（中心盒、四个分支盒、两张插画、连线）已基本重合。
+  残余微差：中心盒 230 vs 228、分支 149×44 vs 150×46（1–2px），
+  标记白环与 `translateX(4px)` 的数像素错位，图片卡片内边距数像素，
+  字体渲染；另有两套应用的工具栏/状态栏（按要求未改）。**仍不声称像素级一致**。
+
+### 47.4 复用提醒
+
+- 构建前必须 `Get-Process xmind-rs | Stop-Process -Force`，否则 cargo 覆盖
+  `target/release/xmind-rs.exe` 报 `os error 5 拒绝访问`。
+- 每次隔离实例换新的 `WEBVIEW2_USER_DATA_FOLDER` 与 CDP 端口（本轮 9227→9228→9229）。
+- 原版 `wait-open.mjs` 可能取到非 test.xmind 的 target 而误报「加载中」；
+  以 `probe-orig-geom.mjs <needle>` 能读到主题为准。
+
+## 48. 标记边距 / 标记可点击 / 图片独立选中（2026-11-18，续 §47）
+
+用户提出三点：标记与文字左右边距不对、原版每个标记可点击弹框换同类或删除、
+原版贴纸/插图可单独选中并响应右键菜单。
+
+**注意 fixture 已变**：本轮 `test.xmind` 的中心主题带 **4 个** marker
+（`task-oct, priority-1, flag-red, star-red`），原版中心盒宽 **324**，
+不再是 §46/§47 记录的 228/230（那个是单 marker 版本）。回归基线随文件更新。
+
+### 48.1 标记行的精确内边距
+
+`scripts/probe-orig-interact.mjs` 直读原版 SVG（相对形状盒 `[0,0,324,70]`）：
+
+| 元素 | 相对 x | 说明 |
+| --- | --- | --- |
+| `topic-content` g | +34（transform +29） | 内容区左右各 inset 29 |
+| `topic-marker-group` | +34，宽 126 | 4×30 图标，步长 32（`icon+2`） |
+| 4 个 marker | +34 / +66 / +98 / +130 | `transform(5,5)` 白环 path |
+| `topic-title` fo | +175 | 与 marker 组间隔 **15px**，宽 120 |
+| 形状右边界 | +324 | 标题右侧留 **29px** |
+
+即 `324 = 29 + [5 + 126] + 15 + 120 + 29`。
+之前 `marker_width = n*(icon+4)+18` 得到 154，且 node 无 padding，
+于是 marker 贴着左边框、标题被 flex 撑到中间偏右（用户说的「左小右大」）。
+
+修法：
+- `layout::marker_width` 改为 `(5 + (n-1)*(icon+2) + icon + 15) * pad`
+  （4×30 → 146，盒宽 332 → **324**）；
+- 新增 `LaidOutNode.marker_pad = h_pad(depth)/2`（中心 29），前端对
+  `has-markers` 的 node 用它作真实 CSS `padding-left/right`，并把
+  `--text-pad` 置 0、`textAlign` 强制 left、`auto-wrap` 禁用；
+  `make_node` 的 `wrap_usable` 同步不收窄，避免行数不一致；
+- CSS `.node-markers` 加 `padding-left:5px; margin-right:15px`，
+  `.marker-chip` 宽 `icon+2`（最后一个只有 `icon`），图标 `translateX(2px)`。
+- 全局 `box-sizing: border-box`，`.node-shape` 是 `position:absolute; left:0`，
+  所以加 padding 不会撑大盒子、也不会移动形状。
+
+### 48.2 单个标记点击弹框（原版实测）
+
+`scripts/probe-orig-ui.mjs` 用 CDP `Input.dispatchMouseEvent` 点击
+`topic-marker-image:…:star-red`，原版新增：
+
+- `.uk-pop.uk-popover.uk-popover-bottom-center.uk-open`，`223×40`，
+  `style="--uk-popover-toggle-width:324px; …"`，即锚定**整个主题盒**下方居中；
+- 内容为该 marker **同组全部 7 个** 16px 图标按钮（star-red/orange/yellow/
+  green/blue/purple/gray）+ 一个 `uk-icon: trash` 删除按钮；
+- 全屏 `.topic-popover-overlay` 透明遮罩；弹框是 toggle，再点一次关闭。
+
+本应用实现：新增 `src/shell/MarkerChipPop.tsx`（同组图标 + 垃圾桶 + overlay +
+点外部/Esc 关闭），`MapCanvas` 的 `.marker-chip` 变为可点击按钮
+（`onPointerDown stopPropagation` 防止触发主题拖拽），App 维护
+`markerChipPop` 状态并通过 `run('setMarkers')` 替换/删除；替换走
+`addMarkerExclusive` 保持「同组唯一」。弹框锚点用主题盒
+`bottom + 16 / centre`，与 `uk-popover-toggle-width` 一致。
+
+### 48.3 图片独立选中与右键菜单（原版实测）
+
+`scripts/probe-orig-image.mjs` diff 原版 DOM：左键点
+`topic-image:a469…` 后新增 **5 个元素**：
+`topic-image-outline`（`stroke: rgba(46,189,255,1)`，比图大 1px）+
+`topic-image-resize-handle-{up,down}-{left,right}` 四角手柄；
+**没有**新增主题选中框 → 图片是独立对象。
+右键后 DOM 无任何新增节点，说明是 **Electron 原生菜单**（CDP 读不到），
+因此本应用菜单只列能真正落地的行，不伪造不可用项。
+
+实现：`MapCanvas` 给 `.node-image` 加 click / contextmenu（均
+`stopPropagation`），App 维护 `selectedImage`；CSS 画蓝色 outline +
+4 个 `.image-handle`；`menuModel.buildImageMenu()` 提供
+替换图片（本地图片 / 贴纸 / 插画）、拷贝、格式、删除图片、删除主题；
+`handleMenuAction` 新增 `image.*` 分支，`Delete` 键在图片选中时删图片而非主题。
+
+### 48.4 另一个渲染差异：标记按组排序
+
+原版画 `priority-1, task-oct, flag-red, star-red`，而 `content.json`
+存的是 `task-oct, priority-1, …`。即官方按标记目录的组顺序
+（标签/优先级/任务/旗帜/星星/人像/符号）排列，不按文件顺序。
+`layout::ordered_markers()` 用稳定排序按前缀归组，`make_node` 下发。
+
+### 48.5 验证与陷阱
+
+- `scripts/ui-render-align.mjs` 扩到 **51/51 PASS**（原 23 项 +
+  边距 8 项 + 弹框 8 项 + 图片 6 项 + 顺序/位置等）。
+- `cargo test --workspace` 全绿、`tsc --noEmit` 通过、`npm run build:app` 成功。
+- **回归脚本陷阱**：不要直接 `invoke('doc_undo')` 撤销改动——
+  shell 的 `run()` 才持有 `commit()`，绕过它后端布局已回滚但 React DOM
+  仍是旧 marker，后续断言会连锁失败。必须用真实 `Ctrl+Z`
+  （`document.body.dispatchEvent(new KeyboardEvent('keydown', …))`）。
+- `KeyboardEvent` 必须 dispatch 到 `document.body` 而非 `window`：
+  App 的 handler 会对 `event.target` 调 `.closest()`，window 没有该方法。
+- 本轮叠加图平移量仍是 `(+119,+20)`（原版中心盒 `478,385` /
+  本应用 `359,365`），与 §47 一致。
+- 新增脚本：`probe-orig-interact.mjs` / `probe-orig-ui.mjs` /
+  `probe-orig-image.mjs` / `shot-interactions.mjs`。
+
+

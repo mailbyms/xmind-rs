@@ -3,7 +3,7 @@ import {
 } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { api } from '../lib/api';
-import { markerColor, markerGlyph } from '../lib/markers';
+import { markerColor, markerGlyph, markerIcon, markerLabel } from '../lib/markers';
 import type { DecorSelection, Frame, LaidOutNode, Layout, LiveEditPhase, Side, Snapshot, Structure } from '../lib/types';
 
 export interface MapCanvasHandle {
@@ -26,6 +26,14 @@ interface Props {
   onSelectMany: (ids: string[]) => void;
   /** The shell owns the menu tree; the canvas only reports the anchor. */
   onContextMenu: (clientX: number, clientY: number, topicId: string | null) => void;
+  /** Clicking one in-box marker opens the shipped "same-group" popover. */
+  onMarkerClick: (topicId: string, marker: string, anchor: { x: number; y: number }) => void;
+  /** Which marker chip currently owns the open popover. */
+  activeMarker: { topicId: string; marker: string } | null;
+  /** The artwork of an image topic is a separate selectable object. */
+  selectedImage: string | null;
+  onImageSelect: (topicId: string | null) => void;
+  onImageContextMenu: (clientX: number, clientY: number, topicId: string) => void;
   onAction: (cmd: string, args?: Record<string, unknown>) => Promise<Snapshot | null>;
   /** Live edit session: each `text` phase asks the backend to re-layout. */
   onLiveEdit: (phase: LiveEditPhase, id: string, title: string | null) => Promise<Snapshot | null>;
@@ -37,7 +45,11 @@ interface Props {
   onDecorRename: (selection: DecorSelection, current: string) => void;
   /** Drag one end of a 概要 / 外框: the range snaps to whole siblings. */
   onDecorRange: (kind: 'boundary' | 'summary', id: string, startId: string, endId: string) => void;
+  /** Click the page badge on a topic that carries a note. */
+  onOpenNote?: (id: string) => void;
   onScale?: (scale: number) => void;
+  /** Report pan / zoom so shell overlays can stay anchored to a topic. */
+  onViewChange?: (view: View) => void;
 }
 
 interface View { scale: number; tx: number; ty: number }
@@ -322,8 +334,9 @@ function hatchPattern(node: LaidOutNode): { id: string; el: React.ReactNode } | 
 /** Heavy renderer: loaded as its own chunk, never part of the startup bundle. */
 const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
   { layout, selected, selectedIds, fitKey, onSelect, onSelectMany, onContextMenu,
-    onAction, onLiveEdit, onScale,
-    linkPick, onLinkTarget, selectedDecor, onDecorSelect, onDecorRename, onDecorRange }, ref,
+    onAction, onLiveEdit, onScale, onViewChange, onOpenNote,
+    linkPick, onLinkTarget, selectedDecor, onDecorSelect, onDecorRename, onDecorRange,
+    onMarkerClick, activeMarker, selectedImage, onImageSelect, onImageContextMenu }, ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const panStart = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
@@ -446,6 +459,8 @@ const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
   }), [zoomAt, fit]);
 
   useEffect(() => { fit(); /* eslint-disable-line react-hooks/exhaustive-deps */ }, [fitKey]);
+
+  useEffect(() => { onViewChange?.(view); }, [view, onViewChange]);
 
   // The status bar shows the live zoom percentage, exactly like XMind's.
   useEffect(() => { onScale?.(view.scale); }, [view.scale, onScale]);
@@ -1070,6 +1085,11 @@ const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
           const style = node.style;
           const isSelected = selected === node.id;
           const imageUrl = node.image ? imageCache.current[node.image] : undefined;
+          // An image topic is a card: artwork at its intrinsic size on top,
+          // label underneath.  Only treat it as such when the backend managed
+          // to measure the artwork; otherwise keep the legacy inline icon.
+          const hasArtwork = Boolean(imageUrl && node.imageWidth > 0 && node.imageHeight > 0);
+          const hasMarkers = node.markers.length > 0;
           const hatch = hatchPattern(node);
           const fill = style.fill === 'none' || style.fill === 'transparent'
             ? 'none'
@@ -1084,9 +1104,11 @@ const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
               key={node.id}
               data-id={node.id}
               className={`node${style.underline ? ' underline' : ''}${isSelected ? ' selected' : ''}${node.cell ? ' cell' : ''}`
+                + `${hasArtwork ? ' has-image' : ''}`
+                + `${hasMarkers ? ' has-markers' : ''}`
                 + `${style.align === 'left' ? ' align-left' : ''}`
                 + `${node.lines > 1 && !node.title.includes('\n') && style.align === 'left'
-                    && !style.underline && node.textPad > 0 && !node.cell ? ' auto-wrap' : ''}`
+                    && !style.underline && node.textPad > 0 && !node.cell && !hasMarkers ? ' auto-wrap' : ''}`
                 + `${inFlight ? ' drag-src' : ''}${drop && drop.id === node.id ? ' drag-origin' : ''}`
                 + `${isTarget && drop?.mode === 'child' ? ' drop-target' : ''}`}
               style={{
@@ -1101,16 +1123,23 @@ const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
                 fontStyle: style.italic ? 'italic' : 'normal',
                 textDecoration: style.strike ? 'line-through' : 'none',
                 textTransform: (style.textCase as React.CSSProperties['textTransform']) || 'none',
-                justifyContent: style.align === 'left' ? 'flex-start'
-                  : style.align === 'right' ? 'flex-end' : 'center',
-                textAlign: (style.align as React.CSSProperties['textAlign']) || 'center',
+                justifyContent: hasArtwork ? undefined : (hasMarkers || style.align === 'left' ? 'flex-start'
+                  : style.align === 'right' ? 'flex-end' : 'center'),
+                // A marker row is followed immediately by the label, which
+                // starts at the same x as it would without markers (§48).
+                textAlign: hasMarkers ? 'left' : (style.align as React.CSSProperties['textAlign']) || 'center',
                 opacity: style.opacity,
-                paddingLeft: node.pad || undefined,
-                paddingRight: node.pad || undefined,
+                paddingLeft: hasMarkers ? node.markerPad : (node.pad || undefined),
+                paddingRight: hasMarkers ? node.markerPad : (node.pad || undefined),
                 // XMind splits the topic's horizontal padding evenly: the
                 // label (and the in-place editor) are inset by `textPad` on
                 // both sides instead of starting on the shape's left edge.
-                ['--text-pad' as string]: `${node.textPad || 0}px`,
+                // A marker row already spends that inset as real CSS padding,
+                // so the label gets none on top of it.
+                ['--text-pad' as string]: `${hasMarkers ? 0 : (node.textPad || 0)}px`,
+                // Unresolved sheet themes fall back to 30px marker icons;
+                // native files keep 36px (FINDINGS §43 / §47).
+                ['--marker-size' as string]: `${node.markerSize || 36}px`,
                 // The 下划线 shapes underline with the branch hue (or the
                 // theme's border colour); the label ink may be flipped for
                 // contrast, so `currentColor` would be wrong here.
@@ -1137,17 +1166,96 @@ const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
                   strokeLinejoin="round"
                 />
               </svg>
-              {node.markers.length > 0 && (
-                <div className="node-markers">
-                  {node.markers.map((marker) => (
-                    <span key={marker} className="marker-chip" title={marker}
-                      style={{ background: markerColor(marker) }}>
-                      {markerGlyph(marker)}
-                    </span>
+              {imageUrl && (
+                <img className={`node-image${selectedImage === node.id ? ' selected' : ''}`}
+                  src={imageUrl} alt="" draggable={false}
+                  style={hasArtwork
+                    ? { width: node.imageWidth, height: node.imageHeight }
+                    : undefined}
+                  // The artwork is its own selectable object in XMind: a
+                  // click must not select / drag the enclosing topic, and a
+                  // right click must open the image menu rather than the
+                  // topic menu (FINDINGS §48).
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onImageSelect(node.id);
+                  }}
+                  onDoubleClick={(event) => event.stopPropagation()}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onImageSelect(node.id);
+                    onImageContextMenu(event.clientX, event.clientY, node.id);
+                  }} />
+              )}
+              {hasArtwork && selectedImage === node.id && (
+                // Four corner handles, like the shipped renderer's
+                // `topic-image-resize-handle-*`.  The artwork starts at the
+                // card's 20px / 12px content inset.
+                <>
+                  {([
+                    ['nw', 20, 12], ['ne', 20 + node.imageWidth, 12],
+                    ['sw', 20, 12 + node.imageHeight],
+                    ['se', 20 + node.imageWidth, 12 + node.imageHeight],
+                  ] as const).map(([corner, hx, hy]) => (
+                    <span key={corner} className={`image-handle ih-${corner}`}
+                      style={{ left: hx - 4, top: hy - 4 }} />
                   ))}
+                </>
+              )}
+              {/* XMind paints markers inside the topic box, in one horizontal row
+                  to the left of the label.  The backend reserves markerWidth px
+                  so the box grows without shrinking the label's wrap limit. */}
+              {hasMarkers && (
+                <div className="node-markers">
+                  {node.markers.map((marker) => {
+                    const icon = markerIcon(marker);
+                    const active = activeMarker?.topicId === node.id && activeMarker.marker === marker;
+                    return (
+                      <span key={marker}
+                        className={`marker-chip${active ? ' active' : ''}`}
+                        title={`${markerLabel(marker)}（点击更换 / 删除）`}
+                        data-marker-id={marker}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          // The shipped popover is anchored to the *whole*
+                          // topic box (its `--uk-popover-toggle-width` equals
+                          // the box width), not to the clicked icon (§48).
+                          const box = (event.currentTarget.closest('.node') as HTMLElement | null)
+                            ?.getBoundingClientRect();
+                          onMarkerClick(node.id, marker, box
+                            ? { x: box.left + box.width / 2, y: box.bottom + 16 }
+                            : { x: event.clientX, y: event.clientY });
+                        }}
+                        onDoubleClick={(event) => event.stopPropagation()}>
+                        {icon
+                          ? <img src={icon} alt="" draggable={false} />
+                          : <span className="marker-chip-fallback"
+                              style={{ background: markerColor(marker) }}>{markerGlyph(marker)}</span>}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
-              {imageUrl && <img className="node-image" src={imageUrl} alt="" draggable={false} />}
+              {node.note && (
+                <button className="node-note" type="button" title={node.note}
+                  aria-label="打开笔记"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSelect(node.id);
+                    onOpenNote?.(node.id);
+                  }}>
+                  {/* The shipped renderer uses a small in-box "≡" info button
+                      at the right edge of the topic, not a page-corner badge. */}
+                  <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
+                    <path d="M3.5 5.5h11M3.5 9h11M3.5 12.5h7" stroke="currentColor"
+                      strokeWidth="1.6" strokeLinecap="round" opacity="0.8" />
+                  </svg>
+                </button>
+              )}
               {editing === node.id ? (
                 <textarea
                   className="node-title-input"

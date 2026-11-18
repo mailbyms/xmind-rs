@@ -2,8 +2,9 @@
 //
 //   1. The toolbar no longer has ZEN / 演说 buttons; the 格式 side panel no
 //      longer has a 演说 tab (only 样式 / 画布).
-//   2. 标记 opens a real marker picker that writes topic.markers through the
-//      Rust command (canvas chip + doc_layout agree), and toggles off.
+//   2. 标记 opens the official marker catalogue (7 groups / 58 icons) and
+//      writes topic.markers through the Rust command; clicking the same id is
+//      idempotent, another marker in the same group replaces it (FINDINGS §43).
 //   3. 插入 opens a real dropdown whose rows perform the corresponding insert
 //      actions (子主题 / 笔记 / 主题属性…), not just an attrs-panel toggle.
 //   4. Esc and outside clicks dismiss the popovers; ZEN / 演说 are gone for
@@ -129,20 +130,46 @@ const toolAt = (label) => ev(`(() => {
 const markerAt = await toolAt('标记');
 await clickAt(markerAt.x, markerAt.y);
 ok('标记按钮打开标记弹层', await ev(`!!document.querySelector('.tool-pop-marker')`));
+const header = await ev(`(() => ({
+  tabs: document.querySelectorAll('.tool-pop-marker .tp-tab').length,
+  active: document.querySelectorAll('.tool-pop-marker .tp-tab.on').length,
+  close: !!document.querySelector('.tool-pop-marker .tp-close'),
+  width: Math.round(document.querySelector('.tool-pop-marker').getBoundingClientRect().width),
+  tabIcons: [...document.querySelectorAll('.tool-pop-marker .tp-tab img')].map(i => i.getAttribute('src')),
+}))()`);
+ok('顶栏有三个官方图标页签且标记页签激活', header.tabs === 3 && header.active === 1, JSON.stringify(header));
+ok('顶栏有可点击的关闭按钮', header.close);
+ok('面板宽度与原版 268px 一致', header.width === 268, `width=${header.width}`);
+ok('页签图标来自 app.asar 提取的官方 SVG', JSON.stringify(header.tabIcons) === JSON.stringify(['/markers/ui/marker.svg', '/markers/ui/sticker.svg', '/markers/ui/illustration.svg']), JSON.stringify(header.tabIcons));
 const markerCount = await ev(`document.querySelectorAll('.tp-mark').length`);
-ok('弹层列出 11 个原生标记', markerCount === 11, `count=${markerCount}`);
+ok('弹层列出 58 个官方标记', markerCount === 58, `count=${markerCount}`);
+const groupTitles = await ev(`[...document.querySelectorAll('.tp-group .tp-title')].map(e => e.textContent.trim())`);
+ok('分组顺序与官方一致', JSON.stringify(groupTitles) === JSON.stringify(['标签', '优先级', '任务', '旗帜', '星星', '人像', '符号']), JSON.stringify(groupTitles));
+const iconsOk = await ev(`(() => {
+  const imgs = [...document.querySelectorAll('.tp-mark-icon')];
+  return imgs.length === 58 && imgs.every(i => i.getAttribute('src')?.startsWith('/markers/'));
+})()`);
+ok('每个入口使用官方 SVG 图标', iconsOk);
 ok('标记按钮处于按下态', await ev(`[...document.querySelectorAll('.toolbar .tool-item.on .tool-label')].some(e => e.textContent.trim() === '标记')`));
 await shot('toolbar-marker-pop');
-await ev(`document.querySelectorAll('.tp-mark')[0].click()`);
+await ev(`document.querySelector('.tp-mark[data-marker-id="tag-red"]').click()`);
 await wait(400);
 const chips = await ev(`document.querySelectorAll('.node-markers .marker-chip').length`);
-ok('点击标记后画布出现角标', chips === 1, `chips=${chips}`);
+ok('点击标记后画布出现官方图标角标', chips === 1 && await ev(`!!document.querySelector('.node-markers .marker-chip img')`), `chips=${chips}`);
 const backendMarkers = await ev(`window.__TAURI_INTERNALS__.invoke('doc_layout').then(l => (l.nodes.find(n => n.depth === 0)?.markers ?? []))`);
-ok('Rust doc_layout 已写入 priority-1', JSON.stringify(backendMarkers) === '["priority-1"]', JSON.stringify(backendMarkers));
-ok('弹层保持打开且该标记高亮', await ev(`!!document.querySelector('.tp-mark.on') && !!document.querySelector('.tool-pop-marker')`));
-await ev(`document.querySelectorAll('.tp-mark')[0].click()`);
+ok('Rust doc_layout 已写入 tag-red', JSON.stringify(backendMarkers) === '["tag-red"]', JSON.stringify(backendMarkers));
+ok('弹层保持打开且官方无选中高亮', await ev(`!!document.querySelector('.tool-pop-marker') && !document.querySelector('.tp-mark.on')`));
+await ev(`document.querySelector('.tp-mark[data-marker-id="tag-red"]').click()`);
 await wait(400);
-ok('再次点击取消标记', await ev(`document.querySelectorAll('.node-markers .marker-chip').length`) === 0);
+ok('再次点击同一标记不会移除（与官方一致）', await ev(`document.querySelectorAll('.node-markers .marker-chip').length`) === 1);
+await ev(`document.querySelector('.tp-mark[data-marker-id="priority-1"]').click()`);
+await wait(400);
+ok('可连续添加不同标记', await ev(`document.querySelectorAll('.node-markers .marker-chip').length`) === 2);
+await ev(`document.querySelector('.tp-legend-btn').click()`);
+ok('图例列出本图已用标记', await ev(`document.querySelectorAll('.tp-legend-row').length`) === 2);
+await ev(`document.querySelector('.tp-close').click()`);
+ok('关闭按钮关闭标记弹层', await ev(`!document.querySelector('.tool-pop')`));
+await clickAt(markerAt.x, markerAt.y);
 
 // ------------------------------------------------------------------ 4. Esc / outside
 await press('Escape', 'Escape', 27);
@@ -154,7 +181,7 @@ await clickAt(120, Math.round(viewH / 2));
 ok('点击画布空白处关闭下拉', await ev(`!document.querySelector('.tool-pop')`));
 // 空白点击会清空选中；插入下拉里 needsTopic 的条目此时应处于禁用态。
 await clickAt(insertAt.x, insertAt.y);
-ok('无选中时「子主题」条目被禁用', await ev(`[...document.querySelectorAll('.tp-row')].find(e => e.textContent.includes('子主题'))?.disabled`) === true);
+ok('无选中时「笔记」条目被禁用', await ev(`[...document.querySelectorAll('.tp-row')].find(e => e.textContent.includes('笔记'))?.disabled`) === true);
 await press('Escape', 'Escape', 27);
 await clickAt(rootAt.x, rootAt.y);
 ok('重新选中中心主题', await ev(`document.querySelectorAll('.topic-outline').length`) === 1);
@@ -162,43 +189,95 @@ ok('重新选中中心主题', await ev(`document.querySelectorAll('.topic-outli
 // ------------------------------------------------------------------ 5. insert rows
 await clickAt(insertAt.x, insertAt.y);
 const rows = await ev(`[...document.querySelectorAll('.tp-row')].map(e => e.textContent.trim())`);
-ok('插入下拉含 19 个真实条目', rows.length === 19, `count=${rows.length}`);
-ok('插入下拉含 子主题 / 笔记 / 主题属性', ['子主题', '笔记', '主题属性'].every((s) => rows.some((r) => r.includes(s))));
+ok('插入下拉严格保留原版 5 项', JSON.stringify(rows) === JSON.stringify(['笔记', '标签', '贴纸', '插画', '本地图片']), JSON.stringify(rows));
+ok('不实现 链接 / 附件 / 语音备注 / 方程', !['链接', '附件', '语音备注', '方程'].some((s) => rows.includes(s)), JSON.stringify(rows));
 await shot('toolbar-insert-pop');
-const beforeNodes = await ev(`document.querySelectorAll('.node').length`);
-await ev(`[...document.querySelectorAll('.tp-row')].find(e => e.textContent.includes('子主题')).click()`);
-await wait(500);
-const afterNodes = await ev(`document.querySelectorAll('.node').length`);
-ok('插入 > 子主题 真正新增主题', afterNodes === beforeNodes + 1, `${beforeNodes} → ${afterNodes}`);
-ok('执行后下拉自动关闭', await ev(`!document.querySelector('.tool-pop')`));
 
-// 笔记：输入弹窗写入 note，再打开时值被回读
-await clickAt(insertAt.x, insertAt.y);
+// 笔记：主题下方的浮层写入 note，再打开时值被回读
 await ev(`[...document.querySelectorAll('.tp-row')].find(e => e.textContent.includes('笔记')).click()`);
 await wait(300);
-ok('插入 > 笔记 打开输入弹窗', await ev(`document.querySelector('.rename-title')?.textContent`) === '插入笔记');
-const noteAt = await rectOf('.rename-input');
+ok('插入 > 笔记 打开主题下方浮层', await ev(`!!document.querySelector('.topic-inline-editor.editor-note')`));
+const noteAt = await rectOf('.topic-inline-editor.editor-note .tie-input');
 if (!noteAt) throw new Error('note input missing');
 await clickAt(noteAt.x, noteAt.y);
 await send('Input.insertText', { text: '工具栏回归写入的笔记' });
 await wait(150);
-await ev(`[...document.querySelectorAll('.rename-actions button')].find(b => b.textContent.includes('确定')).click()`);
+await ev(`[...document.querySelectorAll('.topic-inline-editor .tie-actions button')].find(b => b.textContent.includes('确定')).click()`);
 await wait(400);
 await clickAt(insertAt.x, insertAt.y);
 await ev(`[...document.querySelectorAll('.tp-row')].find(e => e.textContent.includes('笔记')).click()`);
 await wait(300);
-ok('笔记已写入文档并可回读', await ev(`document.querySelector('.rename-input')?.value`) === '工具栏回归写入的笔记');
-await ev(`[...document.querySelectorAll('.rename-actions button')].find(b => b.textContent.includes('取消')).click()`);
+ok('笔记已写入文档并可回读', await ev(`document.querySelector('.topic-inline-editor.editor-note .tie-input')?.value`) === '工具栏回归写入的笔记');
+await ev(`[...document.querySelectorAll('.topic-inline-editor .tie-actions button')].find(b => b.textContent.includes('取消')).click()`);
 await wait(200);
+ok('有笔记的主题右上角显示纸页角标', await ev(`(() => {
+  const badge = document.querySelector('.node-note');
+  return !!badge && (badge.getAttribute('title') ?? '').includes('工具栏回归写入的笔记');
+})()`));
+await ev(`document.querySelector('.node-note').click()`);
+await wait(250);
+ok('点击纸页角标重新打开笔记浮层', await ev(`document.querySelector('.topic-inline-editor.editor-note .tie-input')?.value`) === '工具栏回归写入的笔记');
+await ev(`[...document.querySelectorAll('.topic-inline-editor .tie-actions button')].find(b => b.textContent.includes('取消')).click()`);
+await wait(150);
 
-// 主题属性：插入下拉里保留侧面板入口
+// 标签：半角逗号分隔，写回 labels 数组
 await clickAt(insertAt.x, insertAt.y);
-await ev(`[...document.querySelectorAll('.tp-row')].find(e => e.textContent.includes('主题属性')).click()`);
+await ev(`[...document.querySelectorAll('.tp-row')].find(e => e.textContent.includes('标签')).click()`);
+await wait(300);
+ok('插入 > 标签 打开主题下方浮层', await ev(`!!document.querySelector('.topic-inline-editor.editor-label')`));
+ok('标签浮层提示半角逗号', await ev(`document.querySelector('.topic-inline-editor.editor-label .tie-hint')?.textContent.includes('半角逗号')`) === true);
+const labelAt = await rectOf('.topic-inline-editor.editor-label .tie-input');
+if (!labelAt) throw new Error('label input missing');
+await clickAt(labelAt.x, labelAt.y);
+await send('Input.insertText', { text: '甲, 乙' });
+await ev(`[...document.querySelectorAll('.topic-inline-editor .tie-actions button')].find(b => b.textContent.includes('确定')).click()`);
 await wait(400);
-ok('插入 > 主题属性… 打开侧面板', await ev(`!!document.querySelector('.panel .panel-head h3')`));
-ok('打开侧面板后下拉已关闭', await ev(`!document.querySelector('.tool-pop')`));
-await ev(`document.querySelector('.panel-close')?.click()`);
-await wait(200);
+const labels = await ev(`window.__TAURI_INTERNALS__.invoke('doc_layout').then(l => (l.nodes.find(n => n.depth === 0)?.labels ?? []))`);
+ok('标签写入 Rust 文档', JSON.stringify(labels) === JSON.stringify(['甲', '乙']), JSON.stringify(labels));
+
+// 贴纸 / 插画：同一图标面板的另两个页签，点击后写 topic.image 资源
+for (const [label, tabSrc, dir] of [
+  ['贴纸', '/markers/ui/sticker.svg', '/stickers/'],
+  ['插画', '/markers/ui/illustration.svg', '/illustrations/'],
+]) {
+  await clickAt(insertAt.x, insertAt.y);
+  await ev(`[...document.querySelectorAll('.tp-row')].find(e => e.textContent.trim() === ${JSON.stringify(label)}).click()`);
+  await wait(250);
+  const panel = await ev(`(() => {
+    const p = document.querySelector('.tool-pop-marker.icon-mode');
+    if (!p) return null;
+    return {
+      active: p.querySelector('.tp-tab.on img')?.getAttribute('src'),
+      category: p.querySelector('.tp-category select')?.value,
+      icons: p.querySelectorAll('.tp-icon-item').length,
+    };
+  })()`);
+  ok(`插入 > ${label} 打开图标面板对应页签`, panel?.active === tabSrc && panel?.category === '全部' && panel?.icons > 0, JSON.stringify(panel));
+  await ev(`(() => {
+    const s = document.querySelector('.tp-category select');
+    const value = s.options[1].value;
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(s, value);
+    s.dispatchEvent(new Event('change', { bubbles: true }));
+    return value;
+  })()`);
+  await wait(150);
+  ok(`${label}「类别」筛选只显示所选分组`, await ev(`document.querySelectorAll('.tool-pop-marker.icon-mode .tp-group .tp-title').length`) === 1);
+  await shot(`toolbar-icon-panel-${label === '贴纸' ? 'sticker' : 'illustration'}`);
+  await ev(`document.querySelector('.tp-icon-item:not(:disabled)').click()`);
+  await wait(1000);
+  const image = await ev(`window.__TAURI_INTERNALS__.invoke('doc_layout').then(l => (l.nodes.find(n => n.depth === 0)?.image ?? null))`);
+  const toast = await ev(`document.querySelector('.toast')?.textContent ?? ''`);
+  ok(`点击${label}写入主题图片资源`, typeof image === 'string' && image.endsWith('.svg'), `${image} toast=${toast}`);
+  ok(`插入${label}后面板保持打开（与官方一致）`, await ev(`!!document.querySelector('.tool-pop-marker.icon-mode')`));
+  await ev(`document.querySelector('.tp-close').click()`);
+  await wait(150);
+}
+await clickAt(insertAt.x, insertAt.y);
+ok('本地图片行存在且可用', await ev(`(() => {
+  const row = [...document.querySelectorAll('.tp-row')].find(e => e.textContent.trim() === '本地图片');
+  return !!row && !row.disabled;
+})()`));
+await press('Escape', 'Escape', 27);
 
 // ------------------------------------------------- 6. ZEN / 演说 fully removed
 await press('f', 'KeyF', 70, 3);

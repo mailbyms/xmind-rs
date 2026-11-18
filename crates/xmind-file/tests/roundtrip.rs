@@ -494,3 +494,83 @@ fn svg_exports_font_stack_dashes_and_arrow_markers() {
     assert!(svg.contains("marker-end=\"url(#arrow-0)\""), "marker reference: {svg}");
     assert!(svg.contains("<path d=\"M0 -3.4 L6 0 L0 3.4 Z\""), "triangle body: {svg}");
 }
+
+/// XMind's desktop writer emits markers as `[{"markerId": "..."}]`
+/// (research/asar-src/renderer/2907.js: `N.markers = D.map((e) => ({ markerId: e }))`).
+/// A bare string array makes the shipped app refuse the file — the canvas stays at
+/// "主题: 0" with no error dialog — so the shape is part of the format contract.
+#[test]
+fn markers_are_written_as_marker_id_objects() {
+    let source = fixture();
+    if !source.exists() {
+        eprintln!("fixture missing, skipping: {}", source.display());
+        return;
+    }
+    let loaded = read_xmind(&source).expect("read real xmind");
+    let mut document = loaded.document.clone();
+    let root_id = document.root().id.clone();
+    {
+        let root = document.root_mut();
+        root.markers = vec!["priority-2".into(), "flag-red".into()];
+    }
+    let resources: Vec<(String, Vec<u8>)> = loaded
+        .resources
+        .iter()
+        .map(|r| (r.name.clone(), r.bytes.clone()))
+        .collect();
+    let target = std::env::temp_dir().join("xmind-rs-marker-shape.xmind");
+    write_xmind(&target, &document, &resources, None).expect("write xmind");
+
+    let file = fs::File::open(&target).unwrap();
+    let mut zip = zip::ZipArchive::new(file).unwrap();
+    let mut raw = String::new();
+    zip.by_name("content.json").unwrap().read_to_string(&mut raw).unwrap();
+    let json: serde_json::Value = serde_json::from_str(&raw).unwrap();
+    let markers = json[0]["rootTopic"]["markers"].clone();
+    assert_eq!(
+        markers,
+        serde_json::json!([{ "markerId": "priority-2" }, { "markerId": "flag-red" }]),
+        "markers must be markerId objects, got {markers}"
+    );
+
+    let again = read_xmind(&target).expect("re-read");
+    assert_eq!(again.document.root().markers, vec!["priority-2".to_string(), "flag-red".to_string()]);
+    assert_eq!(root_id, again.document.root().id);
+}
+
+/// A file written by an older build stored markers as bare strings, which the
+/// desktop app refuses to open. Loading and saving it must repair the shape
+/// instead of copying the raw array through untouched.
+#[test]
+fn resaving_repairs_legacy_string_markers() {
+    use std::io::Write;
+    let source = std::env::temp_dir().join("xmind-rs-legacy-markers.xmind");
+    {
+        let file = fs::File::create(&source).unwrap();
+        let mut zip = zip::ZipWriter::new(file);
+        let opts = zip::write::SimpleFileOptions::default();
+        zip.start_file("content.json", opts).unwrap();
+        zip.write_all(br#"[{"class":"sheet","id":"s1","title":"s","rootTopic":{"id":"t1","class":"topic","title":"R","markers":["priority-2"]}}]"#).unwrap();
+        zip.start_file("manifest.json", opts).unwrap();
+        zip.write_all(br#"{"file-entries":{"content.json":{}}}"#).unwrap();
+        zip.start_file("metadata.json", opts).unwrap();
+        zip.write_all(br#"{"activeSheetId":"s1"}"#).unwrap();
+        zip.finish().unwrap();
+    }
+
+    let loaded = read_xmind(&source).expect("read legacy file");
+    assert_eq!(loaded.document.root().markers, vec!["priority-2".to_string()]);
+    let target = std::env::temp_dir().join("xmind-rs-legacy-markers-out.xmind");
+    write_xmind(&target, &loaded.document, &[], None).expect("write");
+
+    let file = fs::File::open(&target).unwrap();
+    let mut zip = zip::ZipArchive::new(file).unwrap();
+    let mut raw = String::new();
+    zip.by_name("content.json").unwrap().read_to_string(&mut raw).unwrap();
+    let json: serde_json::Value = serde_json::from_str(&raw).unwrap();
+    assert_eq!(
+        json[0]["rootTopic"]["markers"],
+        serde_json::json!([{ "markerId": "priority-2" }]),
+        "legacy string markers must be rewritten as objects: {raw}"
+    );
+}

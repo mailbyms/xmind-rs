@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from '../lib/api';
-import { MARKER_GROUPS, markerColor, markerGlyph } from '../lib/markers';
+import { MARKER_GROUPS, toggleMarkerExclusive } from '../lib/markers';
 import type { Action } from '../lib/api';
 import type { Snapshot, Topic } from '../lib/types';
 
@@ -94,17 +94,18 @@ export default function TopicAttrs({ snapshot, selected, onAction, onClose, noti
 
         <div className="section-title">标记</div>
         {MARKER_GROUPS.map((group) => (
-          <div className="marker-group" key={group.title}>
+          <div className="marker-group" key={group.id}>
             <div className="marker-group-title">{group.title}</div>
             <div className="marker-grid">
               {group.items.map((item) => (
                 <button key={item.id}
                   className={`marker-btn${(topic.markers ?? []).includes(item.id) ? ' active' : ''}`}
                   title={item.label}
-                  onClick={() => void onAction('toggleMarker', { id, marker: item.id })}>
-                  <span className="marker-glyph" style={{ color: markerColor(item.id) }}>
-                    {markerGlyph(item.id)}
-                  </span>{item.label}
+                  onClick={() => void onAction('setMarkers', {
+                    id,
+                    markers: toggleMarkerExclusive(topic.markers ?? [], item.id),
+                  })}>
+                  <img className="marker-btn-icon" src={item.icon} alt="" draggable={false} />
                 </button>
               ))}
             </div>

@@ -52,6 +52,7 @@ export const api = {
   setNote: (id: string, note: string) => call<Snapshot>('doc_set_note', { id, note }),
   setLabels: (id: string, labels: string[]) => call<Snapshot>('doc_set_labels', { id, labels }),
   toggleMarker: (id: string, marker: string) => call<Snapshot>('doc_toggle_marker', { id, marker }),
+  setMarkers: (id: string, markers: string[]) => call<Snapshot>('doc_set_markers', { id, markers }),
   setStyle: (id: string, style: TopicStyle) => call<Snapshot>('doc_set_style', { id, style }),
   clearStyle: (id: string) => call<Snapshot>('doc_clear_style', { id }),
   setSide: (id: string, side: Side | null) => call<Snapshot>('doc_set_side', { id, side }),

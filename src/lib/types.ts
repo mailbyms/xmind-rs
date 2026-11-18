@@ -154,8 +154,18 @@ export interface LaidOutNode {
   shapePath: string;
   shapeClosed: boolean;
   markers: string[];
+  /** Width reserved for the in-box marker row, in topic-local px. */
+  markerWidth: number;
+  /** Native marker icon size (36px for official themes, 30px for unresolved ones). */
+  markerSize: number;
+  /** Content inset on each side when the topic carries markers (FINDINGS §48). */
+  markerPad: number;
   labels: string[];
   image: string | null;
+  /** Intrinsic artwork size; XMind draws image topics as cards with the
+   * artwork above the label instead of a small inline icon. */
+  imageWidth: number;
+  imageHeight: number;
   parentId: string | null;
   /** Position among the parent's children, in document order (0 for the root). */
   childIndex: number;

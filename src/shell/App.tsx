@@ -2,12 +2,15 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { api, type Action } from '../lib/api';
+import { addMarkerExclusive, MARKERS } from '../lib/markers';
 import type { MapCanvasHandle } from '../editor/MapCanvas';
 import type { AppInfo, DecorSelection, Document, Snapshot, Structure, Topic, TopicStyle, LiveEditPhase } from '../lib/types';
 import type { SkeletonPreset } from '../inspector/skeletons';
 import Menu, { type MenuItem } from './Menu';
-import { InsertPop, MarkerPop } from './ToolbarPop';
-import { buildMainMenu, buildCanvasMenu, buildTopicMenu, SHORTCUTS, type MenuContext } from './menuModel';
+import MarkerChipPop from './MarkerChipPop';
+import { InsertPop, MarkerPop, type IconTab } from './ToolbarPop';
+import type { IconItem } from '../lib/icon-data';
+import { buildMainMenu, buildCanvasMenu, buildTopicMenu, buildImageMenu, SHORTCUTS, type MenuContext } from './menuModel';
 import { exportBranch, printBranch, type BranchFormat } from '../io/branchExport';
 
 // All four heavy views are separate chunks, fetched only when opened.
@@ -20,6 +23,10 @@ const ExportDialog = lazy(() => import('../io/ExportDialog'));
 
 type Panel = 'none' | 'ai' | 'format' | 'attrs' | 'export';
 type ToolbarPop = 'marker' | 'insert' | null;
+type TopicEditor = { kind: 'note' | 'label'; id: string; draft: string };
+type CanvasView = { scale: number; tx: number; ty: number };
+/** Which in-box marker owns the open same-group popover. */
+type MarkerChipTarget = { topicId: string; marker: string; x: number; y: number };
 
 type IconName =
   | 'menu' | 'undo' | 'redo' | 'topic' | 'subtopic' | 'relation' | 'summary' | 'boundary'
@@ -129,9 +136,18 @@ export default function App() {
   const [panel, setPanel] = useState<Panel>('format');
   /** 工具栏「标记 / 插入」的下拉弹层；两者互斥，点击外部或 Esc 关闭。 */
   const [toolbarPop, setToolbarPop] = useState<ToolbarPop>(null);
+  /** 同一个图标面板的三个页签；插入 > 贴纸/插画会 direct-open 对应页。 */
+  const [markerTab, setMarkerTab] = useState<IconTab>('marker');
+  /** 主题下方的笔记 / 标签浮层，位置跟随画布缩放与平移。 */
+  const [topicEditor, setTopicEditor] = useState<TopicEditor | null>(null);
+  const [canvasView, setCanvasView] = useState<CanvasView>({ scale: 1, tx: 0, ty: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
   /** Right-click menu: viewport coordinates + the exact item tree to show. */
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  /** Clicking an in-box marker opens a same-group replacement popover. */
+  const [markerChipPop, setMarkerChipPop] = useState<MarkerChipTarget | null>(null);
+  /** The artwork of an image topic, selected independently of its topic. */
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   /** In-app stand-ins for the original's small non-editor dialogs. */
   const [dialog, setDialog] = useState<{ title: string; lines: string[] } | null>(null);
   const [inputDialog, setInputDialog] = useState<{
@@ -180,6 +196,7 @@ export default function App() {
       return next.length === current.length ? current : next;
     });
     setSelected((current) => (current && !live.has(current) ? null : current));
+    setTopicEditor((current) => (current && !live.has(current.id) ? null : current));
     setSelectedDecor((current) => {
       if (!current) return current;
       const frames = snapshot?.layout.frames ?? [];
@@ -199,6 +216,10 @@ export default function App() {
   }, []);
 
   const onSelect = useCallback((id: string | null, additive = false) => {
+    // Clicking bare canvas (or any topic) drops the artwork / marker popover
+    // selection; those are separate objects inside a topic (FINDINGS §48).
+    setSelectedImage(null);
+    setMarkerChipPop(null);
     if (!id) { select(null); return; }
     if (additive) {
       setSelectedIds((current) => {
@@ -299,6 +320,7 @@ export default function App() {
         case 'setNote': result = await api.setNote(text('id'), text('note')); break;
         case 'setLabels': result = await api.setLabels(text('id'), (args.labels as string[]) ?? []); break;
         case 'toggleMarker': result = await api.toggleMarker(text('id'), text('marker')); break;
+        case 'setMarkers': result = await api.setMarkers(text('id'), (args.markers as string[]) ?? []); break;
         case 'setStyle': result = await api.setStyle(text('id'), (args.style as TopicStyle) ?? {}); break;
         case 'clearStyle': result = await api.clearStyle(text('id')); break;
         case 'setSide': result = await api.setSide(text('id'), (args.side as 'left' | 'right' | null) ?? null); break;
@@ -555,6 +577,28 @@ export default function App() {
     input.click();
   }, [run, notify]);
 
+  /** 贴纸 / 插画和本地图片走同一条资源链路：取字节 → content-addressed
+   *  store → topic.image → .xmind resources/，因此保存后可再次打开。 */
+  const insertIconImage = useCallback(async (kind: 'sticker' | 'illustration', item: IconItem) => {
+    if (!selected) { notify('请先选中一个主题'); return; }
+    try {
+      const response = await fetch(item.icon);
+      if (!response.ok) throw new Error(`读取素材失败：${response.status}`);
+      const blob = await response.blob();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ''));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+      const resource = await api.resourcePut(dataUrl, `${item.id}.svg`);
+      await run('setImage', { id: selected, resource: resource.id });
+      notify(`已插入${kind === 'sticker' ? '贴纸' : '插画'}`);
+    } catch (error) {
+      notify(`插入素材失败：${String(error)}`);
+    }
+  }, [selected, run, notify]);
+
   /** 自由主题对齐: the shipped eight commands, applied to box-selected floaters. */
   const alignFloating = useCallback(async (kind: string) => {
     const current = snapshotRef.current;
@@ -706,29 +750,64 @@ export default function App() {
       case 'insert.boundary': addRange('boundary'); break;
       case 'insert.note': {
         if (!need()) break;
-        setInputDialog({
-          title: '插入笔记', label: '笔记内容', value: topicOf(id)?.note ?? '',
-          onSubmit: (value) => { void run('setNote', { id, note: value }); },
-        });
+        setToolbarPop(null);
+        setTopicEditor({ kind: 'note', id, draft: topicOf(id)?.note ?? '' });
         break;
       }
       case 'insert.label': {
         if (!need()) break;
-        setInputDialog({
-          title: '插入标签', label: '多个标签用逗号分隔', value: (topicOf(id)?.labels ?? []).join(', '),
-          onSubmit: (value) => {
-            const list = value.split(/[,，]/).map((v) => v.trim()).filter(Boolean);
-            void run('setLabels', { id, labels: list });
-          },
-        });
+        setToolbarPop(null);
+        setTopicEditor({ kind: 'label', id, draft: (topicOf(id)?.labels ?? []).join(', ') });
         break;
       }
       case 'insert.marker': {
         if (!need()) break;
+        setMarkerTab('marker');
         setToolbarPop('marker');
         break;
       }
       case 'insert.image': if (need()) pickImage(id); break;
+      /* ------------------------------------------- 图片（贴纸 / 插画 / 本地图片）
+         Right-clicking the artwork selects the image, not the topic, so the
+         id always comes from the menu payload (FINDINGS §48). */
+      case 'image.remove': {
+        const imageId = String(payload.id ?? selectedImage ?? id);
+        if (!imageId) break;
+        void run('setImage', { id: imageId, resource: null });
+        setSelectedImage(null);
+        break;
+      }
+      case 'image.replaceFile': {
+        const imageId = String(payload.id ?? selectedImage ?? id);
+        if (imageId) pickImage(imageId);
+        break;
+      }
+      case 'image.replaceSticker': case 'image.replaceClipart': {
+        const imageId = String(payload.id ?? selectedImage ?? id);
+        if (!imageId) break;
+        select(imageId);
+        setMarkerTab(action === 'image.replaceSticker' ? 'sticker' : 'illustration');
+        setToolbarPop('marker');
+        setContextMenu(null);
+        break;
+      }
+      case 'image.copy': {
+        const imageId = String(payload.id ?? selectedImage ?? id);
+        const resource = topicOf(imageId)?.image;
+        if (!resource) { notify('图片资源不可用'); break; }
+        void api.resourceData(resource).then(async (dataUrl) => {
+          if (!dataUrl) { notify('图片资源不可用'); return; }
+          try {
+            const blob = await (await fetch(dataUrl)).blob();
+            await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+            notify('已拷贝图片');
+          } catch {
+            copySelectionText();
+            notify('已拷贝主题文字（当前环境不支持图片剪贴板）');
+          }
+        }).catch((error) => notify(`拷贝失败：${String(error)}`));
+        break;
+      }
       case 'insert.linkWeb': {
         if (!need()) break;
         const href = topicOf(id)?.href ?? 'https://';
@@ -823,7 +902,7 @@ export default function App() {
     }
   }, [selected, selectedIds, run, notify, select, newFile, openFile, saveFile, startLink,
     addRange, commit, win, info, copySelectionText, pasteSelectionText, deleteSelection,
-    pickImage, alignFloating]);
+    pickImage, alignFloating, selectedImage]);
 
   const doAction = useCallback((action: string, payload?: Record<string, unknown>) => {
     handleMenuAction({ id: `kbd:${action}`, label: '', action, payload });
@@ -849,7 +928,9 @@ export default function App() {
         if (toolbarPop) { setToolbarPop(null); return; }
         if (linkFrom || hrefFrom) {
           setLinkFrom(null); setHrefFrom(null); notify('已取消联系');
-        } else if (selectedDecor) setSelectedDecor(null);
+        } else if (markerChipPop) setMarkerChipPop(null);
+        else if (selectedImage) setSelectedImage(null);
+        else if (selectedDecor) setSelectedDecor(null);
         else if (renameTarget) setRenameTarget(null);
         else if (selectedIds.length > 1) select(selected);
         return;
@@ -891,7 +972,10 @@ export default function App() {
       else if (!mod && event.key === 'Enter') { event.preventDefault(); if (selected) cmd('addSibling'); }
       else if (!mod && (event.key === 'Delete' || event.key === 'Backspace')) {
         event.preventDefault();
-        if (selectedDecor) {
+        if (selectedImage) {
+          void run('setImage', { id: selectedImage, resource: null });
+          setSelectedImage(null);
+        } else if (selectedDecor) {
           void run('removeDecor', { kind: selectedDecor.kind, id: selectedDecor.id });
           setSelectedDecor(null);
         } else void deleteSelection();
@@ -903,7 +987,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler);
   }, [selected, selectedIds, selectedDecor, linkFrom, hrefFrom, renameTarget,
     menuOpen, contextMenu, dialog, inputDialog, toolbarPop, run, startLink, addRange, saveFile, openFile,
-    newFile, notify, select, doAction, deleteSelection]);
+    newFile, notify, select, doAction, deleteSelection, markerChipPop, selectedImage]);
 
   const setStructure = async (structure: Structure) => {
     try {
@@ -962,22 +1046,112 @@ export default function App() {
   const toggleToolPop = (next: Exclude<ToolbarPop, null>) => {
     setMenuOpen(false);
     setContextMenu(null);
+    setTopicEditor(null);
+    if (next === 'marker') setMarkerTab('marker');
     setToolbarPop((current) => current === next ? null : next);
   };
 
-  /** 插入下拉里的每一行都落到已实现的菜单动作上。 */
+  /** 插入下拉的 5 行：笔记/标签是浮层，贴纸/插画打开同一个图标面板的
+   *  另两个页签，本地图片沿用原有文件选择链路。 */
   const pickInsert = (action: string) => {
-    if (action === 'insert.marker') { setToolbarPop('marker'); return; }
-    if (action === 'insert.attrs') { setToolbarPop(null); setPanel('attrs'); return; }
+    setTopicEditor(null);
+    if (action === 'insert.sticker' || action === 'insert.illustration') {
+      setMarkerTab(action === 'insert.sticker' ? 'sticker' : 'illustration');
+      setToolbarPop('marker');
+      return;
+    }
     setToolbarPop(null);
     doAction(action);
   };
 
-  /** 直接写 topic.markers，画布角标即时刷新；弹层保持打开可连续点选。 */
-  const toggleMarker = (marker: string) => {
-    if (!selected) { notify('请先选中一个主题'); return; }
-    void run('toggleMarker', { id: selected, marker });
+  /** 笔记 / 标签浮层：原版在主题下方就地编辑，关闭时才写一次文档。 */
+  const commitTopicEditor = () => {
+    const editor = topicEditor;
+    if (!editor) return;
+    setTopicEditor(null);
+    if (editor.kind === 'note') {
+      void run('setNote', { id: editor.id, note: editor.draft });
+      return;
+    }
+    const labels = editor.draft.split(/[,，]/).map((value) => value.trim()).filter(Boolean);
+    void run('setLabels', { id: editor.id, labels });
   };
+
+  const editorAnchor = useMemo(() => {
+    if (!topicEditor || !snapshot) return null;
+    const node = snapshot.layout.nodes.find((entry) => entry.id === topicEditor.id);
+    if (!node) return null;
+    const { scale, tx, ty } = canvasView;
+    const half = topicEditor.kind === 'note' ? 180 : 140;
+    return {
+      left: Math.min(Math.max(node.x * scale + tx + node.width * scale / 2, half + 8),
+        Math.max(half + 8, window.innerWidth - half - 8)),
+      top: Math.min(Math.max(node.y * scale + ty + node.height * scale + 8, 60),
+        Math.max(60, window.innerHeight - 260)),
+    };
+  }, [topicEditor, snapshot, canvasView]);
+
+  const activeMarkers = useMemo(() =>
+    (snapshot && selected ? findTopicById(snapshot.document, selected)?.markers : []) ?? [],
+  [snapshot, selected]);
+
+  /** 图例列出整份导图中已用过的标记，顺序与官方面板的标记目录一致。 */
+  const usedMarkers = useMemo(() => {
+    const seen = new Set<string>();
+    if (!snapshot) return [];
+    const visit = (topic: Topic) => {
+      topic.markers?.forEach((marker) => seen.add(marker));
+      for (const list of [topic.children, topic.detached, topic.summary, topic.callout]) {
+        list?.forEach(visit);
+      }
+    };
+    snapshot.document.sheets.forEach((sheet) => visit(sheet.root));
+    return MARKERS.filter((marker) => seen.has(marker));
+  }, [snapshot]);
+
+  /** 官方标记面板：同组只能有一个，点同组另一个替换、跨组累加；同 id 幂等。 */
+  const addMarker = (marker: string) => {
+    if (!selected) { notify('请先选中一个主题'); return; }
+    const next = addMarkerExclusive(activeMarkers, marker);
+    if (next === activeMarkers) return;
+    void run('setMarkers', { id: selected, markers: next });
+  };
+
+  /** Clicking one marker chip opens the shipped same-group popover.  A second
+   *  click on the same chip toggles it shut (FINDINGS §48). */
+  const openMarkerPop = useCallback((topicId: string, marker: string, anchor: { x: number; y: number }) => {
+    setSelectedImage(null);
+    setContextMenu(null);
+    setMarkerChipPop((current) => current?.topicId === topicId && current.marker === marker
+      ? null : { topicId, marker, ...anchor });
+  }, []);
+
+  const pickMarkerReplacement = useCallback((nextMarker: string | null) => {
+    const target = markerChipPop;
+    if (!target) return;
+    const doc = snapshotRef.current?.document;
+    const current = doc ? findTopicById(doc, target.topicId)?.markers ?? [] : [];
+    // Dropping the old id first keeps the "one marker per group" invariant
+    // even when the replacement already exists elsewhere in the row.
+    const without = current.filter((entry) => entry !== target.marker);
+    const next = nextMarker ? addMarkerExclusive(without, nextMarker) : without;
+    void run('setMarkers', { id: target.topicId, markers: next });
+    setMarkerChipPop(null);
+  }, [markerChipPop, run]);
+
+  /** Artwork selection is independent of topic selection. */
+  const selectImage = useCallback((topicId: string | null) => {
+    setMarkerChipPop(null);
+    setSelectedImage(topicId);
+  }, []);
+
+  const openImageContextMenu = useCallback((x: number, y: number, topicId: string) => {
+    setMenuOpen(false);
+    setMarkerChipPop(null);
+    const current = snapshotRef.current;
+    const rootId = current?.document.sheets[current.document.activeSheet].root.id;
+    setContextMenu({ x, y, items: buildImageMenu(topicId, topicId === rootId) });
+  }, []);
 
   useEffect(() => {
     if (!toolbarPop) return;
@@ -990,9 +1164,15 @@ export default function App() {
     return () => window.removeEventListener('pointerdown', onDown, true);
   }, [toolbarPop]);
 
-  const activeMarkers = useMemo(() =>
-    (snapshot && selected ? findTopicById(snapshot.document, selected)?.markers : []) ?? [],
-  [snapshot, selected]);
+  useEffect(() => {
+    if (!topicEditor) return;
+    const onDown = (event: PointerEvent) => {
+      if ((event.target as HTMLElement | null)?.closest('.topic-inline-editor')) return;
+      setTopicEditor(null);
+    };
+    window.addEventListener('pointerdown', onDown, true);
+    return () => window.removeEventListener('pointerdown', onDown, true);
+  }, [topicEditor]);
 
   const fitKey = snapshot
     ? `${snapshot.path ?? 'new'}|${snapshot.structure}|${snapshot.document.activeSheet}|${snapshot.stats.sheets}`
@@ -1075,6 +1255,8 @@ export default function App() {
   /** MapCanvas reports right clicks; which menu appears depends on the target. */
   const openContextMenu = useCallback((x: number, y: number, topicId: string | null) => {
     setMenuOpen(false);
+    setMarkerChipPop(null);
+    setSelectedImage(null);
     if (topicId && !selectedIds.includes(topicId)) select(topicId);
     const ctx: MenuContext = {
       ...menuContext,
@@ -1167,12 +1349,15 @@ export default function App() {
               <span className="tool-label">外框</span>
             </div>
             <div className={`tool-item${toolbarPop === 'marker' ? ' on' : ''}`}>
-              <button title="标记（为选中主题添加/取消标记）" data-tool-pop="marker"
+              <button title="标记（为选中主题添加标记）" data-tool-pop="marker"
                 disabled={!selected}
                 onClick={() => toggleToolPop('marker')}><Icon name="marker" /></button>
               <span className="tool-label">标记</span>
               {toolbarPop === 'marker' && (
-                <MarkerPop active={activeMarkers} hasTopic={!!selected} onToggle={toggleMarker} />
+                <MarkerPop used={usedMarkers} hasTopic={!!selected}
+                  initialTab={markerTab}
+                  onToggle={addMarker} onPickIcon={(kind, item) => { void insertIconImage(kind, item); }}
+                  onClose={() => setToolbarPop(null)} />
               )}
             </div>
             <div className={`tool-item wide${toolbarPop === 'insert' ? ' on' : ''}`}>
@@ -1225,6 +1410,15 @@ export default function App() {
           onClose={() => setContextMenu(null)}
         />
       )}
+      {markerChipPop && (
+        <MarkerChipPop
+          marker={markerChipPop.marker}
+          x={markerChipPop.x}
+          y={markerChipPop.y}
+          onPick={pickMarkerReplacement}
+          onClose={() => setMarkerChipPop(null)}
+        />
+      )}
       {dialog && (
         <div className="modal-backdrop" onPointerDown={() => setDialog(null)}>
           <div className="info-dialog" onPointerDown={(event) => event.stopPropagation()}>
@@ -1274,7 +1468,18 @@ export default function App() {
                     selected={selected} selectedIds={selectedIds}
                     fitKey={fitKey} onSelect={onSelect} onSelectMany={(ids) => select(null, ids)}
                     onAction={run} onLiveEdit={liveEdit} onContextMenu={openContextMenu}
-                    onScale={setScale}
+                    onMarkerClick={openMarkerPop}
+                    activeMarker={markerChipPop
+                      ? { topicId: markerChipPop.topicId, marker: markerChipPop.marker } : null}
+                    selectedImage={selectedImage} onImageSelect={selectImage}
+                    onImageContextMenu={openImageContextMenu}
+                    onScale={setScale} onViewChange={setCanvasView}
+                    onOpenNote={(id) => {
+                      const topic = snapshot ? findTopicById(snapshot.document, id) : null;
+                      select(id);
+                      setToolbarPop(null);
+                      setTopicEditor({ kind: 'note', id, draft: topic?.note ?? '' });
+                    }}
                     linkPick={linkFrom !== null || hrefFrom !== null} onLinkTarget={onLinkTarget}
                     selectedDecor={selectedDecor} onDecorSelect={setSelectedDecor}
                     onDecorRename={renameDecor}
@@ -1284,6 +1489,55 @@ export default function App() {
                 </Suspense>
               )
             ) : <div className="loading">正在准备画布…</div>}
+            {topicEditor && editorAnchor && (
+              <div className={`topic-inline-editor editor-${topicEditor.kind}`}
+                data-kind={topicEditor.kind}
+                style={{ left: editorAnchor.left, top: editorAnchor.top }}
+                onPointerDown={(event) => event.stopPropagation()}>
+                <div className="tie-head">
+                  <span className="tie-icon" aria-hidden="true">
+                    {topicEditor.kind === 'note' ? '▤' : '🏷'}
+                  </span>
+                  <span className="tie-title">{topicEditor.kind === 'note' ? '笔记' : '标签'}</span>
+                </div>
+                {topicEditor.kind === 'note' ? (
+                  <>
+                    <div className="tie-tools" aria-hidden="true">
+                      <span><b>B</b></span><span><i>I</i></span><span><u>U</u></span>
+                      <span>≡</span><span>☰</span><span>≡</span>
+                    </div>
+                    <textarea autoFocus className="tie-input" rows={5}
+                      value={topicEditor.draft} placeholder="在此输入笔记…"
+                      onChange={(event) => setTopicEditor((current) =>
+                        current ? { ...current, draft: event.target.value } : null)}
+                      onKeyDown={(event) => {
+                        event.stopPropagation();
+                        if (event.key === 'Escape') { event.preventDefault(); setTopicEditor(null); }
+                        if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                          event.preventDefault(); commitTopicEditor();
+                        }
+                      }} />
+                  </>
+                ) : (
+                  <>
+                    <input autoFocus className="tie-input" value={topicEditor.draft}
+                      placeholder="多个标签请用半角逗号隔开"
+                      onChange={(event) => setTopicEditor((current) =>
+                        current ? { ...current, draft: event.target.value } : null)}
+                      onKeyDown={(event) => {
+                        event.stopPropagation();
+                        if (event.key === 'Escape') { event.preventDefault(); setTopicEditor(null); }
+                        if (event.key === 'Enter') { event.preventDefault(); commitTopicEditor(); }
+                      }} />
+                    <div className="tie-hint">多个标签请用半角逗号隔开</div>
+                  </>
+                )}
+                <div className="tie-actions">
+                  <button type="button" onClick={() => setTopicEditor(null)}>取消</button>
+                  <button type="button" className="primary" onClick={commitTopicEditor}>确定</button>
+                </div>
+              </div>
+            )}
             {toast && <div className="toast">{toast}</div>}
             <Suspense fallback={null}>
               {panel === 'export' && <ExportDialog initialFormat={exportFormat}

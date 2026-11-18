@@ -3,11 +3,56 @@
 
 use crate::state::{AppState, Snapshot};
 use serde::Serialize;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::State;
 use xmind_core::{
-    ops, Document, Layout, Side, SkeletonLayers, Structure, ThemeId, TopicStyle, ALL_STRUCTURES,
+    ops, Document, Layout, Side, SkeletonLayers, Structure, ThemeId, Topic, TopicStyle,
+    ALL_STRUCTURES,
 };
+
+/// Intrinsic size of an image resource, in canvas pixels.
+///
+/// XMind sizes an image topic from the artwork itself: a 140×140 SVG becomes a
+/// 178×198 card, a 60×60 sticker a 128×118 one.  Real themes therefore cannot
+/// be reproduced by measuring the label alone.  Stickers are SVGs with an
+/// explicit root `width`/`height`; PNG/JPEG carry the size in their headers.
+/// This is derived from the bytes, never stored in `content.json`.
+fn intrinsic_image_size(bytes: &[u8]) -> Option<(f64, f64)> {
+    if bytes.len() >= 24 && &bytes[0..8] == b"\x89PNG\r\n\x1a\n" {
+        let w = u32::from_be_bytes(bytes[16..20].try_into().ok()?) as f64;
+        let h = u32::from_be_bytes(bytes[20..24].try_into().ok()?) as f64;
+        return (w > 0.0 && h > 0.0).then_some((w, h));
+    }
+    let head = String::from_utf8_lossy(&bytes[..bytes.len().min(4096)]);
+    let lower = head.to_ascii_lowercase();
+    let start = lower.find("<svg")?;
+    let end = lower[start..].find('>')? + start;
+    let tag = &head[start..end];
+    let tag_lower = tag.to_ascii_lowercase();
+    let attr = |name: &str| -> Option<f64> {
+        let at = tag_lower.find(name)?;
+        let rest = &tag[at + name.len()..];
+        let a = rest.find('"')?;
+        let b = rest[a + 1..].find('"')? + a + 1;
+        rest[a + 1..b].trim().trim_end_matches("px").trim().parse::<f64>().ok()
+    };
+    let w = attr(" width=").or_else(|| attr("width="))?;
+    let h = attr(" height=").or_else(|| attr("height="))?;
+    (w > 0.0 && h > 0.0).then_some((w, h))
+}
+
+/// Copy the measured artwork size onto every topic that references it.
+fn apply_image_sizes(topic: &mut Topic, sizes: &HashMap<String, (f64, f64)>) {
+    if let Some(id) = &topic.image {
+        topic.image_size = sizes.get(id).copied();
+    }
+    for child in topic.children.iter_mut().chain(topic.detached.iter_mut())
+        .chain(topic.summary.iter_mut()).chain(topic.callout.iter_mut())
+    {
+        apply_image_sizes(child, sizes);
+    }
+}
 
 fn mutate<F>(state: &State<'_, AppState>, action: F) -> Result<Snapshot, String>
 where
@@ -139,13 +184,20 @@ pub fn doc_open(state: State<'_, AppState>, path: String) -> Result<Snapshot, St
     let source = PathBuf::from(&path);
     let loaded = xmind_file::read_any(&source).map_err(|e| e.to_string())?;
     let mut document = loaded.document;
-    let mut ids = std::collections::HashMap::new();
+    let mut ids = HashMap::new();
+    let mut image_sizes = HashMap::new();
     for resource in &loaded.resources {
         if let Ok(id) = state.resources.import(&resource.name, &resource.bytes) {
-            ids.insert(resource.name.clone(), id);
+            ids.insert(resource.name.clone(), id.clone());
+            if let Some(size) = intrinsic_image_size(&resource.bytes) {
+                image_sizes.insert(id, size);
+            }
         }
     }
     xmind_file::remap_image_ids(&mut document, &ids);
+    for sheet in &mut document.sheets {
+        apply_image_sizes(&mut sheet.root, &image_sizes);
+    }
     document.theme = state.settings.lock().unwrap().theme;
     document.title = source
         .file_stem()
@@ -385,6 +437,15 @@ pub fn doc_toggle_marker(state: State<'_, AppState>, id: String, marker: String)
 }
 
 #[tauri::command]
+pub fn doc_set_markers(
+    state: State<'_, AppState>,
+    id: String,
+    markers: Vec<String>,
+) -> Result<Snapshot, String> {
+    mutate(&state, |doc| { ops::set_markers(doc, &id, markers); })
+}
+
+#[tauri::command]
 pub fn doc_set_style(state: State<'_, AppState>, id: String, style: TopicStyle) -> Result<Snapshot, String> {
     mutate(&state, |doc| { ops::set_style(doc, &id, style); })
 }
@@ -470,7 +531,17 @@ pub fn doc_set_side(state: State<'_, AppState>, id: String, side: Option<Side>) 
 
 #[tauri::command]
 pub fn doc_set_image(state: State<'_, AppState>, id: String, resource: Option<String>) -> Result<Snapshot, String> {
-    mutate(&state, |doc| { ops::set_image(doc, &id, resource); })
+    // Stickers inserted through the 插入 panel go through the resource store;
+    // measure them too so the topic becomes the same card XMind would draw.
+    let size = resource.as_deref()
+        .and_then(|r| std::fs::read(state.resources.path_of(r)).ok())
+        .and_then(|bytes| intrinsic_image_size(&bytes));
+    mutate(&state, |doc| {
+        ops::set_image(doc, &id, resource);
+        if let Some(topic) = ops::find_mut(doc.root_mut(), &id) {
+            topic.image_size = size;
+        }
+    })
 }
 
 #[tauri::command]

@@ -16,6 +16,10 @@ const H_GAP: f64 = 52.0;
 /// Gap between root branches. Measured on the shipped renderer by diffing the
 /// subtree bounding boxes of adjacent 一级分支: 36px (was 86).
 const V_GAP: f64 = 36.0;
+/// 平衡图 never puts two first-level branch centres closer than this, even
+/// when both labels are small: two 46px right branches sit at ±65 while the
+/// two tall image cards on the left stay packed at v_gap (FINDINGS §47).
+const MIN_BRANCH_PITCH: f64 = 130.0;
 /// Sub-branches sit tighter than root branches: the original leaves 7–12px
 /// between the bottom of one subtree and the top of the next (median 9).
 const SUB_GAP: f64 = 9.0;
@@ -51,6 +55,11 @@ pub struct ThemePalette {
     /// topics created *after* the preset was chosen.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub skeleton: Option<SkeletonLayers>,
+    /// `fo:text-align` taken straight from `sheet.theme`, for the three top
+    /// level layers.  This is injected even when `has_theme` is false: the
+    /// shipped renderer still honours text alignment on sheets whose theme
+    /// was re-tagged with one of our palette ids (FINDINGS §47).
+    pub theme_align: [Option<String>; 3],
 }
 
 fn s(value: &str) -> String { value.to_string() }
@@ -67,6 +76,7 @@ pub fn palette(theme: ThemeId) -> ThemePalette {
             edge: s("#c8d2e2"),
             sheet_theme: None,
             skeleton: None,
+            theme_align: [None, None, None],
         },
         ThemeId::Dark => ThemePalette {
             bg: s("#141922"), panel: s("#1c2330"), border: s("#2c3646"), grid: s("#232c3a"),
@@ -76,6 +86,7 @@ pub fn palette(theme: ThemeId) -> ThemePalette {
             edge: s("#3a465e"),
             sheet_theme: None,
             skeleton: None,
+            theme_align: [None, None, None],
         },
         ThemeId::Ocean => ThemePalette {
             bg: s("#eef7fa"), panel: s("#ffffff"), border: s("#d7e8ee"), grid: s("#cfe9ef"),
@@ -85,6 +96,7 @@ pub fn palette(theme: ThemeId) -> ThemePalette {
             edge: s("#b7d8e0"),
             sheet_theme: None,
             skeleton: None,
+            theme_align: [None, None, None],
         },
         ThemeId::Forest => ThemePalette {
             bg: s("#f4f8f2"), panel: s("#ffffff"), border: s("#dfe9d9"), grid: s("#d5e6cd"),
@@ -94,6 +106,7 @@ pub fn palette(theme: ThemeId) -> ThemePalette {
             edge: s("#c8dcc1"),
             sheet_theme: None,
             skeleton: None,
+            theme_align: [None, None, None],
         },
     }
 }
@@ -157,8 +170,21 @@ pub struct LaidOutNode {
     /// Whether the outline is a closed area (false for the underline shapes).
     pub shape_closed: bool,
     pub markers: Vec<String>,
+    /// Width reserved in the topic box for the in-box marker row: the shipped
+    /// renderer gives every marker a slot to the left of the label.
+    pub marker_width: f64,
+    /// Native marker icon size for this document (FINDINGS §43 / §47).
+    pub marker_size: f64,
+    /// Content-group inset on each side, applied by the renderer when the
+    /// topic carries an in-box marker row (FINDINGS §48).
+    pub marker_pad: f64,
     pub labels: Vec<String>,
     pub image: Option<String>,
+    /// Intrinsic artwork size (px); zero when the topic has no image or the
+    /// resource does not advertise one.  The frontend draws image topics as
+    /// cards with the artwork on top and the label below.
+    pub image_width: f64,
+    pub image_height: f64,
     pub parent_id: Option<String>,
     /// Position among its parent's children, in document order (0 for the root).
     pub child_index: usize,
@@ -284,6 +310,10 @@ struct Metrics {
     /// metrics and `EffectiveStyle.font_size` must agree, so `node_size` reads
     /// this instead of the hard-coded defaults when a theme is present.
     font: Option<[u16; 3]>,
+    /// Native marker icon size.  Official files use 36px icons in 40px slots
+    /// (FINDINGS §43); a sheet whose theme XMind cannot resolve falls back to
+    /// 30px icons in 34px slots (FINDINGS §47).
+    marker_icon: f64,
 }
 
 impl Metrics {
@@ -291,12 +321,12 @@ impl Metrics {
         if compact {
             Self {
                 h_gap: 30.0, root_gap: 96.0, v_gap: 24.0, sub_gap: 6.0,
-                row_gap: 42.0, sib_x: 8.0, pad: 0.7, font: None,
+                row_gap: 42.0, sib_x: 8.0, pad: 0.7, font: None, marker_icon: 36.0,
             }
         } else {
             Self {
                 h_gap: H_GAP, root_gap: H_GAP, v_gap: V_GAP, sub_gap: SUB_GAP,
-                row_gap: ROW_GAP, sib_x: SIB_X, pad: 1.0, font: None,
+                row_gap: ROW_GAP, sib_x: SIB_X, pad: 1.0, font: None, marker_icon: 36.0,
             }
         }
     }
@@ -436,19 +466,82 @@ fn wrap_pad(style: &EffectiveStyle, text_pad: f64) -> f64 {
 fn h_pad(depth: u32) -> f64 { match depth { 0 => 58.0, 1 => 36.0, _ => 12.0 } }
 fn v_pad(depth: u32) -> f64 { match depth { 0 => 30.0, 1 => 20.0, _ => 13.0 } }
 
+/// XMind lays markers out inside the topic box, to the left of the label.
+/// Measured on the shipped renderer (FINDINGS §48): the content group starts
+/// `h_pad/2` in from the shape edge, the first icon sits another 5px right
+/// (`transform(5,5)`), consecutive icons step by `icon + 2` (30px icons at
+/// x = 0, 32, 64, 96), and a 15px gap separates the row from the label:
+///   324 = 29 + [5 + 126] + 15 + 120(title) + 29
+/// Earlier builds used `count * (icon + 4) + 18`, which starts the row flush
+/// against the left border and leaves the label floating in a wide right half.
+/// `Metrics::marker_icon` switches the icon size for unresolved sheet themes.
+const MARKER_LEAD: f64 = 5.0;
+const MARKER_STEP: f64 = 2.0;
+const MARKER_TRAIL: f64 = 15.0;
+fn marker_width(topic: &Topic, m: Metrics) -> f64 {
+    let count = topic.markers.len();
+    if count == 0 { return 0.0; }
+    (MARKER_LEAD + (count - 1) as f64 * (m.marker_icon + MARKER_STEP)
+        + m.marker_icon + MARKER_TRAIL) * m.pad
+}
+
+/// The shipped renderer orders marker icons by their catalogue group
+/// (标签 / 优先级 / 任务 / 旗帜 / 星星 / 人像 / 符号), *not* by the order in
+/// `content.json`.  test.xmind stores `task-oct, priority-1, flag-red,
+/// star-red` but draws `priority-1, task-oct, flag-red, star-red` (§48).
+/// Stable sort keeps file order within one group.
+const MARKER_GROUP_PREFIXES: &[&str] = &[
+    "tag-", "priority-", "task-", "flag-", "star-", "people-", "symbol-",
+];
+fn ordered_markers(markers: &[String]) -> Vec<String> {
+    let mut out = markers.to_vec();
+    out.sort_by_key(|id| MARKER_GROUP_PREFIXES.iter()
+        .position(|prefix| id.starts_with(prefix))
+        .unwrap_or(MARKER_GROUP_PREFIXES.len()));
+    out
+}
+
+/// Half of `h_pad`: XMind's content group is inset by this on *both* sides.
+/// The frontend only materialises it as CSS padding when a topic carries
+/// markers (plain labels use `--text-pad` instead, so their wrap limit and
+/// in-place editor geometry stay exactly as before).
+fn marker_pad(depth: u32, m: Metrics) -> f64 { h_pad(depth) * m.pad / 2.0 }
+
 fn node_size(topic: &Topic, depth: u32, m: Metrics) -> (f64, f64) {
     let size = topic.style.as_ref().and_then(|v| v.font_size).unwrap_or_else(|| m.font_size(depth));
     let hpad = h_pad(depth) * m.pad;
-    let raw = text_width(&topic.title, size) + hpad;
+    let markers = marker_width(topic, m);
+    // XMind keeps the note/info button *inside* the box at its right edge
+    // (18×18 plus a 10px gap).  Reserve that column so the label never runs
+    // underneath it.
+    let note_badge = if topic.note.is_empty() { 0.0 } else { 28.0 };
+    let title_w = text_width(&topic.title, size);
+    if let Some((art_w, art_h)) = topic.image_size {
+        // Image topics are cards, not labels with an inline icon.  Measured on
+        // the shipped renderer (FINDINGS §46): content padding 20/12/18/10,
+        // the artwork at its intrinsic size, a 12px gap, then the label.
+        // A 140×140 sticker → 178×198; a 60×60 sticker → 128×118.
+        // The extra 6px keeps the label from clipping in the real font: the
+        // shipped renderer's 60×60 card is 128 wide with a 90px title box.
+        let content_w = art_w.max(title_w + markers + note_badge + 6.0);
+        let content_h = art_h + 12.0 + text_height(size);
+        let width = match topic.custom_width {
+            Some(custom) => custom.clamp(60.0, 600.0),
+            None => (content_w + 38.0).clamp(72.0, 600.0),
+        };
+        return (width, content_h + 22.0);
+    }
+    let raw = title_w + hpad + markers + note_badge;
+    // The marker row widens the box without shrinking the label's wrap limit:
+    // official topics keep the same title width before and after a marker.
     let width = match topic.custom_width {
         Some(custom) => custom.clamp(60.0, 600.0),
         None => raw.clamp(if depth == 0 { 150.0 } else { 72.0 }, 340.0),
     };
-    // The label keeps the whole box as its content width (the left/right inset
-    // is painted without shrinking it), so the box width remains the wrap limit.
-    let lines = title_lines(&topic.title, size, width.max(60.0));
+    let text_width_limit = (width - markers).max(60.0);
+    let lines = title_lines(&topic.title, size, text_width_limit);
+    // Labels hang below the shape in XMind, so they do not add to its height.
     let mut height = text_height(size) * lines as f64 + v_pad(depth) * m.pad;
-    if !topic.labels.is_empty() { height += 18.0; }
     if topic.image.is_some() { height += 26.0; }
     (width, height)
 }
@@ -719,6 +812,11 @@ fn style_for(topic: &Topic, depth: u32, branch: usize, pal: &ThemePalette) -> Ef
         },
     };
     // sheet.theme sits between the built-in defaults and the user's own style.
+    // The alignment key is injected separately so it survives the `foreign`
+    // gate; the skeleton and per-topic patches below can still override it.
+    if let Some(Some(align)) = pal.theme_align.get(depth as usize) {
+        style.align = align.clone();
+    }
     let mut explicit_color = false;
     if let Some(theme) = &pal.sheet_theme {
         explicit_color = apply_theme_layer(
@@ -892,9 +990,14 @@ fn make_node(
     // editor's row count) exactly as it was. Left-aligned labels get XMind's
     // 29/18/6px inset on each side.
     let text_pad = if style.align == "center" { 0.0 } else { h_pad(depth) * m.pad / 2.0 };
-    let wide = width.max(60.0);
-    let base_lines = title_lines(&topic.title, style.font_size, wide);
-    let usable = wrap_usable(&topic.title, style.font_size, width, wrap_pad(&style, text_pad));
+    let markers = marker_width(topic, m);
+    let text_box = (width - markers).max(60.0);
+    let base_lines = title_lines(&topic.title, style.font_size, text_box);
+    // Marker topics spend the horizontal inset as real CSS padding around the
+    // whole content group, so their label has no extra `--text-pad` and the
+    // wrap limit must not be narrowed either (FINDINGS §48).
+    let effective_wrap_pad = if topic.markers.is_empty() { wrap_pad(&style, text_pad) } else { 0.0 };
+    let usable = wrap_usable(&topic.title, style.font_size, text_box, effective_wrap_pad);
     let lines = title_lines(&topic.title, style.font_size, usable);
     // `height` came from node_size(), which used the full-width limit. Keep the
     // box (and the in-place editor's `rows`) in step with the narrower limit.
@@ -912,9 +1015,14 @@ fn make_node(
         style,
         shape_path,
         shape_closed,
-        markers: topic.markers.clone(),
+        markers: ordered_markers(&topic.markers),
+        marker_width: markers,
+        marker_size: m.marker_icon,
+        marker_pad: marker_pad(depth, m),
         labels: topic.labels.clone(),
         image: topic.image.clone(),
+        image_width: topic.image_size.map(|(w, _)| w).unwrap_or(0.0),
+        image_height: topic.image_size.map(|(_, h)| h).unwrap_or(0.0),
         parent_id: parent,
         child_index: 0,
         note: topic.note.clone(),
@@ -931,7 +1039,8 @@ struct Placed { node: LaidOutNode }
 
 fn resize_node(node: &mut LaidOutNode, width: f64) {
     node.width = width;
-    let usable = wrap_usable(&node.title, node.style.font_size, width,
+    let text_box = (width - node.marker_width).max(60.0);
+    let usable = wrap_usable(&node.title, node.style.font_size, text_box,
         wrap_pad(&node.style, node.text_pad));
     let lines = title_lines(&node.title, node.style.font_size, usable);
     if lines != node.lines {
@@ -2861,8 +2970,27 @@ pub fn compute_layout(doc: &Document) -> Layout {
     // FINDINGS §26 option A: read `sheet.theme` through the official StyleKey
     // cascade instead of painting every file with our own hard-coded palette.
     let sheet_theme = SheetTheme::from_value(sheet.extra.get("theme"));
+    // `fo:text-align` is honoured by the shipped renderer even when the sheet
+    // theme fails our `foreign` test (a real theme re-tagged as
+    // `colorThemeId: XMindRS-*` on save).  Inject just that key instead of the
+    // whole theme: its `line-class` / `line-tapered` values would otherwise
+    // rewrite every connector in such a file (FINDINGS §46 / §47).
+    for (index, depth) in [0u32, 1, 2].into_iter().enumerate() {
+        if let Some(v) = sheet_theme.get(depth, sk::TEXT_ALIGN) {
+            if matches!(v, "left" | "center" | "right") {
+                pal.theme_align[index] = Some(v.to_string());
+            }
+        }
+    }
+    // The canvas colour is a sheet property, not part of the style cascade.
+    // Honour it even when a real XMind theme was re-tagged with one of our
+    // palette ids on save (`colorThemeId: XMindRS-*`) — otherwise those files
+    // silently fall back to a white canvas (FINDINGS §46).
+    if let Some(bg) = sheet_theme.background() { pal.bg = bg; }
+    // `sheet_theme` is moved into `pal` just below, so remember whether the
+    // file carries a theme that XMind itself cannot resolve.
+    let unresolved_theme = !sheet_theme.has_theme && sheet.extra.contains_key("theme");
     if sheet_theme.has_theme {
-        if let Some(bg) = sheet_theme.background() { pal.bg = bg; }
         // `read_palette` normally puts these in `branch_colors`; this covers
         // documents built in memory or switched to another sheet.
         if doc.branch_colors.is_none() {
@@ -2894,6 +3022,12 @@ pub fn compute_layout(doc: &Document) -> Layout {
     let brace = matches!(structure, Structure::BraceRight | Structure::BraceLeft);
     let mut m = if brace { Metrics::brace(doc.compact) } else { Metrics::new(doc.compact) }
         .with_theme(pal.sheet_theme.as_ref());
+    // A real sheet theme re-tagged with one of our palette ids is unresolved
+    // in the shipped renderer, which falls back to 30px marker icons (34px
+    // slots).  Native themes keep 36px / 40px (FINDINGS §43 / §47).
+    if unresolved_theme {
+        m.marker_icon = 30.0;
+    }
     if matches!(structure, Structure::LogicRight | Structure::LogicLeft) {
         // 逻辑图 bundles its branches into a 160px fan before the first topic.
         m.root_gap = if doc.compact { 96.0 } else { 160.0 };
@@ -3012,6 +3146,17 @@ pub fn compute_layout(doc: &Document) -> Layout {
                     *width = by_depth[depth];
                 }
             }
+            let right_count = sides.iter().filter(|(_, s)| *s == Side::Right).count();
+            // Balanced / clockwise / anticlockwise space their branch *centres*
+            // symmetrically around the central topic when both halves hold the
+            // same number of leaf branches (FINDINGS §47).  Maps whose branches
+            // have their own subtrees keep the older top-edge stack measured in
+            // §24.5, so their bbox match is untouched.
+            let centred_stacks = matches!(structure,
+                    Structure::Balanced | Structure::Clockwise | Structure::Anticlockwise)
+                && !doc.compact
+                && right_count > 0 && right_count * 2 == total
+                && root.children.iter().all(|c| c.children.is_empty());
             for side in [Side::Right, Side::Left] {
                 let mut members: Vec<usize> = sides.iter()
                     .filter(|(_, s)| *s == side)
@@ -3028,18 +3173,37 @@ pub fn compute_layout(doc: &Document) -> Layout {
                     members.reverse();
                 }
                 let heights: Vec<f64> = members.iter().map(|i| subtree_height(&root.children[*i], 1, m)).collect();
-                let stack: f64 = heights.iter().sum::<f64>()
-                    + m.v_gap * (members.len().saturating_sub(1)) as f64;
-                // XMind centres each side's stack on the central topic's *top*
-                // edge, not on its middle (measured on 顺时针 / 平衡 / 逻辑图).
-                let mut cursor = -stack / 2.0 - root_height / 2.0;
-                for (position, index) in members.iter().enumerate() {
-                    let h = heights[position];
-                    place_horizontal(
-                        &root.children[*index], cursor + h / 2.0, 1, side, *index,
-                        Some(root.id.clone()), &columns, root_half, &pal, m, &mut placed, *index,
-                    );
-                    cursor += h + m.v_gap;
+                if centred_stacks {
+                    // Centre-to-centre pitch: natural packing, but never closer
+                    // than MIN_BRANCH_PITCH for small labels.  Tall image cards
+                    // already exceed that pitch and keep their v_gap.
+                    let gaps: Vec<f64> = (0..members.len().saturating_sub(1))
+                        .map(|i| ((heights[i] + heights[i + 1]) / 2.0 + m.v_gap)
+                            .max(MIN_BRANCH_PITCH))
+                        .collect();
+                    let span: f64 = gaps.iter().sum();
+                    let mut centre = -span / 2.0;
+                    for (position, index) in members.iter().enumerate() {
+                        place_horizontal(
+                            &root.children[*index], centre, 1, side, *index,
+                            Some(root.id.clone()), &columns, root_half, &pal, m, &mut placed, *index,
+                        );
+                        if let Some(gap) = gaps.get(position) { centre += gap; }
+                    }
+                } else {
+                    let stack: f64 = heights.iter().sum::<f64>()
+                        + m.v_gap * (members.len().saturating_sub(1)) as f64;
+                    // XMind centres each side's stack on the central topic's *top*
+                    // edge, not on its middle (measured on 顺时针 / 平衡 / 逻辑图).
+                    let mut cursor = -stack / 2.0 - root_height / 2.0;
+                    for (position, index) in members.iter().enumerate() {
+                        let h = heights[position];
+                        place_horizontal(
+                            &root.children[*index], cursor + h / 2.0, 1, side, *index,
+                            Some(root.id.clone()), &columns, root_half, &pal, m, &mut placed, *index,
+                        );
+                        cursor += h + m.v_gap;
+                    }
                 }
             }
         }

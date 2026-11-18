@@ -415,6 +415,20 @@ pub fn toggle_marker(doc: &mut Document, id: &str, marker: &str) -> bool {
     }
 }
 
+/// Replace the topic's whole marker list in one edit.  The original XMind
+/// allows one marker per group, so the UI computes the next list from the
+/// catalogue and sends it here; keeping this as one mutation gives one undo
+/// step instead of a remove + add pair.
+pub fn set_markers(doc: &mut Document, id: &str, markers: Vec<String>) -> bool {
+    match find_mut(doc.root_mut(), id) {
+        Some(topic) => {
+            topic.markers = markers;
+            true
+        }
+        None => false,
+    }
+}
+
 pub fn set_href(doc: &mut Document, id: &str, href: Option<String>) -> bool {
     match find_mut(doc.root_mut(), id) {
         Some(topic) => {

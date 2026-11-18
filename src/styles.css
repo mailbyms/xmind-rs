@@ -178,23 +178,48 @@ button { cursor: pointer; }
   box-shadow: 0 8px 24px rgba(0, 0, 0, .16), 0 2px 6px rgba(0, 0, 0, .08);
   color: var(--text); text-align: left; user-select: none; cursor: default;
 }
-.tool-pop-marker { width: 272px; }
+.tool-pop-marker { width: 268px; padding: 0; box-sizing: border-box; }
 .tool-pop-insert { width: 244px; }
 .tp-head { font-size: 13px; font-weight: 600; padding: 2px 6px 6px; }
-.tp-group { margin-bottom: 2px; }
-.tp-title { font-size: 11px; color: var(--text-faint); padding: 5px 6px 3px; }
-.tp-marks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+/* Official icon-module header: three 16px tabs (72x20 each) plus close. */
+.tp-tabs { display: flex; align-items: center; padding: 4px; }
+.tp-tab {
+  width: 72px; height: 20px; display: flex; align-items: center; justify-content: center;
+  border: 0; padding: 0; background: transparent; cursor: pointer;
+  border-radius: 3px; opacity: .55;
+}
+.tp-tab.on { background: var(--hover); opacity: 1; }
+.tp-tab img { width: 16px; height: 16px; display: block; }
+.tp-close {
+  width: 20px; height: 20px; margin-left: auto; padding: 0; border: 0; border-radius: 4px;
+  background: transparent; color: var(--text-faint); font-size: 18px; line-height: 18px;
+}
+.tp-close:hover { background: var(--hover); color: var(--text); }
+.tp-group { margin-bottom: 4px; padding: 0 8px; }
+.tp-title { font-size: 12px; font-weight: 600; color: var(--text); padding: 8px 0 4px; }
+.tp-marks { display: flex; flex-wrap: wrap; gap: 6px; }
 .tp-mark {
-  display: flex; align-items: center; gap: 4px; height: 28px; min-width: 0;
-  padding: 0 6px; border: 0; border-radius: 5px; background: transparent;
-  font-size: 11px; text-align: left; white-space: nowrap;
+  width: 26px; height: 26px; padding: 0; border: 0; border-radius: 4px;
+  background: transparent; display: flex; align-items: center; justify-content: center;
 }
 .tp-mark:hover { background: var(--hover); }
-.tp-mark.on { background: var(--accent-soft); color: var(--accent); }
-.tp-mark-glyph { width: 16px; flex: none; text-align: center; font-size: 13px; font-weight: 700; }
-.tp-mark-label { overflow: hidden; text-overflow: ellipsis; }
+.tp-mark-icon { width: 24px; height: 24px; display: block; }
+.tp-legend-btn {
+  width: calc(100% - 16px); height: 28px; margin: 8px 8px 4px;
+  border: 0; border-radius: 14px; background: #f1f2f4;
+  color: var(--text); font-size: 12px;
+}
+.tp-legend-btn:hover { background: var(--hover); }
+.tp-legend {
+  margin: 4px 8px 8px; padding: 8px; border-radius: 6px; background: #fafafa;
+  border: 1px solid var(--line);
+}
+.tp-legend-title, .tp-legend-empty { font-size: 11px; color: var(--text-faint); }
+.tp-legend-row { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 0; }
+.tp-legend-row img { width: 20px; height: 20px; }
 .tp-foot, .tp-hint { font-size: 11px; color: var(--text-faint); padding: 6px 6px 2px; }
 .tp-sep { height: 1px; margin: 5px 0 2px; background: rgba(0, 0, 0, .08); }
+.tool-pop-marker .tp-sep { margin: 0; }
 .tp-row {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   width: 100%; height: 28px; padding: 0 8px; border: 0; border-radius: 5px;
@@ -204,18 +229,70 @@ button { cursor: pointer; }
 .tp-row:disabled { opacity: .4; cursor: default; }
 .tp-shortcut { font-size: 11px; color: var(--text-faint); flex: none; }
 
+/* 插入 > 贴纸 / 插画：与标记共用三个页签，但按原版改成带「类别」
+   筛选的窄图标面板（5 列、40px 格子、右侧滚动）。 */
+.tool-pop-marker.icon-mode {
+  position: fixed; left: auto; right: 28px; top: 56px;
+  width: 216px; max-height: calc(100vh - 80px); overflow: hidden;
+}
+.tp-category {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px 4px;
+  font-size: 12px; color: var(--text);
+}
+.tp-category select {
+  flex: 1; min-width: 0; height: 24px; padding: 0 20px 0 8px;
+  border: 1px solid var(--line); border-radius: 4px; background: #fff;
+  color: var(--text); font-size: 12px;
+}
+.tp-icon-scroll { max-height: 360px; overflow-y: auto; padding-bottom: 6px; }
+.tp-icon-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.tp-icon-item {
+  width: 36px; height: 36px; padding: 0; border: 0; border-radius: 5px;
+  background: transparent; display: flex; align-items: center; justify-content: center;
+}
+.tp-icon-item:hover:not(:disabled) { background: var(--hover); }
+.tp-icon-item:disabled { opacity: .4; cursor: default; }
+.tp-icon-item img { width: 32px; height: 32px; object-fit: contain; }
+
+/* 主题下方的笔记 / 标签浮层（原版 XMind 的就地编辑器）。 */
+.topic-inline-editor {
+  position: absolute; z-index: 95; width: 360px; transform: translateX(-50%);
+  padding: 10px 12px; border: 1px solid rgba(0, 0, 0, .1); border-radius: 8px;
+  background: #fff; box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+  color: var(--text); font-size: 13px; user-select: text; cursor: default;
+}
+.topic-inline-editor.editor-label { width: 280px; }
+.tie-head { display: flex; align-items: center; gap: 6px; font-weight: 600; margin-bottom: 6px; }
+.tie-icon { font-size: 14px; line-height: 1; }
+.tie-title { font-size: 13px; }
+.tie-tools {
+  display: flex; gap: 10px; padding: 3px 0 6px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--line); color: var(--text-faint); font-size: 12px;
+}
+.tie-input {
+  width: 100%; box-sizing: border-box; border: 0; outline: 0; resize: vertical;
+  font: inherit; color: var(--text); background: transparent; padding: 4px 2px;
+}
+textarea.tie-input { min-height: 88px; line-height: 1.5; }
+.tie-hint { font-size: 11px; color: var(--text-faint); padding: 4px 2px 0; }
+.tie-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.tie-actions button {
+  height: 26px; padding: 0 12px; border: 1px solid var(--line); border-radius: 5px;
+  background: #fff; color: var(--text); font-size: 12px;
+}
+.tie-actions button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
 /* 主题属性面板里的标记按钮（与工具栏弹层共用 lib/markers.ts 的定义）。 */
 .marker-group { margin-bottom: 8px; }
 .marker-group-title { font-size: 11px; color: var(--text-faint); margin: 4px 0; }
-.marker-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+.marker-grid { display: flex; flex-wrap: wrap; gap: 5px; }
 .marker-btn {
-  display: flex; align-items: center; gap: 4px; height: 26px; min-width: 0;
-  padding: 0 6px; border: 1px solid var(--line); border-radius: 5px;
-  background: #fff; font-size: 11px; white-space: nowrap; overflow: hidden;
+  width: 28px; height: 28px; padding: 2px; border: 1px solid var(--line); border-radius: 5px;
+  background: #fff; display: flex; align-items: center; justify-content: center;
 }
 .marker-btn:hover { background: var(--hover); }
-.marker-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-.marker-glyph { width: 14px; flex: none; text-align: center; font-size: 13px; font-weight: 700; }
+.marker-btn.active { border-color: var(--accent); background: var(--accent-soft); }
+.marker-btn-icon { width: 22px; height: 22px; display: block; }
 
 /* Main menu, opened from the hamburger at the far left. */
 .menu-backdrop { position: fixed; inset: 0; z-index: 55; }
@@ -501,22 +578,118 @@ button { cursor: pointer; }
 /* 下划线骨架的标题贴合文字宽度，不能拉满盒子，只补左侧缩进。 */
 .node.align-left.underline .node-title,
 .node.align-left.underline .node-title-input { padding-left: var(--text-pad, 0px); }
-.node-markers { position: absolute; left: -8px; top: -9px; display: flex; gap: 2px; }
+/* XMind draws the marker row *inside* the topic box, to the left of the label.
+   Measured on the shipped renderer (FINDINGS §48): the row starts 5px into the
+   content group, icons step by `icon + 2`, and 15px separates it from the
+   label.  The topic itself supplies `markerPad` on both sides, so a 4-marker
+   central box is 29 + [5 + 126] + 15 + 120 + 29 = 324 wide.
+   The icon size is document-level: 36px natively, 30px for unresolved sheet
+   themes (FINDINGS §47). */
+.node-markers {
+  position: relative; z-index: 1; display: flex; flex: 0 0 auto;
+  align-items: center; padding-left: 5px; margin-right: 15px;
+}
 .marker-chip {
-  min-width: 16px; height: 16px; border-radius: 4px; font-size: 10px;
+  width: calc(var(--marker-size, 36px) + 2px);
+  height: calc(var(--marker-size, 36px) + 4px);
+  flex: 0 0 calc(var(--marker-size, 36px) + 2px); display: inline-flex;
+  align-items: center; justify-content: center; background: transparent;
+  border-radius: 4px; cursor: pointer;
+  /* A click on a marker must not start the topic's pointer-capturing drag. */
+  touch-action: none;
+}
+.marker-chip:last-child {
+  width: var(--marker-size, 36px); flex-basis: var(--marker-size, 36px);
+}
+.marker-chip:hover { background: rgba(255, 255, 255, .22); }
+.marker-chip.active { background: rgba(255, 255, 255, .34); }
+/* The shipped renderer strokes a white ring around each marker icon. */
+.marker-chip img {
+  width: var(--marker-size, 36px); height: var(--marker-size, 36px);
+  display: block; transform: translateX(2px);
+  border-radius: 50%; box-shadow: 0 0 0 3px rgba(255, 255, 255, 1);
+  pointer-events: none;
+}
+.ol-marker img { width: 16px; height: 16px; display: block; }
+.marker-chip-fallback {
+  width: var(--marker-size, 36px); height: var(--marker-size, 36px);
+  border-radius: 50%; font-size: 14px;
   display: inline-flex; align-items: center; justify-content: center;
-  color: #fff; background: #f9423a; padding: 0 3px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+  color: #fff; padding: 0; transform: translateX(2px);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 1);
+  pointer-events: none;
+}
+/* Image topics (贴纸 / 插画 / 本地图片): the shipped renderer stacks the
+   artwork above the label inside a padded card, sizing the whole box from the
+   artwork's intrinsic dimensions (20/12/18/10 padding, 12px gap, 24px label).
+   The backend measures the resource bytes and gives us that geometry. */
+.node.has-image {
+  flex-direction: column; justify-content: flex-start; align-items: center;
+  padding: 12px 18px 10px 20px;
+}
+.node.has-image .node-image {
+  position: relative; z-index: 1; flex: 0 0 auto;
+  max-width: none; max-height: none; margin: 0; object-fit: contain;
+}
+.node.has-image .node-title,
+.node.has-image .node-title-input {
+  flex: 0 0 auto; width: 100%; margin-top: 12px; text-align: left;
+}
+.node.has-image.align-left:not(.underline) .node-title,
+.node.has-image.align-left:not(.underline) .node-title-input {
+  padding-left: 0; padding-right: 0; width: 100%; max-width: none; margin-right: 0;
 }
 .node-labels {
-  position: absolute; left: 0; right: 0; bottom: -17px; display: flex;
-  gap: 4px; justify-content: center; pointer-events: none;
+  position: absolute; left: 0; top: calc(100% + 5px); display: flex;
+  gap: 4px; justify-content: flex-start; pointer-events: none;
 }
 .label-chip {
-  font-size: 10px; padding: 1px 6px; border-radius: 4px;
-  background: #ececf0; color: var(--text-dim);
+  font-size: 11px; padding: 2px 7px; border-radius: 5px;
+  background: rgba(255, 255, 255, .7); color: #6f737b;
+  border: 1px solid rgba(0, 0, 0, .1);
 }
 .node-image { max-height: 22px; max-width: 46px; margin-right: 6px; object-fit: contain; }
+/* Single-marker popover: same-group alternatives + remove (FINDINGS §48).
+   The overlay mirrors the shipped `topic-popover-overlay`. */
+.marker-pop-overlay { position: fixed; inset: 0; z-index: 60; background: transparent; }
+.marker-chip-pop {
+  position: fixed; z-index: 61; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px;
+  min-height: 40px; padding: 6px 8px;
+  background: #fff; border: 1px solid #e2e5ea; border-radius: 6px;
+  box-shadow: 0 6px 22px rgba(20, 28, 38, .18);
+}
+.mcp-icons { display: flex; flex-wrap: wrap; align-items: center; gap: 1px; }
+.mcp-icon {
+  width: 26px; height: 26px; padding: 3px; border: 0; border-radius: 4px;
+  background: transparent; display: inline-flex; align-items: center;
+  justify-content: center; cursor: pointer;
+}
+.mcp-icon:hover { background: #eef4fa; }
+.mcp-icon.on { background: #dcecf8; }
+.mcp-icon img { width: 16px; height: 16px; display: block; pointer-events: none; }
+.mcp-empty { font-size: 12px; color: #6f737b; padding: 0 6px; }
+.mcp-sep { width: 1px; height: 20px; background: #e2e5ea; flex: 0 0 1px; }
+.mcp-trash {
+  width: 26px; height: 26px; padding: 3px; border: 0; border-radius: 4px;
+  background: transparent; color: #5b616b; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.mcp-trash:hover { background: #fdeceb; color: #d0453b; }
+
+/* The artwork of a 贴纸 / 插画 / 本地图片 topic is a separate selectable
+   object: the shipped renderer draws a blue `topic-image-outline` and four
+   corner resize handles around it, without selecting the whole topic (§48). */
+.node.has-image .node-image { cursor: pointer; }
+.node.has-image .node-image.selected {
+  outline: 2px solid rgba(46, 189, 255, 1);
+  outline-offset: 1px;
+}
+.image-handle {
+  position: absolute; z-index: 4; width: 8px; height: 8px;
+  border: 1px solid rgba(46, 189, 255, 1); background: #fff;
+  border-radius: 2px; pointer-events: none;
+}
 
 /* 折叠 / 展开控件: XMind 把它画在「通往子主题的那条线的起点」上 —— 16px 圆、
    1px 分支色描边、画布底色填充、10px 分支色数字。默认完全透明, 鼠标移到主题上
@@ -537,6 +710,18 @@ button { cursor: pointer; }
 .fold-badge.folded,
 .fold-badge:focus-visible { opacity: 1; }
 .link-dot { position: absolute; right: -7px; top: -7px; font-size: 10px; color: var(--accent); }
+/* 有笔记的主题：原版在主题盒右上角挂一枚折角纸页图标，点击重新打开笔记。 */
+.node-note {
+  /* XMind's info button sits *inside* the topic at its right edge (18×18,
+     19px from the box edge, vertically centred), not on the top-right corner. */
+  position: absolute; right: 19px; top: 50%; transform: translateY(-50%); z-index: 3;
+  width: 18px; height: 18px; padding: 0; border: 0; background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: currentColor; opacity: .78;
+  filter: none;
+}
+.node-note:hover { transform: translateY(calc(-50% - 1px)); opacity: 1; }
+.node-note svg { display: block; }
 
 /* ------------------------------------------------------------- right panel */
 .panel {

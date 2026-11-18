@@ -375,6 +375,35 @@ export function buildTopicMenu(ctx: MenuContext): MenuItem[] {
   return rows;
 }
 
+/**
+ * Right-clicking the *artwork* of an image topic selects the image itself
+ * (blue outline + corner handles), not the topic, and shows this shorter
+ * menu.  The shipped build uses an Electron native menu (invisible to CDP),
+ * so only rows backed by a real local action are listed here (FINDINGS §48).
+ */
+export function buildImageMenu(topicId: string, isRoot: boolean): MenuItem[] {
+  const p = { id: topicId };
+  return [
+    item('im.replace', '替换图片', {
+      submenu: [
+        item('im.replace.file', '本地图片…', { shortcut: 'Ctrl+Shift+I', action: 'image.replaceFile', payload: p }),
+        item('im.replace.sticker', '贴纸…', { action: 'image.replaceSticker', payload: p }),
+        item('im.replace.clipart', '插画…', { action: 'image.replaceClipart', payload: p }),
+      ],
+    }),
+    sep('im.sep1'),
+    item('im.copy', '拷贝', { shortcut: 'Ctrl+C', action: 'image.copy', payload: p }),
+    item('im.format', '格式…', { action: 'view.panel.style', payload: p }),
+    sep('im.sep2'),
+    item('im.remove', '删除图片', {
+      shortcut: 'Delete', action: 'image.remove', payload: p, danger: true,
+    }),
+    item('im.removeTopic', '删除主题', {
+      action: 'edit.deleteSingle', payload: p, disabled: isRoot,
+    }),
+  ];
+}
+
 /** Shortcut list shown by 帮助 > 快捷键命令. */
 export const SHORTCUTS: [string, string][] = [
   ['新建 / 打开 / 保存', 'Ctrl+N / Ctrl+O / Ctrl+S'],
