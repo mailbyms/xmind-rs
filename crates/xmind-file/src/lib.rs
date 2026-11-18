@@ -8,11 +8,12 @@
 
 mod export;
 mod legacy;
+mod marker_icons;
 mod markdown;
 mod theme;
 mod xmind;
 
-pub use export::{export_document, to_markdown, to_opml, to_svg, to_text, ExportFormat};
+pub use export::{export_document, to_markdown, to_opml, to_svg, to_svg_with_images, to_text, ExportFormat};
 pub use theme::theme_for;
 pub use xmind::{
     read_any, read_xmind, remap_image_ids, write_xmind, write_xmind_with_extras,

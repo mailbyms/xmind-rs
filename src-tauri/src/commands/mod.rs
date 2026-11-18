@@ -54,6 +54,31 @@ fn apply_image_sizes(topic: &mut Topic, sizes: &HashMap<String, (f64, f64)>) {
     }
 }
 
+/// Resolve every image referenced by a document to the data URL the WebView
+/// uses. A standalone SVG cannot reach the app's asset protocol, so artwork
+/// must be embedded as `data:` before rasterising to PNG/PDF.
+fn export_image_urls(doc: &Document, state: &AppState) -> HashMap<String, String> {
+    fn collect(topic: &Topic, ids: &mut Vec<String>) {
+        if let Some(id) = &topic.image { ids.push(id.clone()); }
+        for child in topic.children.iter().chain(topic.detached.iter())
+            .chain(topic.summary.iter()).chain(topic.callout.iter())
+        {
+            collect(child, ids);
+        }
+    }
+    let mut ids = Vec::new();
+    for sheet in &doc.sheets {
+        collect(&sheet.root, &mut ids);
+    }
+    let mut out = HashMap::new();
+    for id in ids {
+        if let Ok(Some(url)) = state.resources.data_url(&id) {
+            out.insert(id, url);
+        }
+    }
+    out
+}
+
 fn mutate<F>(state: &State<'_, AppState>, action: F) -> Result<Snapshot, String>
 where
     F: FnOnce(&mut Document),
@@ -270,7 +295,12 @@ pub fn doc_export(state: State<'_, AppState>, path: String, format: String) -> R
     }
     let parsed = xmind_file::ExportFormat::parse(&format)
         .ok_or_else(|| format!("不支持的导出格式: {format}"))?;
-    let bytes = xmind_file::export_document(&document, parsed);
+    let bytes = if parsed == xmind_file::ExportFormat::Svg {
+        let images = export_image_urls(&document, &state);
+        xmind_file::to_svg_with_images(&document, &images).into_bytes()
+    } else {
+        xmind_file::export_document(&document, parsed)
+    };
     xmind_file::write_atomic(&target, &bytes).map_err(|e| e.to_string())
 }
 
@@ -281,7 +311,8 @@ pub fn doc_export(state: State<'_, AppState>, path: String, format: String) -> R
 pub fn doc_branch_svg(state: State<'_, AppState>, id: String) -> Result<String, String> {
     let document = state.document.lock().unwrap();
     let branch = ops::branch_document(&document, &id).ok_or_else(|| "找不到该分支".to_string())?;
-    Ok(xmind_file::to_svg(&branch))
+    let images = export_image_urls(&branch, &state);
+    Ok(xmind_file::to_svg_with_images(&branch, &images))
 }
 
 #[tauri::command]
@@ -292,7 +323,12 @@ pub fn doc_export_branch(
     let branch = ops::branch_document(&document, &id).ok_or_else(|| "找不到该分支".to_string())?;
     let parsed = xmind_file::ExportFormat::parse(&format)
         .ok_or_else(|| format!("不支持的导出格式: {format}"))?;
-    let bytes = xmind_file::export_document(&branch, parsed);
+    let bytes = if parsed == xmind_file::ExportFormat::Svg {
+        let images = export_image_urls(&branch, &state);
+        xmind_file::to_svg_with_images(&branch, &images).into_bytes()
+    } else {
+        xmind_file::export_document(&branch, parsed)
+    };
     xmind_file::write_atomic(&PathBuf::from(&path), &bytes).map_err(|e| e.to_string())
 }
 

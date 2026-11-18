@@ -4810,6 +4810,7 @@ dependencies = [
 name = "xmind-file"
 version = "0.4.1"
 dependencies = [
+ "base64 0.22.1",
  "flate2",
  "quick-xml",
  "serde",

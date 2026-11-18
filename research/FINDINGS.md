@@ -3260,3 +3260,60 @@ D.length && (N.markers = D.map((e) => ({ markerId: e })))
   同目录 `map.png`）。`ui-export-raster.mjs` 全 PASS，画布 51/51 不变。
 
 
+
+## §51 SVG/PNG/PDF 导出补齐标记、标签与贴纸/插图
+
+### 51.1 现象
+
+`test.xmind` 的导出图只有主题盒、连线与标题：中心主题的 4 个标记、
+「分支主题 1」下方的「超出范围了」标签、两个分支的贴纸/插画全部消失。
+画布上这些都存在，说明是导出链路（而非布局）丢元素。
+
+### 51.2 数据可用性
+
+`LaidOutNode` 已经带有 `markers / labels / image / image_width /
+image_height / marker_size / marker_pad`，但旧 `to_svg()` 只消费了标题与样式。
+资源字节不在 `Document` 里，而在 Tauri 侧 `ResourceStore`（id → 本地文件）；
+独立的 SVG Blob 无法访问 asset 协议，因此必须由命令层把资源解析成 `data:` URL 注入。
+
+### 51.3 修复
+
+- `crates/xmind-file/src/marker_icons.rs`（生成自 `src/lib/marker-data.ts`）：
+  58 个官方标记的全部 24×24 SVG，用 `include_str!` 内嵌；导出时转成
+  `data:image/svg+xml;base64,...`，每个图标独立文档，避免若干图标内部
+  `mask/clip` id 冲突。未知 markerId 沿用 `markers.ts` 的字形/颜色兜底。
+- `svg_marker_row()`：按画布 CSS 的几何绘制 —— 图标起点 `marker_pad + 5`，
+  步长 `icon + 2`，最后一个减 2，垂直居中，外加 3px 白色描边圆。
+  CDP 实测 `test.xmind`：图标相对主题盒 `(37,69,101,132), y=20, 30×30`，
+  与公式逐像素一致。
+- `svg_labels()`：标签画在主题盒下方 5px，11px 圆角白底 chip；裁剪框同步下扩
+  25.7px（实测 chip 高 20.7）。
+- `svg_image()` + `to_svg_with_images(doc, images)`：资源 id → data URL 由
+  `doc_export` / `doc_branch_svg` / `doc_export_branch` 通过 `ResourceStore::data_url()`
+  注入。贴纸在 20/18px 内边距的内容区居中（60×60 → x=20+(90.6−60)/2=35.3），
+  标题移至插画下方 12px，而不是垂直居中。
+- **关键对齐修复**：画布在 `hasMarkers` 时强制 `textAlign: left`，即使主题样式是
+  `center`。导出器原来仍按 `style.align=center` 把标题居中，导致「中心主题」
+  的前两个字被画在 4 个标记底下（截图 `zoom-markers3.png` 可见）。现在同样强制左对齐，
+  起点 `node.x + text_pad + marker_width`（实测 x=175）。
+- 回归 `roundtrip.rs::svg_exports_markers_labels_and_images`：
+  断言 2 个标记 + 1 个贴纸都成为内嵌 data URL、标签文本存在、贴纸按内容区居中、
+  标记主题标题不再 `text-anchor=middle`。
+
+### 51.4 验证（test.xmind）
+
+- CDP 实测画布几何：中心主题 `[37,69,101,132] / y=20 / 30×30`，标签 chip
+  `y=49 / 71×20.7`，两张贴纸 `(35.3,12) 60×60` 与 `(20,12) 140×140`；
+  导出 SVG 与这些坐标逐项对齐。
+- `doc_branch_svg(root)` 导出：6 个 `<image>`（4 标记 + 2 贴纸）全部为
+  `data:image/svg+xml;base64`、`超出范围了` 标签存在、`text-anchor=middle`
+  不再出现在带标记的主题上。放大截图 `target/verify/elem-export/zoom-final.png`
+  显示标题与第 4 个图标之间有 13px 干净间隙。
+- `doc_export(..., 'svg')` 整图导出同样包含 6 个内嵌资源与标签
+  （`target/verify/elem-export/menu-full.svg`）。
+- 最终 PNG：`target/verify/elem-export/map-final2.png`；过程中的中间态
+  `map-aligned.png`（元素已出现，但标题仍压在图标上）保留用于对照画布截图
+  `canvas.png`。
+- `cargo test --workspace --offline` 全绿（roundtrip 17/17），
+  `npm run build:app` 成功，`ui-render-align.mjs` 51/51，
+  `ui-export-raster.mjs` ALL PASS。

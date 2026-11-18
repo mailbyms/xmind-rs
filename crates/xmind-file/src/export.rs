@@ -1,4 +1,5 @@
-use crate::xml_escape;
+use crate::{marker_icons::marker_icon_svg, xml_escape};
+use base64::Engine as _;
 use std::collections::HashMap;
 use xmind_core::{compute_layout, node_title_lines, Document, LaidOutNode, ThemePalette, Topic};
 
@@ -197,10 +198,25 @@ fn svg_label(node: &LaidOutNode, pal: &ThemePalette) -> String {
     let lines = node_title_lines(node);
     let size = node.style.font_size;
     let line_height = f64::from(size) * 1.333;
-    let first = node.y + node.height / 2.0
-        - (lines.len().saturating_sub(1) as f64) * line_height / 2.0
-        + f64::from(size) * 0.35;
-    let (x, anchor) = if node.style.align == "center" {
+    let is_card = node.image.is_some() && node.image_width > 0.0 && node.image_height > 0.0;
+    let first = if is_card {
+        // `.node.has-image` stacks the label 12px below the artwork; its
+        // 1.333em line box puts the first baseline ~1.02em from the top.
+        node.y + 12.0 + node.image_height + 12.0 + f64::from(size) * 1.02
+    } else {
+        node.y + node.height / 2.0
+            - (lines.len().saturating_sub(1) as f64) * line_height / 2.0
+            + f64::from(size) * 0.35
+    };
+    let (x, anchor) = if is_card {
+        (node.x + 20.0, "")
+    } else if !node.markers.is_empty() {
+        // MapCanvas sets `paddingLeft: markerPad` on the box and lays the
+        // marker row out inside it, so the label starts after BOTH.  Using
+        // `text_pad` here (zero for marker topics) would paint the first
+        // glyphs over the last icon, even with the left-align override below.
+        (node.x + node.marker_pad + node.marker_width, "")
+    } else if node.style.align == "center" {
         (node.x + node.width / 2.0, " text-anchor=\"middle\"")
     } else {
         (node.x + node.text_pad + node.marker_width, "")
@@ -223,6 +239,141 @@ fn svg_label(node: &LaidOutNode, pal: &ThemePalette) -> String {
     out
 }
 
+/// Canvas marker chips are the exact 24x24 catalogue SVGs, shown at the
+/// document's native icon size with a 3px white ring (`.marker-chip img`).
+/// A data URL keeps each icon in its own SVG document, so the `mask`/`clip`
+/// ids used by some catalogue entries cannot collide when several markers
+/// share one export.
+fn marker_icon_href(id: &str) -> Option<String> {
+    let svg = marker_icon_svg(id)?;
+    Some(format!(
+        "data:image/svg+xml;base64,{}",
+        base64::engine::general_purpose::STANDARD.encode(svg.as_bytes())
+    ))
+}
+
+/// Same fallbacks as `src/lib/markers.ts` for ids outside the 58-item
+/// catalogue (legacy markers written by older XMind builds).
+fn marker_fallback(id: &str) -> (String, &'static str) {
+    let known = match id {
+        "task-start" => Some(("▶", "#f9423a")),
+        "task-done" => Some(("✓", "#f9423a")),
+        "task-half" => Some(("½", "#f9423a")),
+        "arrow-left" => Some(("←", "#f9423a")),
+        "arrow-right" => Some(("→", "#f9423a")),
+        "arrow-up" => Some(("↑", "#f9423a")),
+        "arrow-down" => Some(("↓", "#f9423a")),
+        "arrow-refresh" => Some(("↻", "#f9423a")),
+        _ => None,
+    };
+    if let Some((glyph, color)) = known {
+        return (glyph.into(), color);
+    }
+    let color = [
+        ("red", "#e2483f"), ("orange", "#ef8b2c"), ("yellow", "#e3a008"),
+        ("green", "#28a06a"), ("blue", "#2f7ee5"), ("purple", "#8255c6"),
+        ("gray", "#7d8794"),
+    ].into_iter().find(|(word, _)| id.ends_with(&format!("-{word}")))
+        .map(|(_, color)| color).unwrap_or("#f9423a");
+    let glyph = if let Some(digit) = id.strip_prefix("priority-") {
+        digit.to_string()
+    } else if id.starts_with("task-") {
+        "◐".into()
+    } else if id.starts_with("star-") {
+        "★".into()
+    } else if id.starts_with("flag-") {
+        "⚑".into()
+    } else if id.starts_with("people-") {
+        "●".into()
+    } else if id.starts_with("tag-") {
+        "◆".into()
+    } else {
+        "•".into()
+    };
+    (glyph, color)
+}
+
+/// `Layout.marker_width` reserves `5 + n*(icon+2) - 2 + 15` px.  The chips
+/// are `icon+2` wide except the last one (`icon`), and each icon is nudged 3px
+/// (2px on the last chip) inside its chip by the canvas CSS.
+fn svg_marker_row(node: &LaidOutNode, out: &mut String) {
+    if node.markers.is_empty() { return; }
+    let size = node.marker_size.max(1.0);
+    let count = node.markers.len();
+    let cy = node.y + node.height / 2.0;
+    for (index, id) in node.markers.iter().enumerate() {
+        let last = index + 1 == count;
+        let x = node.x + node.marker_pad + 5.0
+            + index as f64 * (size + 2.0)
+            + if last { 2.0 } else { 3.0 };
+        let cx = x + size / 2.0;
+        // `box-shadow: 0 0 0 3px #fff` on a circular chip.
+        out.push_str(&format!(
+            "<circle cx=\"{cx:.1}\" cy=\"{cy:.1}\" r=\"{r:.1}\" fill=\"#fff\"/>\n",
+            r = size / 2.0 + 3.0,
+        ));
+        if let Some(href) = marker_icon_href(id) {
+            out.push_str(&format!(
+                "<image x=\"{x:.1}\" y=\"{y:.1}\" width=\"{size:.1}\" height=\"{size:.1}\" \
+                 preserveAspectRatio=\"xMidYMid meet\" href=\"{href}\"/>\n",
+                y = cy - size / 2.0,
+            ));
+        } else {
+            let (glyph, color) = marker_fallback(id);
+            out.push_str(&format!(
+                "<circle cx=\"{cx:.1}\" cy=\"{cy:.1}\" r=\"{r:.1}\" fill=\"{color}\"/>\n\
+                 <text x=\"{cx:.1}\" y=\"{ty:.1}\" text-anchor=\"middle\" fill=\"#fff\" \
+                 font-size=\"{fs:.1}\">{glyph}</text>\n",
+                r = size / 2.0, ty = cy + size * 0.18, fs = size * 0.39,
+                color = xml_escape(color), glyph = xml_escape(&glyph),
+            ));
+        }
+    }
+}
+
+/// Labels hang 5px below the topic box (`.node-labels`), one rounded chip
+/// each.  They are decorations, so they never grow the layout box — the
+/// crop bounds are extended separately.
+fn svg_labels(node: &LaidOutNode, out: &mut String) {
+    if node.labels.is_empty() { return; }
+    const H: f64 = 20.7;
+    let top = node.y + node.height + 5.0;
+    let mut x = node.x;
+    for label in &node.labels {
+        let em = 11.0;
+        let width = label.chars().map(|c| if c.is_ascii() { em * 0.56 } else { em }).sum::<f64>() + 16.0;
+        out.push_str(&format!(
+            "<rect x=\"{x:.1}\" y=\"{top:.1}\" width=\"{w:.1}\" height=\"{H:.0}\" rx=\"5\" \
+             fill=\"#fff\" fill-opacity=\"0.7\" stroke=\"#000\" stroke-opacity=\"0.1\"/>\n",
+            w = width,
+        ));
+        out.push_str(&format!(
+            "<text x=\"{tx:.1}\" y=\"{ty:.1}\" fill=\"#6f737b\" font-size=\"11\">{}</text>\n",
+            xml_escape(label), tx = x + 7.0, ty = top + 13.0,
+        ));
+        x += width + 4.0;
+    }
+}
+
+/// The artwork of a 贴纸 / 插画 / 本地图片 topic sits at (20,12) inside the
+/// padded card.  `images` maps the layout's resource id to the data URL the
+/// resource store already produced for the WebView.
+fn svg_image(node: &LaidOutNode, images: &HashMap<String, String>, out: &mut String) {
+    let Some(id) = node.image.as_deref() else { return };
+    let Some(href) = images.get(id) else { return };
+    if node.image_width <= 0.0 || node.image_height <= 0.0 { return; }
+    // `.node.has-image` centres the artwork in the 20px/18px padded card;
+    // only a full-width sticker ends up at the left inset itself.
+    let content_w = (node.width - 38.0).max(node.image_width);
+    let x = node.x + 20.0 + (content_w - node.image_width) / 2.0;
+    out.push_str(&format!(
+        "<image x=\"{x:.1}\" y=\"{y:.1}\" width=\"{w:.1}\" height=\"{h:.1}\" \
+         preserveAspectRatio=\"xMidYMid meet\" href=\"{href}\"/>\n",
+        y = node.y + 12.0,
+        w = node.image_width, h = node.image_height,
+    ));
+}
+
 /// Standalone SVG built from the exact same Rust layout the editor renders, so
 /// the export matches what the user sees on screen.
 ///
@@ -230,6 +381,13 @@ fn svg_label(node: &LaidOutNode, pal: &ThemePalette) -> String {
 /// `PAD` and enforces a 480x320 minimum for the *editor* viewport, which would
 /// leave a single-topic branch floating in empty white space.
 pub fn to_svg(doc: &Document) -> String {
+    to_svg_with_images(doc, &HashMap::new())
+}
+
+/// Same export, with the document's image resources resolved to data URLs.
+/// The WebView owns the resource store; callers that have it (the Tauri
+/// commands) pass `id -> data:...` so artwork can be embedded in the SVG.
+pub fn to_svg_with_images(doc: &Document, images: &HashMap<String, String>) -> String {
     let layout = compute_layout(doc);
     let pal = &layout.theme;
     // Breathing room around the cropped content, matching XMind's export.
@@ -241,6 +399,12 @@ pub fn to_svg(doc: &Document) -> String {
         let mut min_y = layout.nodes.iter().map(|n| n.y).fold(f64::INFINITY, f64::min);
         let mut max_x = layout.nodes.iter().map(|n| n.x + n.width).fold(f64::NEG_INFINITY, f64::max);
         let mut max_y = layout.nodes.iter().map(|n| n.y + n.height).fold(f64::NEG_INFINITY, f64::max);
+        // `.node-labels` hang below the shape; include them in the crop.
+        for node in &layout.nodes {
+            if !node.labels.is_empty() {
+                max_y = max_y.max(node.y + node.height + 5.0 + 20.7);
+            }
+        }
         for path in layout.frames.iter().map(|f| f.path.as_str())
             .chain(layout.links.iter().map(|l| l.path.as_str())) {
             if let Some((x1, y1, x2, y2)) = path_bounds(path) {
@@ -392,7 +556,10 @@ pub fn to_svg(doc: &Document) -> String {
                 stroke = if style.stroke == "transparent" { "none".into() } else { xml_escape(&style.stroke) }
             ));
         }
+        svg_image(node, images, &mut out);
+        svg_marker_row(node, &mut out);
         out.push_str(&svg_label(node, pal));
+        svg_labels(node, &mut out);
         if node.folded && node.hidden_count > 0 {
             out.push_str(&format!(
                 "<text x=\"{x:.1}\" y=\"{y:.1}\" fill=\"{}\" font-size=\"11\">+{}</text>\n",

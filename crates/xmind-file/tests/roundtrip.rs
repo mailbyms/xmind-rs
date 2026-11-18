@@ -525,6 +525,50 @@ fn svg_exports_font_stack_dashes_and_arrow_markers() {
     assert!(svg.contains("<path d=\"M0 -3.4 L6 0 L0 3.4 Z\""), "triangle body: {svg}");
 }
 
+/// Markers, labels and 贴纸/插画 artwork are first-class canvas objects; the
+/// standalone SVG must embed all three or the exported PNG/PDF silently loses
+/// them (the original `to_svg()` only drew shapes, titles and connectors).
+#[test]
+fn svg_exports_markers_labels_and_images() {
+    let mut doc = xmind_core::Document::new("元素导出");
+    let root = doc.root().id.clone();
+    assert!(xmind_core::ops::set_markers(
+        &mut doc, &root, vec!["priority-1".into(), "star-red".into()]
+    ));
+    let child = xmind_core::ops::add_child(&mut doc, &root, "带标签").unwrap();
+    assert!(xmind_core::ops::set_labels(&mut doc, &child, vec!["超出范围了".into()]));
+    let art = xmind_core::ops::add_child(&mut doc, &root, "贴纸").unwrap();
+    assert!(xmind_core::ops::set_image(&mut doc, &art, Some("sha256.svg".into())));
+    for topic in doc.sheets[0].root.children.iter_mut() {
+        if topic.id == art { topic.image_size = Some((60.0, 60.0)); }
+    }
+
+    let mut images = std::collections::HashMap::new();
+    images.insert("sha256.svg".into(), "data:image/svg+xml;base64,PHN2Zz4=".into());
+    let svg = xmind_file::to_svg_with_images(&doc, &images);
+
+    // Two catalogue icons + the sticker, all self-contained data URLs.
+    assert_eq!(svg.matches("<image ").count(), 3, "marker/artwork images: {svg}");
+    assert_eq!(svg.matches("data:image/svg+xml;base64,").count(), 3, "embedded assets: {svg}");
+    assert!(svg.contains("PHN2Zz4="), "sticker data URL must be used: {svg}");
+    assert!(svg.contains("超出范围了"), "label text missing: {svg}");
+    assert!(svg.contains("fill=\"#fff\" fill-opacity=\"0.7\""), "label chip missing: {svg}");
+    // Image cards stack the label below the artwork instead of centring it.
+    let layout = xmind_core::compute_layout(&doc);
+    let root_node = layout.nodes.iter().find(|n| n.id == root).expect("root");
+    let root_title = doc.root().title.clone();
+    let lines: Vec<&str> = svg.lines().collect();
+    let at = lines.iter().position(|l| l.contains(&root_title)).expect("root label");
+    let label_line = lines[at];
+    let left = format!("x=\"{:.1}\"", root_node.x + root_node.marker_pad + root_node.marker_width);
+    assert!(label_line.contains(&left), "marker label must follow the icon row: {label_line} vs {left}");
+    assert!(!label_line.contains("text-anchor=\"middle\""), "marker topics force left align: {label_line}");
+    let card = layout.nodes.iter().find(|n| n.id == art).expect("image card");
+    let inset = 20.0 + ((card.width - 38.0).max(card.image_width) - card.image_width) / 2.0;
+    let expected = format!("x=\"{:.1}\" y=\"{:.1}\"", card.x + inset, card.y + 12.0);
+    assert!(svg.contains(&expected), "artwork inset wrong, expected {expected}: {svg}");
+}
+
 /// XMind's desktop writer emits markers as `[{"markerId": "..."}]`
 /// (research/asar-src/renderer/2907.js: `N.markers = D.map((e) => ({ markerId: e }))`).
 /// A bare string array makes the shipped app refuse the file — the canvas stays at
