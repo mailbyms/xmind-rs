@@ -3214,4 +3214,49 @@ D.length && (N.markers = D.map((e) => ({ markerId: e })))
   （如「曦云C500 * 8卡 * 64台」高 50px vs 原版 31px），
   属已有字体度量问题，不影响「子主题可见 + 连线正确」这一修复目标。
 
+## §50 SVG/PNG/PDF 导出：多行标题与概要/联系装饰
+
+### 50.1 现象
+
+用户导出 `test2.xmind` 为 PNG 后，标题只剩一行且被盒子/画布右缘截断
+（「暗物广州（10902万）」「暗物广州-协创（10875万）」），
+最后一个子主题的四行文字被拼成一行后整段出界；概要花括号与联系线都没有画出来。
+用 `doc_branch_svg(rootId)` + WebView canvas 2x 栅格化可稳定复现
+（`target/verify/export-test2/map.{svg,png}`）。
+
+### 50.2 根因
+
+`xmind_file::to_svg()` 只看 `Layout.nodes`：
+
+- 标题写成单个 `<text>{node.title}</text>`。SVG 1.1 会折叠 `\n`/`\r\n`，
+  `pre-wrap` 语义丢失，长标题自然溢出；
+- 完全忽略 `Layout.frames`（概要花括号 / 外框）和 `Layout.links`（联系）；
+- 裁剪框只取节点包围盒，装饰线若出界会被切掉。
+
+### 50.3 修复
+
+- `xmind-core::layout`：新增 `wrapped_title_lines()` 与 `node_title_lines()`，
+  按 `\r\n`→`\n`、丢弃孤立 `\r`，再用与 `title_lines()` 完全相同的
+  `wrap_ratio` 贪心断行；宽度取 `node_title_lines()` 里复算的
+  `wrap_usable(width - marker_width, pad)`，与布局行数/`rows` 同源。
+- `xmind-file::export::to_svg()`：
+  - 每个节点输出 `<text xml:space="preserve">` + 每行一个 `<tspan x=… dy=1.333em>`，
+    首行基线按行数整体上移，使多行文本仍在盒内垂直居中；
+    左对齐文字从 `node.x + text_pad + marker_width` 起，居中主题用 `text-anchor=middle`；
+    `italic` / `strike` 也同步到 SVG。
+  - 在连线之上、主题之下绘制 `frames`（概要实线、外框 `6 4` 虚线）
+    与 `links`（自带箭头 marker、`dash_attr()`、白描边标签）。
+  - **联系线的 `dash` 已是最终 SVG 数组**（布局写 `"9 3"`），不能再过一遍
+    `dash_attr()`——那会把实线画出来；导出直接写 `stroke-dasharray="{dash}"`。
+  - 裁剪包围盒合并 `path_bounds()` 解析出的花括号/联系控制点及标签锚点。
+- 回归 `crates/xmind-file/tests/roundtrip.rs::svg_export_keeps_multiline_titles_and_decor`：
+  断言 `\r\n` 三行全部出现、`\r` 不外泄、概要路径与联系箭头写入 SVG。
+
+### 50.4 验证
+
+- `cargo test --workspace --locked` 全绿（roundtrip 16/16）。
+- 重建后重新栅格化 `test2.xmind`：三行标题完整、概要花括号与虚线联系箭头
+  都出现、右侧内容不再被截。截图 `target/verify/export-test2/map-final.png`（修复前
+  同目录 `map.png`）。`ui-export-raster.mjs` 全 PASS，画布 51/51 不变。
+
 

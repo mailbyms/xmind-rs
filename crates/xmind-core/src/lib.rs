@@ -10,7 +10,10 @@ pub mod ops;
 pub mod shape;
 pub mod theme_style;
 
-pub use layout::{compute_layout, palette, Decor, Edge, EffectiveStyle, LaidOutNode, Layout, ThemePalette};
+pub use layout::{
+    compute_layout, node_title_lines, palette, wrapped_title_lines, Decor, Edge, EffectiveStyle,
+    LaidOutNode, Layout, ThemePalette,
+};
 pub use model::*;
 pub use ops::*;
 pub use theme_style::{SkeletonLayer, SkeletonLayers, SKELETON_KEY};

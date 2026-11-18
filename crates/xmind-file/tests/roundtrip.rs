@@ -416,7 +416,37 @@ fn svg_export_keeps_wedge_fill_and_dash() {
     assert!(outline.contains("fill=\"#"), "wedge must be filled: {outline}");
 }
 
-/// Exported SVG must be cropped to the drawn content. `compute_layout` keeps a
+/// A title with explicit line breaks (official files use `\r\n`) and the
+/// native 概要 brace must both survive into SVG — and therefore into the
+/// PNG/PDF rasterised from it.  Flattening the title into one `<text>` made
+/// `test2.xmind` lose two lines and clip the last topic at the image edge.
+#[test]
+fn svg_export_keeps_multiline_titles_and_decor() {
+    let mut doc = xmind_core::Document::new("多行导出");
+    doc.sheets[0].extra.insert("theme".into(), serde_json::json!({
+        "relationship": { "properties": { "line-pattern": "dash" }}
+    }));
+    let root = doc.root().id.clone();
+    let child = xmind_core::ops::add_child(&mut doc, &root, "第一行\r\n第二行\r\n第三行\r").unwrap();
+    xmind_core::ops::add_summary(&mut doc, &root, "概要").unwrap();
+    xmind_core::ops::add_relationship(&mut doc, &root, &child, "联系").unwrap();
+
+    let svg = to_svg(&doc);
+    assert!(!svg.contains('\r'), "CR must not leak into the SVG: {svg}");
+    assert!(svg.matches("<tspan").count() >= 3, "three lines expected: {svg}");
+    for line in ["第一行", "第二行", "第三行"] {
+        assert!(svg.contains(line), "missing line {line}: {svg}");
+    }
+
+    let layout = xmind_core::compute_layout(&doc);
+    let frame = layout.frames.iter().find(|f| f.kind == "summary").expect("概要 brace");
+    assert!(svg.contains(&frame.path[..24]), "brace path missing from export: {svg}");
+    assert!(svg.contains("link-arrow-0"), "联系 arrow marker missing: {svg}");
+    assert!(svg.contains("stroke-dasharray=\"9 3\""), "联系 dash array missing: {svg}");
+    assert!(svg.contains("paint-order=\"stroke\""), "decor labels need halo: {svg}");
+}
+
+/// SVG export must be cropped to the drawn content. `compute_layout` keeps a
 /// 480x320 minimum so the editor viewport never collapses, but a one-branch
 /// export would then be a topic lost in white space (PNG/PDF inherit this).
 #[test]

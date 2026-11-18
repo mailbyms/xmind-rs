@@ -459,6 +459,50 @@ fn wrap_pad(style: &EffectiveStyle, text_pad: f64) -> f64 {
     if style.underline || style.align != "left" { 0.0 } else { text_pad }
 }
 
+/// Split a title into the exact lines the canvas shows: explicit `\n` /
+/// `\r\n` breaks first, then the same greedy per-character wrap as
+/// `title_lines()`.  Exports use this so standalone SVG/PNG/PDF keep the
+/// multi-line titles instead of flattening them into one clipped `<text>`.
+pub fn wrapped_title_lines(title: &str, size: u16, usable: f64) -> Vec<String> {
+    let normalized = title.replace("\r\n", "\n").replace('\r', "");
+    let em = f64::from(size);
+    let limit = usable.max(em);
+    let mut lines = Vec::new();
+    let mut current = String::new();
+    let mut used = 0.0f64;
+    for ch in normalized.chars() {
+        if ch == '\n' {
+            lines.push(std::mem::take(&mut current));
+            used = 0.0;
+            continue;
+        }
+        let w = em * wrap_ratio(ch);
+        if used + w > limit && used > 0.0 {
+            lines.push(std::mem::take(&mut current));
+            current.push(ch);
+            used = w;
+        } else {
+            current.push(ch);
+            used += w;
+        }
+    }
+    lines.push(current);
+    lines
+}
+
+/// Lines for an already laid-out node, using the very same wrap width that
+/// decided `LaidOutNode.lines` and the canvas's `rows`.
+pub fn node_title_lines(node: &LaidOutNode) -> Vec<String> {
+    let text_box = (node.width - node.marker_width).max(60.0);
+    let pad = if node.markers.is_empty() {
+        wrap_pad(&node.style, node.text_pad)
+    } else {
+        0.0
+    };
+    let usable = wrap_usable(&node.title, node.style.font_size, text_box, pad);
+    wrapped_title_lines(&node.title, node.style.font_size, usable)
+}
+
 /// Horizontal / vertical padding inside a topic, per depth. The deep values are
 /// pinned to the shipped renderer: 4 CJK glyphs at 14px → a 68px box (12px of
 /// padding) and a 32px height (13px on top of the 18.7px line box). 6 glyphs
