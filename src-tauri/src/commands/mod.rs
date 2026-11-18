@@ -121,6 +121,8 @@ pub fn app_info(state: State<'_, AppState>) -> Result<AppInfo, String> {
         data_dir: state.layout.root.to_string_lossy().to_string(),
         startup_file: state
             .startup_file
+            .lock()
+            .unwrap()
             .as_ref()
             .map(|path| path.to_string_lossy().to_string()),
         theme: settings.theme,

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { listen } from '@tauri-apps/api/event';
 import { api, type Action } from '../lib/api';
 import { addMarkerExclusive, MARKERS } from '../lib/markers';
 import type { MapCanvasHandle } from '../editor/MapCanvas';
@@ -250,10 +251,47 @@ export default function App() {
     return { startId: best[0].id, endId: best[best.length - 1].id };
   }, [selectedIds]);
 
+  // Open a file handed to us by the OS. Used both at bootstrap (Windows argv
+  // and macOS cold start, surfaced via app_info.startupFile) and while running
+  // (macOS Finder "Open with", delivered as the "opened" event). The dedup
+  // guard covers the cold-start race where the same path arrives by both
+  // routes in quick succession.
+  const lastOpened = useRef<{ path: string; at: number } | null>(null);
+  const openFromPath = useCallback((path: string) => {
+    const now = Date.now();
+    const previous = lastOpened.current;
+    if (previous && previous.path === path && now - previous.at < 2000) return;
+    lastOpened.current = { path, at: now };
+    void (async () => {
+      try {
+        const next = await api.open(path);
+        commit(next);
+        select(next.document.sheets[next.document.activeSheet].root.id);
+        notify('已打开（未知字段会原样保留）');
+      } catch (error) {
+        notify(`打开文件失败：${String(error)}`);
+      }
+    })();
+  }, [commit, notify, select]);
+
+  // macOS: Finder "Open with" on an already-running instance arrives as an
+  // Apple Event -> RunEvent::Opened on the Rust side -> this event.
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let cancelled = false;
+    void listen<string>('opened', (event) => {
+      if (!cancelled && event.payload) openFromPath(event.payload);
+    }).then((fn) => {
+      if (cancelled) fn();
+      else unlisten = fn;
+    }).catch(() => undefined);
+    return () => { cancelled = true; unlisten?.(); };
+  }, [openFromPath]);
+
   // Bootstrap: XMind normally opens on a clean, unsaved "未命名" map (one
   // central topic + four main topics), never on the document left behind by
-  // the previous session. The one exception is a file passed on the command
-  // line (Explorer "Open with"), which is opened after the WebView is ready.
+  // the previous session. The one exception is a file passed by the OS
+  // (Explorer "Open with" argv / macOS cold start), opened once WebView is ready.
   // Recovery snapshots are still written on edit and can be loaded through
   // `doc_restore`, but startup must not consume them.
   useEffect(() => {
@@ -263,19 +301,11 @@ export default function App() {
         const appInfo = await api.info();
         if (cancelled) return;
         setInfo(appInfo);
-        let initial;
         if (appInfo.startupFile) {
-          try {
-            initial = await api.open(appInfo.startupFile);
-            if (cancelled) return;
-            notify('已打开（未知字段会原样保留）');
-          } catch (error) {
-            notify(`打开启动文件失败：${String(error)}`);
-            initial = await api.newDoc();
-          }
-        } else {
-          initial = await api.newDoc();
+          openFromPath(appInfo.startupFile);
+          return;
         }
+        const initial = await api.newDoc();
         if (cancelled) return;
         commit(initial);
         select(initial.document.sheets[initial.document.activeSheet].root.id);
@@ -284,7 +314,7 @@ export default function App() {
       }
     })();
     return () => { cancelled = true; };
-  }, [commit, notify, select]);
+  }, [commit, notify, select, openFromPath]);
 
   // The chrome uses XMind's measured palette (styles.css); the document theme
   // only affects canvas content, so nothing writes CSS variables here.

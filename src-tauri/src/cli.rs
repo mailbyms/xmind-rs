@@ -29,7 +29,7 @@ where
         .find(|candidate| is_openable_file(candidate))
 }
 
-fn is_openable_file(path: &Path) -> bool {
+pub(crate) fn is_openable_file(path: &Path) -> bool {
     path.is_file() && has_openable_extension(path)
 }
 
