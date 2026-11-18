@@ -3157,4 +3157,61 @@ D.length && (N.markers = D.map((e) => ({ markerId: e })))
 - 新增脚本：`probe-orig-interact.mjs` / `probe-orig-ui.mjs` /
   `probe-orig-image.mjs` / `shot-interactions.mjs`。
 
+## 49. 概要主题的子主题必须作为分支渲染（2026-11-18，test2.xmind）
+
+用户文件 `test2.xmind` 的概要主题 `d5f95edf…` 带 4 个 `children.attached`
+子主题。原版 XMind 23.07（CDP 9222）画出 **13 个 `topic-node`**、
+**10 条 `topic-connection`**、1 条 `summary-body-line`；本应用只画 9 个节点，
+概要右侧整棵子树消失。
+
+### 49.1 原版实测（窗口最大化、100%）
+
+- 概要主题盒 `[874,482,116,51]`，蓝底 `#0288D1`；花括号
+  `[837,470,26,74]`（range `(2,3)` 包住第 3、4 个兄弟）。
+- 4 个子主题盒统一 `x=1017`：`y=414/453/492/531`，
+  宽 `141/156/164/306`，高 `31/31/31/86`；淡红/淡蓝填充按分支色与
+  自身 `svg:fill` 决定。
+- 连接组 `[991,429,27,145]`，4 条 `roundedElbow` 红色
+  `rgba(242,40,22,1)` 连线从概要右缘 `990` 到子主题左缘 `1017`
+  （水平间隙 27px，垂直节距 39px = 31 + 8）。
+- 子主题堆栈中心约 `515.5`，比概要盒中心 `507.5` 低 8px；
+  说明官方把子主题当作概要主题自己的右侧分支，而不是浮动/外框装饰。
+
+### 49.2 根因
+
+`layout.rs::place_native_summaries()` 只画概要主题本身与花括号：
+`collect_native_summary_ids()` 让浮动主题遍历跳过它，`build_edges()`
+又在挂概要节点之前就跑完，因此 `sum.children` 从未进入 `placed`，
+`Layout.edges` 也不会有概要→子主题的连线。
+
+### 49.3 修复
+
+- 新增 `place_summary_children()`：从概要主题出发递归摆放
+  `children.attached`，深度从 3 开始、`Side::Right`、
+  `parent_id = Some(父 id)`，水平间隙 `(m.h_gap/2).max(16.0)`（默认 26px），
+  垂直按 `subtree_height()` + `m.sub_gap` 堆叠，堆栈中心
+  `sy + sh/2 + m.sub_gap`。折叠主题不再向下展开。
+- `place_native_summaries()` 改为把「概要节点 + 整棵子树」组成局部
+  `Vec<Placed>`，用 `build_edges(..., 空 Anchors, 水平)` 生成连线后
+  append 到 `Layout.edges`；概要节点仍 `parent_id=None`（只由花括号连接）。
+- 这一步继续放在 `apply_alignment()` 与 stage shift 之后，于是
+  `同级主题对齐` 不会把概要子主题拉伸成主树同层宽度；stage 的
+  `width/height` 自动因新节点变宽，右侧不再被裁剪。
+- 新增回归 `crates/xmind-core/tests/decor.rs::native_summary_children_are_rendered_as_a_branch`：
+  断言概要节点恰好 1 个、3 层后代都出现、概要→子/子→孙的边存在、
+  子节点在概要右侧且 `parent_id` 正确、花括号仍只有 1 条。
+
+### 49.4 验证
+
+- 本项目修复前 `nodes=9 / edges=6`，修复后 `nodes=13 / edges=10 / frames=1`，
+  与原版 13 个 `topic-node` / 10 条 `topic-connection` 对齐。
+- 截图：`target/verify/test2-orig-desktop2.png`（原版）、
+  `target/verify/test2-ours-before.png`、`target/verify/test2-ours-after.png`。
+- `cargo test --workspace --locked` 全绿（decor 9/9）、
+  `scripts/ui-render-align.mjs` 仍 **51/51 PASS**、
+  `npm run build:app` 成功。
+- 残余差异：个别概要子主题因字体度量在本应用里折成两行
+  （如「曦云C500 * 8卡 * 64台」高 50px vs 原版 31px），
+  属已有字体度量问题，不影响「子主题可见 + 连线正确」这一修复目标。
+
 

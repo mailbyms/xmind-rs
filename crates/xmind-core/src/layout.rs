@@ -2716,16 +2716,50 @@ fn collect_native_summary_ids(topic: &Topic, out: &mut HashSet<String>) {
     }
 }
 
+/// A native 概要 topic is a real branch root: its attached children grow to
+/// the right and are connected with the sheet's ordinary branch lines.  The
+/// main-tree pass never sees them because XMind keeps the whole subtree in
+/// `children.summary` under the range's parent (FINDINGS §49).  Lay them out
+/// here, after 同级主题对齐 and the stage shift, so their widths stay their
+/// own instead of being stretched to the main tree's level width.
+fn place_summary_children(
+    parent_topic: &Topic, parent: &LaidOutNode, depth: u32, branch: usize,
+    pal: &ThemePalette, m: Metrics, gap: f64, center_y: f64,
+    out: &mut Vec<Placed>,
+) {
+    if parent_topic.folded || parent_topic.children.is_empty() { return; }
+    let heights: Vec<f64> = parent_topic.children.iter()
+        .map(|kid| subtree_height(kid, depth, m)).collect();
+    let total: f64 = heights.iter().sum::<f64>()
+        + m.sub_gap * (heights.len().saturating_sub(1)) as f64;
+    let mut cursor = center_y - total / 2.0;
+    for (index, kid) in parent_topic.children.iter().enumerate() {
+        let h = heights[index];
+        let child_center = cursor + h / 2.0;
+        let (w, kh) = node_size(kid, depth, m);
+        let x = parent.x + parent.width + gap;
+        let mut node = make_node(
+            kid, x, child_center - kh / 2.0, w, kh, depth, Side::Right, branch,
+            Some(parent.id.clone()), pal, m,
+        );
+        node.child_index = index;
+        out.push(Placed { node: node.clone() });
+        place_summary_children(kid, &node, depth + 1, branch, pal, m, gap, child_center, out);
+        cursor += h + m.sub_gap;
+    }
+}
+
 /// Lay out every native 概要 topic and its brace, then append both to the
 /// stage.  Called after the main/floating trees are placed and shifted.
 fn place_native_summaries(
-    topic: &Topic, placed: &mut Vec<Placed>, pal: &ThemePalette, m: Metrics,
-    frames: &mut Vec<Frame>, theme: Option<&Value>, branch: usize,
+    topic: &Topic, placed: &mut Vec<Placed>, edges: &mut Vec<Edge>,
+    pal: &ThemePalette, m: Metrics, frames: &mut Vec<Frame>,
+    theme: Option<&Value>, branch: usize,
 ) {
     for group in [&topic.children, &topic.detached, &topic.summary, &topic.callout] {
         let kids: Vec<&Topic> = group.iter().collect();
         for kid in kids {
-            place_native_summaries(kid, placed, pal, m, frames, theme, branch);
+            place_native_summaries(kid, placed, edges, pal, m, frames, theme, branch);
         }
     }
     let Some(list) = topic.extra.get("summaries").and_then(Value::as_array) else { return; };
@@ -2794,7 +2828,20 @@ fn place_native_summaries(
         node.shape_path = path;
         node.shape_closed = closed;
         node.parent_id = None; // 概要 topics are not part of the branch tree
-        placed.push(Placed { node });
+        // The summary topic is a branch root of its own.  XMind stacks its
+        // attached children just below the topic's centre (measured +8px on
+        // test2.xmind) and leaves ~27px before their left edge.
+        let root_node = node.clone();
+        let mut subtree = vec![Placed { node }];
+        let child_gap = (m.h_gap / 2.0).max(16.0);
+        let stack_center = sy + sh / 2.0 + m.sub_gap;
+        place_summary_children(
+            sum, &root_node, 3, branch, pal, m, child_gap, stack_center, &mut subtree,
+        );
+        let empty_anchors: Anchors = HashMap::new();
+        let mut subtree_edges = build_edges(&subtree, pal, false, false, m, &empty_anchors);
+        edges.append(&mut subtree_edges);
+        placed.extend(subtree);
     }
 }
 
@@ -3334,7 +3381,7 @@ pub fn compute_layout(doc: &Document) -> Layout {
 
     let root_class = root_line_class(doc, &pal);
     let no_connections = matches!(root_class.as_str(), "none" | "treeTableNoConnections");
-    let edges = if brace && !no_connections {
+    let mut edges = if brace && !no_connections {
         Vec::new()
     } else {
         build_edges(&placed, &pal, vertical, upward, m, &anchors)
@@ -3350,7 +3397,7 @@ pub fn compute_layout(doc: &Document) -> Layout {
     let mut native_frames = Vec::new();
     {
         let theme = sheet.extra.get("theme");
-        place_native_summaries(root, &mut placed, &pal, m, &mut native_frames, theme, 0);
+        place_native_summaries(root, &mut placed, &mut edges, &pal, m, &mut native_frames, theme, 0);
     }
     let nodes: Vec<LaidOutNode> = placed.into_iter().map(|p| p.node).collect();
     let (links, mut frames) = build_decorations(&nodes, doc, &pal);

@@ -135,6 +135,36 @@ fn summary_is_registered_in_xminds_native_format() {
 }
 
 #[test]
+fn native_summary_children_are_rendered_as_a_branch() {
+    let (mut doc, _, first, second) = tree();
+    let id = ops::add_summary_with_range(
+        &mut doc, &first, Some((&first, &second)), "概要",
+    ).unwrap();
+    let kid_a = ops::add_child(&mut doc, &id, "概要子 1").unwrap();
+    let kid_b = ops::add_child(&mut doc, &id, "概要子 2").unwrap();
+    let grand = ops::add_child(&mut doc, &kid_b, "概要孙").unwrap();
+
+    let layout = compute_layout(&doc);
+    assert_eq!(layout.nodes.iter().filter(|n| n.id == id).count(), 1,
+        "the 概要 itself is still drawn exactly once");
+    for title in ["概要子 1", "概要子 2", "概要孙"] {
+        assert!(layout.nodes.iter().any(|n| n.title == title),
+            "missing summary descendant: {title}");
+    }
+    assert_eq!(layout.frames.iter().filter(|f| f.id == id).count(), 1,
+        "one brace only, no duplicate summary frame");
+    assert!(layout.edges.iter().any(|e| e.from == id && e.to == kid_a));
+    assert!(layout.edges.iter().any(|e| e.from == id && e.to == kid_b));
+    assert!(layout.edges.iter().any(|e| e.from == kid_b && e.to == grand));
+
+    let sum = layout.nodes.iter().find(|n| n.id == id).unwrap();
+    let child = layout.nodes.iter().find(|n| n.id == kid_a).unwrap();
+    assert_eq!(child.parent_id.as_deref(), Some(id.as_str()));
+    assert!(child.x > sum.x + sum.width,
+        "summary children grow to the right of the 概要 topic");
+}
+
+#[test]
 fn legacy_summary_is_upgraded_to_native_format() {
     let (mut doc, _, first, second) = tree();
     // What older builds wrote: a private extension plus a topic parked under
