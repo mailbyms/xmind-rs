@@ -1864,17 +1864,16 @@ fn branch_anchor_y(node: &LaidOutNode) -> f64 {
     }
 }
 
-/// X where a branch leaves its parent.  A filled shape keeps the historical
-/// text-area inset; an underline shape has a full-width rule, so the branch
-/// must leave from the box edge (= the rule's end), as measured on the
-/// shipped XMind (all 126 attach points had `dx <= 0.71` from the box edge).
-fn branch_start_x(parent: &LaidOutNode, right: bool, m: Metrics) -> f64 {
-    let inset = if parent.style.underline { 0.0 } else { h_pad(parent.depth) * m.pad };
-    if right { parent.x + parent.width - inset } else { parent.x + inset }
+/// X where a branch leaves its parent.  CDP measurements on the shipped
+/// renderer (test2 / example2, FINDINGS §53) put the connector start exactly on
+/// the topic box edge for filled shapes as well as underlines — the old
+/// `h_pad * pad` text-area inset made the line appear to grow out of the box.
+fn branch_start_x(parent: &LaidOutNode, right: bool) -> f64 {
+    if right { parent.x + parent.width } else { parent.x }
 }
 
 fn build_edges(
-    placed: &[Placed], pal: &ThemePalette, vertical: bool, upward: bool, m: Metrics,
+    placed: &[Placed], pal: &ThemePalette, vertical: bool, upward: bool,
     anchors: &Anchors,
 ) -> Vec<Edge> {
     let positions: HashMap<String, LaidOutNode> = placed
@@ -1911,11 +1910,11 @@ fn build_edges(
             let end_y = branch_anchor_y(node);
             match node.side {
                 Side::Right => (
-                    (branch_start_x(parent, true, m), start_y),
+                    (branch_start_x(parent, true), start_y),
                     (node.x, end_y),
                 ),
                 Side::Left => (
-                    (branch_start_x(parent, false, m), start_y),
+                    (branch_start_x(parent, false), start_y),
                     (node.x + node.width, end_y),
                 ),
             }
@@ -2518,7 +2517,7 @@ fn compute_matrix(doc: &Document, pal: &ThemePalette, m: Metrics) -> Layout {
     let mut edges = if matches!(root_line_class(doc, pal).as_str(), "none" | "treeTableNoConnections") {
         Vec::new()
     } else {
-        build_edges(&placed, pal, false, false, m, &anchors)
+        build_edges(&placed, pal, false, false, &anchors)
     };
     edges.retain(|e| depth_of.get(e.from.as_str()).copied().unwrap_or(0) >= 2);
 
@@ -2883,7 +2882,7 @@ fn place_native_summaries(
             sum, &root_node, 3, branch, pal, m, child_gap, stack_center, &mut subtree,
         );
         let empty_anchors: Anchors = HashMap::new();
-        let mut subtree_edges = build_edges(&subtree, pal, false, false, m, &empty_anchors);
+        let mut subtree_edges = build_edges(&subtree, pal, false, false, &empty_anchors);
         edges.append(&mut subtree_edges);
         placed.extend(subtree);
     }
@@ -3243,11 +3242,16 @@ pub fn compute_layout(doc: &Document) -> Layout {
             // same number of leaf branches (FINDINGS §47).  Maps whose branches
             // have their own subtrees keep the older top-edge stack measured in
             // §24.5, so their bbox match is untouched.
-            let centred_stacks = matches!(structure,
-                    Structure::Balanced | Structure::Clockwise | Structure::Anticlockwise)
-                && !doc.compact
-                && right_count > 0 && right_count * 2 == total
-                && root.children.iter().all(|c| c.children.is_empty());
+            // test2.xmind (FINDINGS §53): with exactly one attached branch the
+            // shipped renderer centres that branch on the central topic even
+            // when it owns a subtree.  Top-edge stacking only applies to the
+            // multi-branch samples measured in §24.5 / §47.
+            let centred_stacks = total == 1
+                || (matches!(structure,
+                        Structure::Balanced | Structure::Clockwise | Structure::Anticlockwise)
+                    && !doc.compact
+                    && right_count > 0 && right_count * 2 == total
+                    && root.children.iter().all(|c| c.children.is_empty()));
             for side in [Side::Right, Side::Left] {
                 let mut members: Vec<usize> = sides.iter()
                     .filter(|(_, s)| *s == side)
@@ -3428,7 +3432,7 @@ pub fn compute_layout(doc: &Document) -> Layout {
     let mut edges = if brace && !no_connections {
         Vec::new()
     } else {
-        build_edges(&placed, &pal, vertical, upward, m, &anchors)
+        build_edges(&placed, &pal, vertical, upward, &anchors)
     };
     let decor = if brace && !no_connections {
         build_braces(&placed, &pal, &root_class)

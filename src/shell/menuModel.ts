@@ -72,9 +72,6 @@ function insertElements(ctx: MenuContext): MenuItem[] {
     item('in.clipart', '插画', { action: 'insert.notice', payload: { label: '插画' }, disabled: !ctx.hasTopic }),
     item('in.image', '本地图片', { shortcut: 'Ctrl+Shift+I', action: 'insert.image', disabled: !ctx.hasTopic }),
     item('in.equation', '方程', { action: 'insert.notice', payload: { label: '方程' }, disabled: !ctx.hasTopic }),
-    sep('in.sep5'),
-    item('in.sheet', '新画布', { shortcut: 'Ctrl+Alt+N', action: 'insert.sheet' }),
-    item('in.sheetFrom', '从主题新建画布', { action: 'insert.sheetFromTopic', disabled: !ctx.hasTopic }),
   ];
 }
 

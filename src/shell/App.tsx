@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { listen } from '@tauri-apps/api/event';
@@ -13,6 +13,9 @@ import { InsertPop, MarkerPop, type IconTab } from './ToolbarPop';
 import type { IconItem } from '../lib/icon-data';
 import { buildMainMenu, buildCanvasMenu, buildTopicMenu, buildImageMenu, SHORTCUTS, type MenuContext } from './menuModel';
 import { exportBranch, printBranch, type BranchFormat } from '../io/branchExport';
+// Same 256px artwork that Windows uses for the window / taskbar icon. Vite
+// emits it as a hashed asset so the in-app mark can never drift from the exe.
+import appIcon from '../../src-tauri/icons/icon.png';
 
 // All four heavy views are separate chunks, fetched only when opened.
 const MapCanvas = lazy(() => import('../editor/MapCanvas'));
@@ -118,6 +121,21 @@ function docLabel(path: string | null | undefined): string {
 
 export default function App() {
   const win = getCurrentWindow();
+  /** The main tool cluster is centred between the file name and the 样式 tab;
+   *  the latter's position depends on how wide the title cluster grew. */
+  const titleLeftRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const left = titleLeftRef.current;
+    const bar = toolbarRef.current;
+    if (!left || !bar) return;
+    const apply = () => bar.style.setProperty(
+      '--title-left-w', `${left.getBoundingClientRect().width}px`);
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(left);
+    return () => observer.disconnect();
+  }, []);
   const [info, setInfo] = useState<AppInfo | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const snapshotRef = useRef<Snapshot | null>(null);
@@ -1223,6 +1241,8 @@ export default function App() {
     : 'boot';
 
   const docName = docLabel(snapshot?.path);
+  /** Same source as 帮助 → 关于; empty until app_info resolves. */
+  const versionLabel = info?.version ? `v${info.version}` : '';
   const topicCount = snapshot?.stats.topics ?? 0;
   const activeSheet = snapshot?.document.activeSheet ?? 0;
   const idList = snapshot ? collectIds(snapshot.document) : [];
@@ -1344,7 +1364,7 @@ export default function App() {
       {/* Tauri 2.12 "deep" makes every non-interactive pixel of the whole bar
           draggable; buttons / inputs / labels automatically block the drag. */}
       <header className="titlebar" data-tauri-drag-region="deep">
-        <div className="titlebar-left">
+        <div className="titlebar-left" ref={titleLeftRef}>
           <button className="menu-btn" title="主菜单"
             onClick={(event) => {
               event.stopPropagation();
@@ -1353,6 +1373,8 @@ export default function App() {
             }}>
             <Icon name="menu" />
           </button>
+          <img className="app-icon" src={appIcon} alt="XMind RS"
+            title="XMind RS" draggable={false} />
           <div className="titlebar-title">
             <span className="doc-name" title={snapshot?.path ?? '尚未保存到文件'}>{docName}</span>
             {/* XMind shows an empty subtitle for a clean document, 已编辑 once
@@ -1363,7 +1385,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="toolbar">
+        <div className="toolbar" ref={toolbarRef}>
           <div className="tool-flex" />
 
           <div className="tool-group">
@@ -1625,6 +1647,13 @@ export default function App() {
                 onClick={() => setViewMode(viewMode === 'map' ? 'outline' : 'map')}>
                 {viewMode === 'map' ? '大纲' : '思维导图'}
               </button>
+
+              <span className="sb-divider" />
+
+              <span className="sb-version"
+                title={versionLabel ? `XMind RS ${versionLabel}` : 'XMind RS'}>
+                {versionLabel}
+              </span>
             </div>
           </div>
         </footer>

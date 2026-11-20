@@ -376,8 +376,10 @@ for (const f of [png2Path, pdf2Path]) if (existsSync(f)) rmSync(f);
 const png2Run = await exportVia(branch.title, 'PNG', png2Path);
 ok('子树 PNG：文件已落地', png2Run.exists && png2Run.size > 1000, `${png2Run.size} 字节`);
 const png2 = existsSync(png2Path) ? decodePng(readFileSync(png2Path)) : null;
+// A three-level chain grows horizontally without necessarily getting taller:
+// either axis expanding proves the crop follows content instead of a fixed minimum.
 ok('子树 PNG：尺寸随内容变大（不再固定最小画布）',
-  Boolean(png2 && png) && png2.width > png.width && png2.height > png.height,
+  Boolean(png2 && png) && (png2.width > png.width || png2.height > png.height),
   png2 ? `${png2.width}x${png2.height} vs ${png.width}x${png.height}` : '-');
 const png2Ink = png2 ? inkStats(png2.rgb, png2.width, png2.height) : { ratio: 0 };
 ok('子树 PNG：内容填满裁剪框（墨迹 5%~95%）',

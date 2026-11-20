@@ -3359,3 +3359,319 @@ Explorer 传入的路径虽然到了进程参数里，却没有任何代码消�
 - 再验证含空格与中文的复制路径
   `target\verify-openarg\My Maps\测试 地图.xmind`，同样成功加载，
   `document.title = "测试 地图.xmind - XMind RS"`。
+
+## 53. test2.xmind 连线起点与单分支栈心（2026-11-20）
+
+### 53.1 用户反馈
+
+1. 本应用第一个主题「北京亚信」到「暗物广州」的外伸线是曲的，原版是水平直线；
+2. 「暗物广州」和概要主题「暗物广州-协创」到各自子主题的连线从主题框里面出发，
+   原版从主题框右边缘出发。
+
+### 53.2 原版实测
+
+新增 `scripts/probe-orig-connections.mjs`（CDP 9222），直接读
+`topic-connection` 路径与 `topic-node` 包围盒：
+
+- 中心「北京亚信」盒 `[555,387,170,67]`，连线外接矩形
+  `[725,420,100,0]`，`d = M 85 0 L 97 0 L 141 0 Q 141 0, 141 0 L 185 0`
+  ——整条线在 y=0 上，起点 x=725 正好是中心盒右缘 `555+170`。
+  两端中心分别 420.5 / 420，几乎完全水平对齐。
+- 「暗物广州」盒 `[850,386,171,68]`，4 条子连线外接矩形 x=1021，
+  正好是盒右缘 `850+171`；路径形如
+  `M 86 0 L 98 0 L 98 ±… Q … L 113 …`。
+- 概要「暗物广州-协创」盒 `[1332,432,116,51]`，4 条子连线 x=1449
+  （右缘 1448，边界描边差 1px）。
+- `example2.xmind` 同样成立：中心盒右缘 825 = 连线 x，一级盒右缘 1113 = 连线 x。
+
+结论：原版连线起点一律落在父主题盒边缘，不按 `h_pad` 文本区内缩。
+
+### 53.3 根因
+
+- `layout.rs::branch_start_x()` 过去对非下划线实心主题保留
+  `h_pad(depth) * pad` 内缩（中心 58 / 一级 36 / 二级 12），
+  于是线看起来从盒子里面长出来。
+- 栈心规则：`centred_stacks` 只在 balanced / clockwise / anticlockwise、
+  多分支且一级分支没有子树时按中心对齐；test2 只有 **1 个** attached
+  一级分支（其余是浮动/概要主题），且它有子树，于是走了
+  “栈心对齐中心主题**顶边**”的旧规则，子主题中心比中心主题高
+  `root_h/2 ≈ 33.7px`。父层 `roundedfold` 因 dy≠0 画出折/曲外伸线；
+  原版单分支按中心对齐，dy=0 时 `roundedfold` 退化为水平直线。
+
+### 53.4 修复
+
+- `branch_start_x()` 去掉 `h_pad` 内缩：实心与下划线主题都从盒边缘出线；
+  `build_edges()` 因此不再需要 `Metrics` 参数。
+- `centred_stacks` 增加 `total == 1` 分支：只有一个 attached 一级主题时，
+  它的中心对齐中心主题中心；多分支仍沿用 §24.5 / §47 的顶边规则。
+- 新增 `crates/xmind-core/tests/attach.rs`：
+  `connector_starts_on_the_parent_box_edge`（roundedfold / roundedElbow / curve，
+  断言起点等于父盒边缘）与 `a_single_attached_branch_centres_on_the_root`。
+- 修正 `scripts/ui-export-raster.mjs` 过严断言：三层链只横向变宽时高度可以不变，
+  任一维变大即证明裁剪框随内容扩展。
+
+### 53.5 验证
+
+- 截图：`target/verify/test2-connectors/orig.png`、修复前 `ours.png`、
+  修复后 `ours-after.png`；原版路径数据
+  `orig-connections.json` / `example2-connections.json`。
+- 修复后 100% 布局：中心盒中心 y=342.5，「暗物广州」中心 y=342；
+  根连线 `M 242.0 148.8 L 322.0 148.8 … L 402.0 148.8` 全水平；
+  10 条连线的起点逐条校验，**0 条**落在父盒内部。
+- `cargo test --workspace --locked` 全绿（attach 2/2、roundtrip 17/17），
+  `npm run build:app` 成功，`ui-render-align.mjs` 51/51，
+  `ui-export-raster.mjs` ALL PASS。
+
+## §54 折叠数字标要落在下划线主题的线上（15:35）
+
+### 54.1 现象
+
+用户更新 `test2.xmind`：一级主题「暗物广州」改成下划线并把子主题折叠。
+原版 XMind 中折叠数字标（`topic-unfold-button`，显示隐藏子树数 9）
+圆心与紫色下划线同高，在下划线右端外侧 12px；本应用数字标却高出一整
+个主题盒半高，看起来悬在文字右边。改成双下划线同样错位；而圆角矩形、
+实心主题没有这个问题。
+
+### 54.2 原版实测
+
+- `test2.xmind`：`topic-node` 盒 `[849,362,170,57.5]`，
+  `topic-node-border` 是 `M 0 67.5 L 170 67.5` 的零高度线，位于盒底 y≈419.5；
+  数字标盒 `[1023,412,16,16]`，圆心 y=420；
+  `topic-connection-for-unfold-button` 路径在 y=419.5，x 从 1019 到 1031。
+- 原版 `example.xmind` 的下划线分支同样把外伸线接到 `rect.bottom`
+  （如「做计划」盒底 217，连线终点 y=216），中心主题盒中心 y=471：
+  下划线分支的外伸线本来就是弯的，这不是本次修复目标。
+
+### 54.3 根因
+
+`layout.rs::branch_anchor_y()` 早就知道下划线主题的连线锚点在盒底，
+但画布侧 `MapCanvas.tsx::foldAnchor()` 和 SVG 导出 `export.rs` 仍一律
+用 `node.y + node.height / 2`（盒中心）。实心/圆角主题的锚点恰好就是盒中心，
+所以只有下划线/双下划线暴露了差异。
+
+### 54.4 修复
+
+- `MapCanvas.tsx` 新增 `branchAnchorY(node)`：`style.underline` 时取盒底，
+  否则取盒中心；`foldAnchor()` 的水平分支与方向判断全部改用它。
+  数字标仍沿分支方向外移 12px，x 逻辑不变。
+- `export.rs` 的折叠 `+N` 文本 y 同样按 `style.underline` 选盒底/盒中心，
+  与 CSS `.node.underline::after`、连线端点保持同一个锚点。
+- `scripts/check-fold.mjs` 增加锚点断言：数字标圆心与下划线主题的盒底
+  （实心主题为盒中心）相差不得超过 1.5px。
+- `roundtrip.rs` 新增 `folded_underline_export_puts_the_count_on_the_rule`：
+  折叠的双下划线主题导出后 `+1` 的 y 必须落在盒底 8px 内。
+
+### 54.5 验证
+
+- 修复后 CDP 实测：数字标圆心 y=353，盒底 y=353（差 0px）；
+  实心主题「北京亚信」「储备合同」仍是盒中心（差 0px）。
+- `check-fold.mjs`：下划线 353 vs 354（取整误差 1px）、实心 541 vs 541，均通过。
+- `cargo test --workspace --locked` 全绿（roundtrip 18/18），
+  `npx tsc --noEmit`、`npm run build:app` 成功；
+  `ui-render-align.mjs` 51/51、`ui-export-raster.mjs` ALL PASS。
+- 截图：`target/verify/test2-fold/ours-after.png`、`orig.png`。
+  改动仍只在工作区，未提交、未发布。
+
+## §55 贴纸主题的折叠圆浮到主题顶部（16:10，example.xmind）
+
+### 55.1 现象
+
+用户截图：以 `example.xmind` 验证，给带贴纸的子主题「演示/展示」hover 时，
+16px 折叠圆出现在贴纸**正上方**（而不是外伸线的起点），红色箭头指向那个
+空心圆。同页其它贴纸主题（做计划 / 做笔记 / 辅助记忆 …）正常。
+
+### 55.2 复现与定位
+
+`scripts/check-fold-anchor.mjs`（新增）全量扫 `.node > .fold-badge` 的内联
+`left/top`，修复前的 `example.xmind`：34 个圆中 `h+ 18 / h- 14 / v- 2`，
+两个异常都是 `top: -20`（顶部中央）：
+
+| 主题 | 类型 | left / top |
+| --- | --- | --- |
+| 思维导图 | 中心主题 | `w/2-8=93` / `-20` |
+| 演示/展示 | 贴纸 + 下划线，w=125.9 h=122 | `w/2-8=54.95` / `-20` |
+
+而同类左侧贴纸主题（辅助记忆 / 做报告 / 项目管理）是 `left=-20, top=114`
+（左缘、盒底），说明只有这一个被判成了「向上生长」。
+
+### 55.3 原版实测（`scripts/probe-orig-fold.mjs`）
+
+原版 XMind 23.07 CDP 9222，`Page.bringToFront` + hover 后可读到：
+
+- `topic-connection-for-unfold-button`：`d = "M 50 0 L 62 0"`，12px **水平**
+  短线，落在下划线主题盒的右缘 x=916 / 盒底 y=217；
+- `topic-unfold-button` 11×11（100% 下 16×16）紧接短线外端
+  `[918,211,11,11]`，即 §24.1 记录的「连线起点 + 沿轴外移 12px」。
+- 原版没有任何把折叠圆放到主题顶部的画法。
+
+### 55.4 根因
+
+`MapCanvas.tsx::foldAnchor()` 用**第一个子主题的中心**与主题的
+`branchAnchorY(node)` 做 `|dx| >= |dy|` 比较来猜生长轴。贴纸主题是
+`node_size()` 里的高卡片（60×60 贴纸 → 128×118，`example` 实测 h=122），
+且 example 的一级主题是下划线（锚点取**盒底** y=node.y+122）：它的子主题
+成组堆在卡片上方，dy 轻易超过 -200，而 dx 只有约 -190，于是水平外伸线被
+判成 `axis='v', dir=-1`，圆盘 `top` 变成 `-20`。中心主题同理被误判。
+
+### 55.5 修复
+
+- 新增 `connectorStart(path)`：解析 `layout.edges` 中第一条 `from === node.id`
+  的连线的 `M x y` 起点（`taper_polygon` 只让起点偏移半个线宽，用来判轴足够）。
+- `foldAnchor()` 改为**以真实连线起点定轴**：起点贴盒左/右缘 → 水平；贴盒
+  顶/底 → 垂直；自定义结构锚点则比较它相对盒中心的 dx/dy。水平优先是
+  刻意的——下划线分支起点也在盒底，但仍然是横向生长。
+- 锚点坐标仍用计算值（盒边缘 + `branchAnchorY`），不取 path 起点，避免锥形
+  分支的半个线宽误差；折叠态没有连线时保留原来的骨架 fallback。
+- 新增 `scripts/check-fold-anchor.mjs`：断言每个圆都落在四种合法锚点之一，
+  支持 `--horizontal-only` 与 `--vertical=down|up`；
+  `scripts/probe-orig-fold.mjs` 记录原版 hover 探针。
+
+### 55.6 验证
+
+| 文档 | 结果 |
+| --- | --- |
+| `example.xmind` 修复前 | 34 个圆，`v- 2`（含「演示/展示」）→ 脚本 FAIL |
+| `example.xmind` 修复后 | 34 个圆 `h+ 19 / h- 15 / v 0`，7 个贴纸主题全部水平；ALL PASS |
+| hover 截图 | 圆落在左缘外伸线起点，`badgeY=248.5` vs 盒底 248（差 0.5px） |
+| `test2.xmind`（折叠下划线） | 3 个圆全 `h+`；数字标圆心 353 vs 盒底 354，未回归 |
+| `org-down.xmind` | 34 个圆全 `v+`；ALL PASS |
+| `org-up.xmind` | 34 个圆全 `v-`；ALL PASS |
+| `test.xmind` | 1 个圆 `h+`；`ui-render-align.mjs` **51/51 ALL PASS** |
+
+`npx tsc --noEmit`、`npm run build:app`、`cargo test --workspace --locked`
+全部通过。截图 `target/verify-foldbadge/after-hover.png`、
+`test2-fold.png`。改动仍只在工作区，未提交、未发布。
+
+坑：重复隔离实例必须换**新的** `WEBVIEW2_USER_DATA_FOLDER` 和 CDP 端口，
+复用同一目录时 WebView2 会静默不带调试端口启动（本轮 9230 → 9231/9232/9233）。
+
+## §56 贴纸卡片把标题压成两行（16:45，example.xmind）
+
+### 56.1 现象
+
+用户反馈：`example.xmind` 的「演示/展示」带贴纸/插画时，标题被折成 2 行，
+单行只有 3 个中文字；**删掉贴纸后恢复单行**。同一份图里「辅助记忆」
+「项目管理」等 4 字贴纸标题同样被折行。
+
+### 56.2 实测（CDP 9235，修复前）
+
+| 项 | 值 |
+| --- | --- |
+| `.node` class | `node underline has-image align-left` |
+| `.node` computed padding | `12px 18px 10px 20px`（卡片自带） |
+| 内联 `--text-pad` | `18px` |
+| `.node-title` width | `87.898px`（= 125.9 盒宽 − 38 卡片内边距） |
+| `.node-title` padding-left | **18px**（来自 `.node.align-left.underline .node-title`） |
+| 文字可用宽度 | **69.9px** |
+| 「演示/展示」实际需要 | 约 82px（4×18 中文字 + `/` 10px） |
+| `clientHeight` | 50 ≈ 2×24px 行高 → 2 行 |
+
+原版 XMind 同主题 `topic-title` 是 `82×25`（单行），卡片盒约 128 宽、
+标题框 90px，文字不折行。
+
+### 56.3 根因
+
+`.node.has-image` 卡片已经用 `padding: 12px 18px 10px 20px` 承担内容内缩，
+但下划线主题的规则 `.node.align-left.underline .node-title { padding-left:
+var(--text-pad) }` 又叠了 18px。原本用来清零的
+`.node.has-image.align-left:not(.underline) .node-title` 偏偏排除了下划线，
+于是「贴纸 + 下划线」这一组合漏了处理，两头夹击只剩 69.9px。
+
+删除贴纸后 `has-image` 消失，`.node.underline .node-title { width:auto }`
+让标题 shrink-to-fit，所以看起来"正常"——这正好解释了用户的对比现象。
+另外 SVG 导出 `svg_label()` 对卡片固定用 `node.x + 20`（不叠 textPad），
+且 `wrap_pad()` 对下划线返回 0，导出一直画的是单行；修复前端后两端才一致。
+
+### 56.4 修复
+
+`src/styles.css`：把
+`.node.has-image.align-left:not(.underline) .node-title` 改成
+`.node.has-image.align-left .node-title`（含 `-input`），让下划线贴纸主题
+同样 `padding-left/right: 0; width: 100%`，标题占满卡片内容区
+（`125.9 − 38 = 87.9px` > 82px，单行）。规则特异性 0-4-0 且位于下划线规则
+之后，能覆盖 18px 左内缩。Rust 布局与 SVG 导出都不用改：
+`node_size()` 本来就按 `max(art_w, title_w + 6) + 38` 给卡片留够了宽度。
+
+新增 `scripts/check-image-label.mjs`：用 Range client rects 数真实渲染行数，
+断言贴纸主题左内缩为 0 且单行、不溢出；`--remove-sticker` 还会通过真实
+右键菜单删除「演示/展示」的贴纸，验证删除后仍是单行。
+
+### 56.5 验证
+
+- 修复前：7 个贴纸主题中 4 字标题 2 行；修复后 **7/7 单行**、
+  `padL: 0px`、`inkW <= boxW`（「演示/展示」42.71 / 47.72，缩放后）。
+- `--remove-sticker`：`{"text":"演示/展示","hasImage":false,"lines":1}`，
+  与用户"删除贴纸后正常"一致；Ctrl+Z 撤销后 7/7 仍单行。
+- `ui-render-align.mjs` **51/51 ALL PASS**、`check-fold-anchor.mjs`
+  `--horizontal-only` ALL PASS（§55 折叠圆未回归）、`check-fold.mjs`
+  hover 圆心 248.5 vs 盒底 248。
+- `npx tsc --noEmit`、`npm run build:app`、`cargo test --workspace --locked`
+  全部通过。
+- 截图 `target/verify-foldbadge/label-fixed.png`：贴纸在上、标题单行、
+  折叠圆在左侧外伸线起点。改动仍只在工作区，未提交、未发布。
+
+## §57 顶栏应用图标与状态栏版本号（17:05）
+用户要求：顶部工具栏「菜单」按钮右边出现应用图标；底部"任务栏"（应用内
+status bar）合适位置显示应用版本号。这两处都是纯外壳信息，不碰画布渲染。
+
+### 57.1 数据来源
+- 图标直接 `import appIcon from '../../src-tauri/icons/icon.png'`（256×256），
+  与 Windows 窗口 / 任务栏使用同一份 PNG；Vite 产出 `assets/icon-*.png`，
+  不会再出现"界面图标和 exe 图标不一致"。
+- 版本号沿用 `api.info()` → Rust `app_info` → `env!("CARGO_PKG_VERSION")`，
+  与「帮助 → 关于」的 `XMind RS <version>` 同源，不新增命令或前端常量。
+
+### 57.2 改动
+- `src/shell/App.tsx`：`versionLabel = info?.version ? 'v'+version : ''`；
+  `header.titlebar-left` 在 `.menu-btn` 之后插入 `<img class="app-icon">`；
+  `footer.statusbar` 的 `.sb-right` 末尾加分隔线 + `.sb-version`（title 为
+  `XMind RS v<version>`）。信息未返回时版本位留空，避免闪烁。
+- `src/styles.css`：`.app-icon` 24×24 / margin-right 8px / pointer-events none，
+  与菜单按钮里的汉堡图标同为 24px；两者都在 40px 高的 `.titlebar-left`
+  flex 行中居中，所以顶边自然落在同一 y。deep drag-region 仍可拖动窗口；
+  `.sb-version` 12px faint 色、右端 21px 行高，与既有状态栏 tile 对齐。
+- 新增 `scripts/check-chrome.mjs`：断言图标已加载、位于菜单右侧/标题左侧、
+  尺寸 18px 级、不挤压工具栏与文档名；版本号匹配 `v\d+\.\d+\.\d+`、
+  位于状态栏右端且 tooltip 正确。
+
+### 57.3 验证
+- CDP 实测：menu.right=44，图标 x=60..84（natural=256），标题 x=92；
+  `toolbar.x=181.8 == titlebar-left.right`（无重叠），文档名 89.8px 完整。
+  菜单图标与应用图标实测均为 24×24、top=14（底部同为 38），精确对齐。
+  状态栏版本 `v0.5.1` 位于 x=1096..1138，状态栏范围 0..1142。
+- `example.xmind` 与 `test.xmind` 上 `check-chrome.mjs` 均 ALL PASS；
+  `ui-render-align.mjs` **51/51 ALL PASS**；`npx tsc --noEmit`、
+  `npm run build:app` 通过。
+- 截图 `target/verify-chrome/chrome.png`、`target/verify-chrome/chrome-aligned.png`
+  （后者为图标对齐后的最终视图）。改动仍只在工作区，未提交、未发布。
+
+## §58 主工具组居中于文件名与样式之间（17:28）
+用户要求：顶部工具栏的图标主题组（主题…插入 7 个按钮）整体往中间移动，
+处于「文件名」和右侧面板「样式」标签的中间。
+
+### 58.1 实测与推导
+- 调整前（example.xmind）：主组 x=804..1133、cx=969；文件名 cx≈137；
+  样式 tab cx≈1212；两者中点 ≈674.5 —— 主组明显偏右约 295px。
+- 工具栏结构：`flex(左空) + 主组(329) + flex.end(89) + 格式(32) + gap(24)`。
+  让两段 flex 等分剩余空间后，主组中心 = `titleLeft/2 + (winRight - B - G - M)/2`；
+  令它等于 `(文件名cx + 样式cx)/2`，解得右 void 的额外边距
+  `M = titleLeft.width / 2 - 37px`（37 = 格式组 32 + gap 24 − 19，
+  19 来自文件名 92px 固定左偏移的一半与样式 tab 130px 宽的一半之差）。
+  主组自身宽度 A 在等式中抵消，因此图标/文字模式切换也不影响。
+
+### 58.2 改动
+- `src/styles.css`：`.tool-flex.end` 从 `flex:0 1 89px` 改为
+  `flex:1 1 0; margin-left: calc(var(--title-left-w, 184px)/2 - 37px)`。
+- `src/shell/App.tsx`：`.titlebar-left` / `.toolbar` 加 ref；
+  `useLayoutEffect` + `ResizeObserver` 把标题区实际宽度写成 toolbar 的
+  `--title-left-w`，文件名的长度变化会实时带动主组居中，无需硬编码窗口宽度。
+- `scripts/check-chrome.mjs`：新增断言「主组中心 ≈ (文件名中心 + 样式中心)/2」
+  （容差 6px）以及「格式按钮仍在主组右侧」。
+
+### 58.3 验证
+- example.xmind：主组 cx=675，中点 674.4；test.xmind：主组 cx=668，
+  中点 667.4（短文件名场景也精确，误差仅来自取整）。
+- `格式` 按钮 x=1222 未移动；`ui-render-align.mjs` **51/51 ALL PASS**；
+  `npx tsc --noEmit`、`npm run build:app` 通过。
+- 截图 `target/verify-toolcenter/tool-centered-final.png`。
+  改动仍只在工作区，未提交、未发布。

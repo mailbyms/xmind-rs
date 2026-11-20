@@ -141,35 +141,67 @@ function childAnchor(from: LaidOutNode, structure: Structure, prefer: Side) {
 
 interface Anchor { x: number; y: number; axis: 'h' | 'v'; dir: number }
 
+/** Y where a horizontal branch meets a topic.  Mirrors `layout.rs::branch_anchor_y`:
+ *  a filled shape is met at its box centre, while 下划线 / 双下划线 are met on
+ *  their full-width rule at the box bottom.  The fold disc sits on this same
+ *  point, so it must follow the shape instead of always using the box centre. */
+function branchAnchorY(node: LaidOutNode): number {
+  return node.style.underline ? node.y + node.height : node.y + node.height / 2;
+}
+
+/** First point of a layout connector (`M x y …`), in canvas coordinates.
+ *  Tapered branches widen their polygon by half a stroke width, so the first
+ *  point can be a couple of px off the true anchor — enough to decide the
+ *  axis, not enough to place the disc on. */
+function connectorStart(path: string): { x: number; y: number } | null {
+  const m = /^M\s*(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)/.exec(path.trim());
+  return m ? { x: Number(m[1]), y: Number(m[2]) } : null;
+}
+
 /** Where the branch to a topic's children leaves it — the 折叠 disc sits there.
  *  XMind draws the disc centred 12px out along the first branch, so the line
- *  appears to start at the disc instead of at the topic's edge. */
+ *  appears to start at the disc instead of at the topic's edge.
+ *
+ *  The axis must come from the *real* connector, not from a child's position.
+ *  The old code compared |dx| with |dy| between the first child's centre and
+ *  the topic's anchor: on a tall 贴纸 card (and on 下划线 topics, whose anchor
+ *  is the box bottom) the children sit far above that anchor, so |dy| won and
+ *  the disc landed on TOP of the topic instead of at its 外伸线 start. */
 function foldAnchor(node: LaidOutNode, layout: Layout): Anchor {
   const midX = node.x + node.width / 2;
   const midY = node.y + node.height / 2;
-  // A live child tells us the true growth direction, whatever the skeleton is.
-  const kid = layout.nodes.find((item) => item.parentId === node.id && !item.cell);
-  if (kid) {
-    const dx = kid.x + kid.width / 2 - midX;
-    const dy = kid.y + kid.height / 2 - midY;
-    if (Math.abs(dx) >= Math.abs(dy)) {
-      return dx >= 0
-        ? { x: node.x + node.width, y: midY, axis: 'h', dir: 1 }
-        : { x: node.x, y: midY, axis: 'h', dir: -1 };
+  const horizontal = (dir: number): Anchor => ({
+    x: dir > 0 ? node.x + node.width : node.x,
+    y: branchAnchorY(node), axis: 'h', dir,
+  });
+  const vertical = (dir: number): Anchor => ({
+    x: midX, y: dir > 0 ? node.y + node.height : node.y, axis: 'v', dir,
+  });
+
+  const edge = layout.edges.find((item) => item.from === node.id);
+  const start = edge ? connectorStart(edge.path) : null;
+  if (start) {
+    // A connector leaves through a box edge.  Horizontal wins deliberately:
+    // an 下划线 branch also starts at the bottom Y, yet still grows sideways.
+    const EPS = 3;
+    if (Math.abs(start.x - node.x) <= EPS) return horizontal(-1);
+    if (Math.abs(start.x - (node.x + node.width)) <= EPS) return horizontal(1);
+    if (Math.abs(start.y - (node.y + node.height)) <= EPS) return vertical(1);
+    if (Math.abs(start.y - node.y) <= EPS) return vertical(-1);
+    // Custom structural anchor away from the box edges: follow the direction
+    // it actually points in instead of guessing from a child's centre.
+    if (Math.abs(start.y - midY) > Math.abs(start.x - midX)) {
+      return vertical(start.y >= midY ? 1 : -1);
     }
-    return dy >= 0
-      ? { x: midX, y: node.y + node.height, axis: 'v', dir: 1 }
-      : { x: midX, y: node.y, axis: 'v', dir: -1 };
+    return horizontal(start.x >= midX ? 1 : -1);
   }
-  // Folded: no child in the layout any more, so fall back to the skeleton.
+
+  // Folded: the children and their connectors are gone, so fall back to the
+  // skeleton's growth direction.
   if (isVerticalStructure(layout.structure)) {
-    return layout.structure === 'orgUp'
-      ? { x: midX, y: node.y, axis: 'v', dir: -1 }
-      : { x: midX, y: node.y + node.height, axis: 'v', dir: 1 };
+    return vertical(layout.structure === 'orgUp' ? -1 : 1);
   }
-  return node.side === 'left'
-    ? { x: node.x, y: midY, axis: 'h', dir: -1 }
-    : { x: node.x + node.width, y: midY, axis: 'h', dir: 1 };
+  return horizontal(node.side === 'left' ? -1 : 1);
 }
 
 

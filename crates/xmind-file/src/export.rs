@@ -561,12 +561,20 @@ pub fn to_svg_with_images(doc: &Document, images: &HashMap<String, String>) -> S
         out.push_str(&svg_label(node, pal));
         svg_labels(node, &mut out);
         if node.folded && node.hidden_count > 0 {
+            // Same anchor as the connectors and the on-canvas fold disc:
+            // underlines are met on their bottom rule, filled shapes at the
+            // box centre (layout.rs::branch_anchor_y).
+            let anchor_y = if style.underline {
+                node.y + node.height
+            } else {
+                node.y + node.height / 2.0
+            };
             out.push_str(&format!(
                 "<text x=\"{x:.1}\" y=\"{y:.1}\" fill=\"{}\" font-size=\"11\">+{}</text>\n",
                 xml_escape(&pal.muted),
                 node.hidden_count,
                 x = node.x + node.width + 8.0,
-                y = node.y + node.height / 2.0 + f64::from(style.font_size) * 0.35,
+                y = anchor_y + f64::from(style.font_size) * 0.35,
             ));
         }
     }

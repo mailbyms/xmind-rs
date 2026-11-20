@@ -387,6 +387,39 @@ fn underline_shapes_export_their_theme_colour() {
     assert!(svg.contains("stroke-width=\"2.0\""), "rule width follows border-line-width: {svg}");
 }
 
+/// A folded underline topic is met by its branch on the bottom rule (not at
+/// the text centre), so the exported hidden-topic count must sit on that rule
+/// as well — the same anchor the on-canvas fold disc uses.
+#[test]
+fn folded_underline_export_puts_the_count_on_the_rule() {
+    let mut document = xmind_core::Document::new("折叠数字标");
+    let root = document.root().id.clone();
+    let child = xmind_core::ops::add_child(&mut document, &root, "下划线").unwrap();
+    let _ = xmind_core::ops::add_child(&mut document, &child, "隐藏主题").unwrap();
+    let mut patch = xmind_core::TopicStyle::default();
+    patch.shape_class = Some("org.xmind.topicShape.doubleunderline".into());
+    assert!(xmind_core::ops::set_style(&mut document, &child, patch));
+    assert!(xmind_core::ops::set_fold(&mut document, &child, true));
+
+    let layout = xmind_core::compute_layout(&document);
+    let node = layout.nodes.iter().find(|n| n.id == child).unwrap();
+    assert!(node.style.underline && node.folded && node.hidden_count == 1);
+    let bottom = node.y + node.height;
+
+    let svg = to_svg(&document);
+    let row = svg.lines().find(|l| l.contains(">+1<")).expect("folded count in SVG");
+    let y: f64 = row
+        .split("y=\"")
+        .nth(1)
+        .unwrap()
+        .split('"')
+        .next()
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert!(y > bottom && y - bottom < 8.0, "count off the rule: {row} (rule y={bottom})");
+}
+
 /// A tapered connector is a filled wedge in the editor and dashed connectors
 /// keep their `line-pattern`; the SVG (and therefore PNG/PDF) export must match.
 #[test]

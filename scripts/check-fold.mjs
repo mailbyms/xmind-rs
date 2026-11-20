@@ -49,6 +49,7 @@ const find = (text) => ev(`(() => {
   return {
     id: hit.dataset.id,
     x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height),
+    underline: hit.classList.contains('underline'),
     badge: b ? { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height),
       opacity: getComputedStyle(badge).opacity, text: (badge.textContent ?? '').trim() } : null,
   };
@@ -83,6 +84,14 @@ const hovered = await find(title);
 console.log('hovered ', JSON.stringify(hovered.badge));
 
 if (hovered.badge && hovered.badge.opacity !== '0') {
+  const centre = hovered.badge.y + hovered.badge.h / 2;
+  // Horizontal branches are met at the box centre, except 下划线 / 双下划线,
+  // whose branch (and fold disc) sits on the rule at the box bottom.
+  const expected = hovered.underline ? hovered.y + hovered.h : hovered.y + hovered.h / 2;
+  console.log('anchor  ', { badgeY: centre, expected, underline: hovered.underline });
+  if (Math.abs(centre - expected) > 1.5) {
+    throw new Error(`fold badge off its branch anchor: ${centre} vs ${expected}`);
+  }
   const pad = 60;
   const clip = {
     x: Math.max(0, hovered.x - pad),

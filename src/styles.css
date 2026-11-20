@@ -117,6 +117,15 @@ button { cursor: pointer; }
 .menu-btn svg { width: 24px; height: 24px; display: block; }
 .menu-btn:hover { background: var(--hover); }
 .menu-btn:active { background: var(--press); }
+/* App mark sits immediately right of the menu button, before the file name.
+   Uses the very same PNG as the native window / taskbar icon.  24px matches
+   the hamburger glyph's box; both are centred in the same 40px flex row, so
+   their top edges land on exactly the same y. */
+.app-icon {
+  width: 24px; height: 24px; flex: none; margin-right: 8px;
+  border-radius: 5px; object-fit: contain; pointer-events: none;
+  user-select: none;
+}
 .doc-name {
   font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -140,9 +149,16 @@ button { cursor: pointer; }
 .tool-group { display: flex; align-items: center; flex: none; }
 .tool-group + .tool-group { margin-left: 16px; }
 .tool-flex { flex: 1 1 0; min-width: 8px; }
-/* The shipped bar keeps a flexible void before 格式 so the main tool cluster
-   lands on the window centre. */
-.tool-flex.end { flex: 0 1 89px; }
+/* The main cluster sits midway between the document name on the left and the
+   样式 tab on the right.  Both voids share the leftover space; the right void
+   takes an extra `titlebar-left.width / 2 - 37px` so the midpoint follows the
+   file name's actual length (37px = 格式 group + tool gap - name's half inset).
+   App.tsx keeps --title-left-w in sync via ResizeObserver.  The trailing 格式
+   group stays pinned where it was. */
+.tool-flex.end {
+  flex: 1 1 0; min-width: 8px;
+  margin-left: calc(var(--title-left-w, 184px) / 2 - 37px);
+}
 
 .tool-item {
   min-width: 32px; height: 32px; flex: none; position: relative;
@@ -635,8 +651,13 @@ textarea.tie-input { min-height: 88px; line-height: 1.5; }
 .node.has-image .node-title-input {
   flex: 0 0 auto; width: 100%; margin-top: 12px; text-align: left;
 }
-.node.has-image.align-left:not(.underline) .node-title,
-.node.has-image.align-left:not(.underline) .node-title-input {
+/* 贴纸卡片自带 20/18 的内容内边距，不能再叠加下划线主题的 `--text-pad`
+   左缩进：否则标题可用宽度 = 卡片内容区 - 18px（「演示/展示」只剩 69.9px，
+   而 4 个中文字 + 斜杠需要 82px），4 字标题会被压成 2 行。去掉 `:not(.underline)`
+   让下划线贴纸主题同样清零 padding，标题占满卡片内容区；SVG 导出本来就按
+   `node.x + 20`（不叠 textPad）单行绘制，两边由此一致。 */
+.node.has-image.align-left .node-title,
+.node.has-image.align-left .node-title-input {
   padding-left: 0; padding-right: 0; width: 100%; max-width: none; margin-right: 0;
 }
 .node-labels {
@@ -1090,6 +1111,13 @@ textarea.tie-input { min-height: 88px; line-height: 1.5; }
 .sb-zoom { padding: 0 6px 0 0; }
 .sb-zoom-label { padding: 0 8px; }
 .sb-chevron { flex: none; }
+/* Version from app_info, rightmost tile so it never competes with the
+   document / selection counters on the left. */
+.sb-version {
+  padding: 0 4px 0 8px; font-size: 12px; font-weight: 500;
+  line-height: 21px; color: var(--text-faint); white-space: nowrap;
+  user-select: none;
+}
 
 /* Zoom ladder popover: anchored above the tile, right-aligned to it. */
 .zoom-backdrop { position: fixed; inset: 0; z-index: 60; }
