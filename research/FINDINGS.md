@@ -3675,3 +3675,21 @@ status bar）合适位置显示应用版本号。这两处都是纯外壳信息�
   `npx tsc --noEmit`、`npm run build:app` 通过。
 - 截图 `target/verify-toolcenter/tool-centered-final.png`。
   改动仍只在工作区，未提交、未发布。
+
+## §59 发布 v0.6.0（17:37）
+- 发布前发现远程多出 `33979de`（v0.5.2，macOS Finder「打开方式」Apple Event
+  修复）与 v0.5.2 tag。把工作区改动整理为 `36e935e` 后 `git rebase origin/main`，
+  无冲突；合并后 App.tsx 同时保留本地标题栏/工具组改动与远程 `listen('opened')`
+  + `openFromPath()`。`example.xmind` 与 test 样本只 stash/pop，未进发布提交。
+- 版本 0.5.2 → 0.6.0：`Cargo.toml`、`Cargo.lock`（5 个 workspace crate）、
+  `package.json`、`package-lock.json`、`src-tauri/tauri.conf.json`；
+  release 提交 `68b46f6`，轻量 tag `v0.6.0`（与 v0.5.2 一致），已推送。
+- 验证：`cargo test --workspace --locked`（attach 2、CLI 3、roundtrip 18 等全过）、
+  `npx tsc --noEmit`、`npm run build:app`；构建产物 FileVersion/ProductVersion
+  均为 0.6.0。发布说明 `target/release-assets/RELEASE_NOTES-0.6.0.md`，
+  README 已同步版本号。
+- Release：https://github.com/mailbyms/xmind-rs/releases/tag/v0.6.0
+  非 draft、非 prerelease。资产：exe（10,370,560 B）、zip（7,296,054 B）、
+  `SHA256SUMS.txt`。回拉校验：`sha256sum -c` 两项 OK；zip 内 exe 与独立 exe
+  哈希一致；回拉 exe 版本元数据 0.6.0。
+- 本次只发 Windows x64（本机无法构建 macOS dmg）；macOS arm64 用户暂用 v0.5.2。
