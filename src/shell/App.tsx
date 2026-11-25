@@ -159,6 +159,11 @@ export default function App() {
   const [markerTab, setMarkerTab] = useState<IconTab>('marker');
   /** 主题下方的笔记 / 标签浮层，位置跟随画布缩放与平移。 */
   const [topicEditor, setTopicEditor] = useState<TopicEditor | null>(null);
+  /** 画布上点击某个标签胶囊后的就地编辑器（可改名或删除单个标签）。 */
+  const [labelEditor, setLabelEditor] = useState<{
+    id: string; index: number; value: string;
+    left: number; top: number;
+  } | null>(null);
   const [canvasView, setCanvasView] = useState<CanvasView>({ scale: 1, tx: 0, ty: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
   /** Right-click menu: viewport coordinates + the exact item tree to show. */
@@ -1139,6 +1144,44 @@ export default function App() {
     void run('setLabels', { id: editor.id, labels });
   };
 
+  /** 点击画布上的标签胶囊：就地改名或删除这一条标签。 */
+  const openLabelEditor = (
+    id: string, index: number, rect: { left: number; top: number; bottom: number },
+  ) => {
+    const topic = snapshot ? findTopicById(snapshot.document, id) : null;
+    setToolbarPop(null);
+    setTopicEditor(null);
+    setLabelEditor({
+      id, index, value: topic?.labels?.[index] ?? '',
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - 268)),
+      top: Math.max(56, Math.min(rect.bottom + 6, window.innerHeight - 120)),
+    });
+  };
+
+  const writeLabels = (id: string, labels: string[]) => {
+    void run('setLabels', { id, labels });
+  };
+
+  const commitLabelEditor = () => {
+    const editor = labelEditor;
+    if (!editor) return;
+    const topic = snapshot ? findTopicById(snapshot.document, editor.id) : null;
+    const next = [...(topic?.labels ?? [])];
+    const value = editor.value.trim();
+    if (value) next[editor.index] = value; else next.splice(editor.index, 1);
+    setLabelEditor(null);
+    writeLabels(editor.id, next);
+  };
+
+  const deleteLabel = () => {
+    const editor = labelEditor;
+    if (!editor) return;
+    const topic = snapshot ? findTopicById(snapshot.document, editor.id) : null;
+    const next = (topic?.labels ?? []).filter((_, index) => index !== editor.index);
+    setLabelEditor(null);
+    writeLabels(editor.id, next);
+  };
+
   const editorAnchor = useMemo(() => {
     if (!topicEditor || !snapshot) return null;
     const node = snapshot.layout.nodes.find((entry) => entry.id === topicEditor.id);
@@ -1235,6 +1278,18 @@ export default function App() {
     window.addEventListener('pointerdown', onDown, true);
     return () => window.removeEventListener('pointerdown', onDown, true);
   }, [topicEditor]);
+
+  // Clicking anywhere else (including another label) closes the 标签 editor;
+  // the chip's own click reopens it with the new value.
+  useEffect(() => {
+    if (!labelEditor) return;
+    const onDown = (event: PointerEvent) => {
+      if ((event.target as HTMLElement | null)?.closest('.label-editor')) return;
+      setLabelEditor(null);
+    };
+    window.addEventListener('pointerdown', onDown, true);
+    return () => window.removeEventListener('pointerdown', onDown, true);
+  }, [labelEditor]);
 
   const fitKey = snapshot
     ? `${snapshot.path ?? 'new'}|${snapshot.structure}|${snapshot.document.activeSheet}|${snapshot.stats.sheets}`
@@ -1546,6 +1601,7 @@ export default function App() {
                       setToolbarPop(null);
                       setTopicEditor({ kind: 'note', id, draft: topic?.note ?? '' });
                     }}
+                    onLabelClick={openLabelEditor}
                     linkPick={linkFrom !== null || hrefFrom !== null} onLinkTarget={onLinkTarget}
                     selectedDecor={selectedDecor} onDecorSelect={setSelectedDecor}
                     onDecorRename={renameDecor}
@@ -1601,6 +1657,26 @@ export default function App() {
                 <div className="tie-actions">
                   <button type="button" onClick={() => setTopicEditor(null)}>取消</button>
                   <button type="button" className="primary" onClick={commitTopicEditor}>确定</button>
+                </div>
+              </div>
+            )}
+            {labelEditor && (
+              <div className="label-editor"
+                style={{ left: labelEditor.left, top: labelEditor.top }}
+                onPointerDown={(event) => event.stopPropagation()}>
+                <input className="le-input" autoFocus value={labelEditor.value}
+                  placeholder="标签文字"
+                  onChange={(event) => setLabelEditor((current) =>
+                    current ? { ...current, value: event.target.value } : null)}
+                  onKeyDown={(event) => {
+                    event.stopPropagation();
+                    if (event.key === 'Enter') { event.preventDefault(); commitLabelEditor(); }
+                    if (event.key === 'Escape') { event.preventDefault(); setLabelEditor(null); }
+                  }} />
+                <div className="le-actions">
+                  <button type="button" className="le-del" onClick={deleteLabel}>删除</button>
+                  <button type="button" onClick={() => setLabelEditor(null)}>取消</button>
+                  <button type="button" className="primary" onClick={commitLabelEditor}>确定</button>
                 </div>
               </div>
             )}

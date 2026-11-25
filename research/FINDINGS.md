@@ -3693,3 +3693,58 @@ status bar）合适位置显示应用版本号。这两处都是纯外壳信息�
   `SHA256SUMS.txt`。回拉校验：`sha256sum -c` 两项 OK；zip 内 exe 与独立 exe
   哈希一致；回拉 exe 版本元数据 0.6.0。
 - 本次只发 Windows x64（本机无法构建 macOS dmg）；macOS arm64 用户暂用 v0.5.2。
+
+## §60 标签（labels）：盒下 23px 胶囊 + 布局预留 + 就地编辑
+
+### 60.1 症状
+为标题添加标签后，胶囊被压扁、互相重叠，还会被下方兄弟主题/连线盖住；标签也没有
+任何编辑或删除入口。
+
+根因两条：`compute_layout` 完全没把标签计入空间（`node_size` 只算形状，注释还写着
+「标签不进盒高」），前端 `.node-labels` 又是 `absolute` + `flex` 无宽度上限，长标签
+被 flex 压到盒宽后文字溢出。
+
+### 60.2 原版测量（XMind 23.07，CDP 读 DOM 几何）
+- 胶囊：高 **23**，圆角 **8**，填充 `rgba(255,255,255,.7)`，描边
+  `rgba(0,0,0,.1)` 1px，文字 **13px**、`rgba(0,0,0,.5)`，左右各 6px 内边距。
+  8 个汉字 → 文本 104px、胶囊 117px（+13）。
+- 第一行在形状下方约 **10px**；同一行相邻胶囊 **3px**，换行也 **3px**。
+- 胶囊**居中**于主题盒，宽度上限就是盒宽：盒只有 13px 宽时胶囊被压到 52px，长标签
+  用省略号截断（`topic-label-text` 的 `text-overflow: ellipsis`）。
+- 一行放得下就并排（宽盒 + 两个短标签 → 同一 y），放不下就往下换行。
+- **布局只把标签空间加在下方**：标签主题自身 y 不变；同一侧的兄弟会整体下移。
+  实测「运行状态实时监控」原本 39px 的兄弟间距，加了 2 个标签后变成 **93px**
+  （= 39 + 4 + 23×2 + 3）。
+- 原版对标签没有可见的单击选中态；改名/删除入口在实测里并不直观，本应用补了
+  明确的就地编辑器。
+
+### 60.3 实现
+- `crates/xmind-core/src/layout.rs`：
+  - 新增 `LabelChip { x, y, width }` 与 `LaidOutNode.label_chips`；`label_chips()`
+    按盒宽贪心分行、每行居中，`label_block_height()` 给出下方占用高度。
+  - `subtree_height` / `max_row_height` / `timeline_span` / `place_outline` 的
+    游标都加上标签块，兄弟/子主题因此不再压住标签。
+  - 形状本身保持居中（`center_y - height / 2`），标签只向下延伸；新增
+    `child_centre()`：叶子主题让形状占在行顶（标签落进预留区），有子树时仍按
+    子树居中。
+  - 平衡图的「中心距」放置单独修正：间距 = 上者形状半高 + 上者标签块 + 下者
+    形状半高 + v_gap，与实测 39→93 一致。
+  - `resize_node` 改宽后重算胶囊（行数可能变少）。
+- `crates/xmind-file/src/export.rs`：SVG 标签改用 `label_chips`，13px/23px/圆角 8，
+  超宽用 `…` 截断，裁剪框按胶囊右下角扩展。
+- 前端：`MapCanvas` 按后端坐标绝对定位每个 `.label-chip`（不再靠 flex 收窄），
+  `styles.css` 换成 13px/23px/radius 8；点击胶囊 → `App` 的 `.label-editor`
+  浮层，可改名（Enter 确定 / Esc 取消）或删除，写回仍走 `doc_set_labels`。
+
+### 60.4 验证
+- `cargo test -p xmind-core --test labels`：3 项 —— 兄弟下移且无重叠、胶囊不越界
+  且首行 4px、宽盒短标签同行不重叠。
+- `ui-toolbar-pop.mjs` 新增 6 条：13px/23px、不与任何主题盒重叠、宽度不超盒、
+  点击打开编辑器、就地改名 `甲→丙`、就地删除。
+- `ui-marker-inbox.mjs` 的尺寸断言改为按 `markerSize`/`markerWidth` 计算：新文档
+  的 `sheet.theme` 是我们自己写的（`theme_for`），对 `SheetTheme` 属「不可解析」，
+  因此按 §47 走 30px 图标 / 34px 槽（82 = 5 + 32 + 30 + 15），不再硬编码 36/40。
+- `cargo test --workspace`、`npx tsc --noEmit`、`npm run build` 全绿。
+
+### 60.5 未还原
+原版标签的双击改名/删除热键没有逐帧核对；本应用的「点击胶囊 → 浮层」是补充交互。

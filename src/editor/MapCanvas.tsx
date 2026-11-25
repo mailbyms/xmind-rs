@@ -47,6 +47,8 @@ interface Props {
   onDecorRange: (kind: 'boundary' | 'summary', id: string, startId: string, endId: string) => void;
   /** Click the page badge on a topic that carries a note. */
   onOpenNote?: (id: string) => void;
+  /** Click a 标签 pill: the shell opens its inline editor next to it. */
+  onLabelClick?: (id: string, index: number, rect: { left: number; top: number; bottom: number }) => void;
   onScale?: (scale: number) => void;
   /** Report pan / zoom so shell overlays can stay anchored to a topic. */
   onViewChange?: (view: View) => void;
@@ -366,7 +368,7 @@ function hatchPattern(node: LaidOutNode): { id: string; el: React.ReactNode } | 
 /** Heavy renderer: loaded as its own chunk, never part of the startup bundle. */
 const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
   { layout, selected, selectedIds, fitKey, onSelect, onSelectMany, onContextMenu,
-    onAction, onLiveEdit, onScale, onViewChange, onOpenNote,
+    onAction, onLiveEdit, onScale, onViewChange, onOpenNote, onLabelClick,
     linkPick, onLinkTarget, selectedDecor, onDecorSelect, onDecorRename, onDecorRange,
     onMarkerClick, activeMarker, selectedImage, onImageSelect, onImageContextMenu }, ref,
 ) {
@@ -1327,7 +1329,28 @@ const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
               {node.href && <span className="link-dot" title={node.href}>↗</span>}
               {node.labels.length > 0 && (
                 <div className="node-labels">
-                  {node.labels.map((label) => <span key={label} className="label-chip">{label}</span>)}
+                  {node.labels.map((label, index) => {
+                    // Chip boxes come from the backend so the canvas, the
+                    // reserved layout space and the SVG export all agree.
+                    const chip = node.labelChips?.[index];
+                    if (!chip) return null;
+                    return (
+                      <button key={`${index}-${label}`} type="button" className="label-chip"
+                        style={{ left: chip.x, top: chip.y, width: chip.width }}
+                        title={`${label}`}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onSelect(node.id);
+                          const rect = event.currentTarget.getBoundingClientRect();
+                          onLabelClick?.(node.id, index, {
+                            left: rect.left, top: rect.top, bottom: rect.bottom,
+                          });
+                        }}>
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
               {node.hasChildren && fold && (

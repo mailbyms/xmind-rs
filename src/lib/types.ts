@@ -135,6 +135,13 @@ export interface EffectiveStyle {
   underlineWidth: number;
 }
 
+/** 标签 pill: 23px high, 13px text, hanging under the topic box. */
+export interface LabelChip {
+  x: number;
+  y: number;
+  width: number;
+}
+
 export interface LaidOutNode {
   id: string;
   title: string;
@@ -161,6 +168,9 @@ export interface LaidOutNode {
   /** Content inset on each side when the topic carries markers (FINDINGS §48). */
   markerPad: number;
   labels: string[];
+  /** Chip boxes for `labels`, in topic-local px. The backend also reserves
+   * their vertical space in the layout, so siblings keep clear of them. */
+  labelChips: LabelChip[];
   image: string | null;
   /** Intrinsic artwork size; XMind draws image topics as cards with the
    * artwork above the label instead of a small inline icon. */

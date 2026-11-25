@@ -660,15 +660,47 @@ textarea.tie-input { min-height: 88px; line-height: 1.5; }
 .node.has-image.align-left .node-title-input {
   padding-left: 0; padding-right: 0; width: 100%; max-width: none; margin-right: 0;
 }
+/* 标签 (labels) hang under the shape as 23px pills — 13px text, 6px side
+   padding, `rgba(255,255,255,.7)` fill, `rgba(0,0,0,.1)` border, radius 8 —
+   measured on the shipped renderer (FINDINGS §52).  The layout reserves their
+   vertical space and hands us every chip box, so rows wrap exactly like the
+   backend computed them. */
 .node-labels {
-  position: absolute; left: 0; top: calc(100% + 5px); display: flex;
-  gap: 4px; justify-content: flex-start; pointer-events: none;
+  position: absolute; inset: 0; pointer-events: none;
+  display: block; z-index: 2;
 }
 .label-chip {
-  font-size: 11px; padding: 2px 7px; border-radius: 5px;
-  background: rgba(255, 255, 255, .7); color: #6f737b;
-  border: 1px solid rgba(0, 0, 0, .1);
+  position: absolute; box-sizing: border-box;
+  height: 23px; line-height: 21px; padding: 0 6px;
+  display: block; text-align: center;
+  font-size: 13px; font-weight: 400;
+  color: rgba(0, 0, 0, .5); background: rgba(255, 255, 255, .7);
+  border: 1px solid rgba(0, 0, 0, .1); border-radius: 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: auto; cursor: pointer; touch-action: none;
+  font-family: inherit;
 }
+.label-chip:hover { background: rgba(255, 255, 255, .95); color: rgba(0, 0, 0, .68); }
+.label-chip:focus-visible { outline: 2px solid var(--accent, #2ebdff); outline-offset: 1px; }
+/* Inline 标签 editor: delete / rename without leaving the canvas. */
+.label-editor {
+  position: fixed; z-index: 70; min-width: 230px;
+  background: #fff; border: 1px solid #e2e5ea; border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(20, 28, 38, .2); padding: 10px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.label-editor .le-input {
+  width: 100%; box-sizing: border-box; height: 30px; padding: 0 8px;
+  font-size: 13px; border: 1px solid #d8dde4; border-radius: 5px; outline: none;
+}
+.label-editor .le-input:focus { border-color: var(--accent, #2ebdff); }
+.label-editor .le-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.label-editor .le-actions button {
+  height: 26px; padding: 0 10px; font-size: 12px; border-radius: 5px;
+  border: 1px solid #d8dde4; background: #fff; color: #333; cursor: pointer;
+}
+.label-editor .le-actions .le-del { margin-right: auto; color: #c0392b; border-color: #e6c3bd; }
+.label-editor .le-actions .primary { background: var(--accent, #2ebdff); border-color: var(--accent, #2ebdff); color: #fff; }
 .node-image { max-height: 22px; max-width: 46px; margin-right: 6px; object-fit: contain; }
 /* Single-marker popover: same-group alternatives + remove (FINDINGS §48).
    The overlay mirrors the shipped `topic-popover-overlay`. */

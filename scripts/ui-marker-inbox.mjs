@@ -84,8 +84,17 @@ await pick('tag-red', ['tag-red']);
 await pick('priority-1', ['tag-red', 'priority-1']);
 const layout = await invoke('doc_layout');
 const node = layout.nodes.find((n) => n.id === root.id);
-check(Math.abs(node.markerWidth - 98) < 0.01, 'markerWidth is 2 x 40px + 18px gap', String(node.markerWidth));
-check(Math.abs(node.width - (baseWidth + 98)) < 0.01, 'topic box grew by 98px', `${baseWidth} -> ${node.width}`);
+// Icon size is document-level: 36px in 40px slots for native themes, 30px in
+// 34px slots when the sheet carries a theme XMind cannot resolve — and our own
+// `theme_for()` write-back is one of those (§47), so a fresh document gets the
+// 30px set.  Assert the DOM against the layout instead of hard-coding 36.
+const iconSize = node.markerSize;
+// 5px lead + (n-1) steps of icon+2 + icon + 15px trail (§48).
+const expectedWidth = 5 + (iconSize + 2) + iconSize + 15;
+check(Math.abs(node.markerWidth - expectedWidth) < 0.01,
+  `markerWidth matches 2 icons at ${iconSize}px`, `${node.markerWidth} vs ${expectedWidth}`);
+check(Math.abs(node.width - (baseWidth + node.markerWidth)) < 0.01,
+  'topic box grows by the marker row', `${baseWidth} -> ${node.width}`);
 check(node.lines === root.lines, 'label wrap unchanged');
 
 const info = await ev(`(() => {
@@ -104,8 +113,10 @@ const info = await ev(`(() => {
 })()`);
 console.log('DOM', JSON.stringify(info));
 check(info.chips.length === 2, 'two chips rendered');
-check(info.chips.every((c) => Math.abs(c.w - 40) < 0.1), '40px marker slots', JSON.stringify(info.chips));
-check(info.icon && Math.abs(info.icon.w - 36) < 0.1, '36px official icon', JSON.stringify(info.icon));
+check(info.chips[0] && Math.abs(info.chips[0].w - (iconSize + 2)) < 0.1
+  && Math.abs(info.chips[1].w - iconSize) < 0.1,
+  `marker slots ${iconSize + 2}/${iconSize}px`, JSON.stringify(info.chips));
+check(info.icon && Math.abs(info.icon.w - iconSize) < 0.1, `${iconSize}px official icon`, JSON.stringify(info.icon));
 check(/255, 255, 255/.test(info.iconShadow), 'white ring around icon', info.iconShadow);
 check(info.row.x >= info.node.x && info.row.x + info.row.w <= info.node.x + info.node.w + 1, 'marker row inside topic box');
 check(info.title.x >= info.row.x + info.row.w - 2, 'markers sit left of the label', `${info.row.x + info.row.w} vs ${info.title.x}`);

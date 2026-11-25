@@ -113,7 +113,7 @@ ok('侧面板只剩 样式 / 画布 两个 tab', tabs.length === 2 && tabs.inclu
 ok('侧面板无 演说 tab', !tabs.includes('演说'));
 
 // ------------------------------------------------------------------ 2. selection
-const rootAt = await rectOf('.node', '中心主题');
+let rootAt = await rectOf('.node', '中心主题');
 if (!rootAt) throw new Error('no central topic on canvas');
 await clickAt(rootAt.x, rootAt.y);
 ok('中心主题已选中', await ev(`document.querySelectorAll('.topic-outline').length`) === 1);
@@ -170,6 +170,9 @@ ok('图例列出本图已用标记', await ev(`document.querySelectorAll('.tp-le
 await ev(`document.querySelector('.tp-close').click()`);
 ok('关闭按钮关闭标记弹层', await ev(`!document.querySelector('.tool-pop')`));
 await clickAt(markerAt.x, markerAt.y);
+
+// 标记会加宽主题盒，之前记下的中心点可能已经落到盒外，重新量一次。
+rootAt = await rectOf('.node', '中心主题');
 
 // ------------------------------------------------------------------ 4. Esc / outside
 await press('Escape', 'Escape', 27);
@@ -234,6 +237,51 @@ await ev(`[...document.querySelectorAll('.topic-inline-editor .tie-actions butto
 await wait(400);
 const labels = await ev(`window.__TAURI_INTERNALS__.invoke('doc_layout').then(l => (l.nodes.find(n => n.depth === 0)?.labels ?? []))`);
 ok('标签写入 Rust 文档', JSON.stringify(labels) === JSON.stringify(['甲', '乙']), JSON.stringify(labels));
+
+// 标签渲染：13px / 23px 胶囊，挂在盒下方，后端已为它预留纵向空间。
+ok('标签渲染为 13px/23px 胶囊', await ev(`(() => {
+  const chips = [...document.querySelectorAll('.label-chip')];
+  if (chips.length !== 2) return false;
+  const s = getComputedStyle(chips[0]);
+  return s.height === '23px' && s.fontSize === '13px';
+})()`));
+ok('标签不与任何主题盒重叠', await ev(`(() => {
+  const chips = [...document.querySelectorAll('.label-chip')].map(c => c.getBoundingClientRect());
+  if (!chips.length) return false;
+  const top = Math.min(...chips.map(c => c.top));
+  const bottom = Math.max(...chips.map(c => c.bottom));
+  const left = Math.min(...chips.map(c => c.left));
+  const right = Math.max(...chips.map(c => c.right));
+  return ![...document.querySelectorAll('.node')].map(n => n.getBoundingClientRect())
+    .some(b => b.top < bottom && b.bottom > top && b.left < right && b.right > left);
+})()`));
+ok('标签宽度不超过所属主题盒', await ev(`(() => {
+  const chip = document.querySelector('.label-chip');
+  if (!chip) return false;
+  const box = chip.closest('.node').getBoundingClientRect();
+  const r = chip.getBoundingClientRect();
+  return r.left >= box.left - 0.5 && r.right <= box.right + 0.5;
+})()`));
+
+// 点击标签 → 就地编辑器；可改名、可删除（原版没有入口，这里补上）。
+const chip0 = await rectOf('.label-chip');
+await clickAt(chip0.x, chip0.y);
+await wait(250);
+ok('点击标签打开就地编辑器', await ev(`document.querySelector('.le-input')?.value`) === '甲');
+await ev(`(() => { const i = document.querySelector('.le-input'); i.focus(); i.select(); return true; })()`);
+await send('Input.insertText', { text: '丙' });
+await ev(`[...document.querySelectorAll('.label-editor .le-actions button')].find(b => b.textContent === '确定').click()`);
+await wait(400);
+const renamed = await ev(`window.__TAURI_INTERNALS__.invoke('doc_layout').then(l => (l.nodes.find(n => n.depth === 0)?.labels ?? []))`);
+ok('标签可就地改名', JSON.stringify(renamed) === JSON.stringify(['丙', '乙']), JSON.stringify(renamed));
+const chip1 = await rectOf('.label-chip', '乙');
+await clickAt(chip1.x, chip1.y);
+await wait(250);
+await ev(`document.querySelector('.label-editor .le-del').click()`);
+await wait(400);
+const afterDelete = await ev(`window.__TAURI_INTERNALS__.invoke('doc_layout').then(l => (l.nodes.find(n => n.depth === 0)?.labels ?? []))`);
+ok('标签可就地删除', JSON.stringify(afterDelete) === JSON.stringify(['丙']), JSON.stringify(afterDelete));
+ok('删除后画布只剩一个标签', await ev(`document.querySelectorAll('.label-chip').length`) === 1);
 
 // 贴纸 / 插画：同一图标面板的另两个页签，点击后写 topic.image 资源
 for (const [label, tabSrc, dir] of [

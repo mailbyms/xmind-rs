@@ -179,6 +179,9 @@ pub struct LaidOutNode {
     /// topic carries an in-box marker row (FINDINGS §48).
     pub marker_pad: f64,
     pub labels: Vec<String>,
+    /// Chip boxes for `labels` in node-local coordinates.  The layout reserves
+    /// the vertical space these take, so a sibling can never cover them.
+    pub label_chips: Vec<LabelChip>,
     pub image: Option<String>,
     /// Intrinsic artwork size (px); zero when the topic has no image or the
     /// resource does not advertise one.  The frontend draws image topics as
@@ -551,6 +554,89 @@ fn ordered_markers(markers: &[String]) -> Vec<String> {
 /// in-place editor geometry stay exactly as before).
 fn marker_pad(depth: u32, m: Metrics) -> f64 { h_pad(depth) * m.pad / 2.0 }
 
+// --- 标签 (labels) ---------------------------------------------------------
+//
+// The shipped renderer hangs labels under the topic as 23px pills: 13px text,
+// 6px side padding, 1px `rgba(0,0,0,.1)` border, radius 8, and a very light
+// `rgba(255,255,255,.7)` fill.  Measured on 23.07 (FINDINGS §52):
+//   - 8 CJK glyphs → 104px of text in a 117px chip  (104 + 13)
+//   - chips sit 3px apart and wrap onto a new row when the row would exceed
+//     the topic's width, so they never stick out past the shape
+//   - a too-long label is clipped with an ellipsis, the chip stops at the box
+//   - the first row starts ~10px under the shape
+// Unlike markers, labels are *outside* the shape but still part of the topic's
+// occupied box: the layout reserves `label_block_height()` so the next sibling
+// is pushed down instead of covering them.
+const LABEL_FONT_SIZE: u16 = 13;
+const LABEL_CHIP_H: f64 = 23.0;
+/// Horizontal chrome of a chip: 6px padding on both sides + 1px border each.
+const LABEL_CHROME: f64 = 14.0;
+const LABEL_GAP_X: f64 = 3.0;
+const LABEL_GAP_Y: f64 = 3.0;
+const LABEL_TOP_GAP: f64 = 4.0;
+
+/// One chip's box in node-local coordinates (`0..width`, `0..height` covers
+/// the shape; chips start below it).  The canvas and the SVG export both draw
+/// from this, so screen and file never disagree.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LabelChip {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+}
+
+fn label_chip_widths(labels: &[String], box_width: f64) -> Vec<f64> {
+    let cap = box_width.max(24.0);
+    labels.iter()
+        .map(|label| (text_width(label, LABEL_FONT_SIZE) + LABEL_CHROME).min(cap))
+        .collect()
+}
+
+/// Greedy row fill, identical to `flex-wrap` with `gap: 3px` inside the box.
+fn label_rows(widths: &[f64], box_width: f64) -> Vec<Vec<usize>> {
+    let mut rows: Vec<Vec<usize>> = Vec::new();
+    let mut used = 0.0;
+    for (index, width) in widths.iter().enumerate() {
+        if let Some(last) = rows.last_mut() {
+            if used + LABEL_GAP_X + width <= box_width + 0.01 {
+                last.push(index);
+                used += LABEL_GAP_X + width;
+                continue;
+            }
+        }
+        rows.push(vec![index]);
+        used = *width;
+    }
+    rows
+}
+
+fn label_chips(labels: &[String], box_width: f64, box_height: f64) -> Vec<LabelChip> {
+    let widths = label_chip_widths(labels, box_width);
+    let rows = label_rows(&widths, box_width);
+    let mut chips = vec![LabelChip { x: 0.0, y: 0.0, width: 0.0 }; labels.len()];
+    for (row, indexes) in rows.iter().enumerate() {
+        let total: f64 = indexes.iter().map(|i| widths[*i]).sum::<f64>()
+            + LABEL_GAP_X * indexes.len().saturating_sub(1) as f64;
+        // XMind centres the row under the shape.
+        let mut x = (box_width - total) / 2.0;
+        let y = box_height + LABEL_TOP_GAP + row as f64 * (LABEL_CHIP_H + LABEL_GAP_Y);
+        for index in indexes {
+            chips[*index] = LabelChip { x, y, width: widths[*index] };
+            x += widths[*index] + LABEL_GAP_X;
+        }
+    }
+    chips
+}
+
+/// Vertical space the labels occupy *below* the shape (0 when there are none).
+fn label_block_height(labels: &[String], box_width: f64) -> f64 {
+    if labels.is_empty() { return 0.0; }
+    let widths = label_chip_widths(labels, box_width);
+    let rows = label_rows(&widths, box_width).len() as f64;
+    LABEL_TOP_GAP + rows * LABEL_CHIP_H + (rows - 1.0) * LABEL_GAP_Y
+}
+
 fn node_size(topic: &Topic, depth: u32, m: Metrics) -> (f64, f64) {
     let size = topic.style.as_ref().and_then(|v| v.font_size).unwrap_or_else(|| m.font_size(depth));
     let hpad = h_pad(depth) * m.pad;
@@ -584,7 +670,8 @@ fn node_size(topic: &Topic, depth: u32, m: Metrics) -> (f64, f64) {
     };
     let text_width_limit = (width - markers).max(60.0);
     let lines = title_lines(&topic.title, size, text_width_limit);
-    // Labels hang below the shape in XMind, so they do not add to its height.
+    // This is the *shape* only.  Labels hang under it and are added back by the
+    // packing functions (`label_block_height`) so siblings move out of their way.
     let mut height = text_height(size) * lines as f64 + v_pad(depth) * m.pad;
     if topic.image.is_some() { height += 26.0; }
     (width, height)
@@ -1064,6 +1151,7 @@ fn make_node(
         marker_size: m.marker_icon,
         marker_pad: marker_pad(depth, m),
         labels: topic.labels.clone(),
+        label_chips: label_chips(&topic.labels, width, height),
         image: topic.image.clone(),
         image_width: topic.image_size.map(|(w, _)| w).unwrap_or(0.0),
         image_height: topic.image_size.map(|(_, h)| h).unwrap_or(0.0),
@@ -1094,6 +1182,8 @@ fn resize_node(node: &mut LaidOutNode, width: f64) {
     let (path, closed) = crate::shape::outline(&node.style.shape, width, node.height);
     node.shape_path = path;
     node.shape_closed = closed;
+    // A wider box can fit the labels on fewer rows.
+    node.label_chips = label_chips(&node.labels, node.width, node.height);
 }
 
 // ---------------------------------------------------------------------------
@@ -1130,7 +1220,10 @@ fn node_x(depth: u32, side: Side, width: f64, columns: &Columns, root_half: f64,
 }
 
 fn subtree_height(topic: &Topic, depth: u32, m: Metrics) -> f64 {
-    let (_, height) = node_size(topic, depth, m);
+    let (width, height) = node_size(topic, depth, m);
+    // Labels hang below the shape but belong to the topic's occupied box, so a
+    // sibling's label must not be covered by the next sibling.
+    let height = height + label_block_height(&topic.labels, width);
     if topic.folded || topic.children.is_empty() { return height; }
     let gap = if depth == 0 { m.v_gap } else { m.sub_gap };
     let children: f64 = topic.children.iter().map(|c| subtree_height(c, depth + 1, m)).sum::<f64>()
@@ -1139,6 +1232,16 @@ fn subtree_height(topic: &Topic, depth: u32, m: Metrics) -> f64 {
 }
 
 #[allow(clippy::too_many_arguments)]
+/// Vertical centre to hand to `place_horizontal()` for a child whose row is
+/// `block` tall starting at `top`.  A leaf keeps its shape on the row's top
+/// edge so the labels hang into the space the row reserved; a branch is still
+/// centred on its own (taller) children, exactly as before labels existed.
+fn child_centre(topic: &Topic, depth: u32, top: f64, block: f64, m: Metrics) -> f64 {
+    let (width, shape) = node_size(topic, depth, m);
+    let own = shape + label_block_height(&topic.labels, width);
+    if block > own + 0.01 { top + block / 2.0 } else { top + shape / 2.0 }
+}
+
 fn place_horizontal(
     topic: &Topic, center_y: f64, depth: u32, side: Side, branch: usize,
     parent: Option<String>, columns: &Columns, root_half: f64, pal: &ThemePalette,
@@ -1146,7 +1249,11 @@ fn place_horizontal(
 ) {
     let (width, height) = node_size(topic, depth, m);
     let x = node_x(depth, side, width, columns, root_half, m);
-    let mut node = make_node(topic, x, center_y - height / 2.0, width, height, depth, side, branch, parent, pal, m);
+    // Labels hang below the shape without moving the topic itself (measured:
+    // a labelled topic keeps its y), so the shape stays centred on the branch
+    // line and the reserved label space is added *after* it.
+    let mut node = make_node(topic, x, center_y - height / 2.0, width, height,
+        depth, side, branch, parent, pal, m);
     node.child_index = child_index;
     out.push(Placed { node });
     if topic.folded || topic.children.is_empty() { return; }
@@ -1155,13 +1262,14 @@ fn place_horizontal(
     let total: f64 = heights.iter().sum::<f64>() + gap * (topic.children.len().saturating_sub(1)) as f64;
     let mut cursor = center_y - total / 2.0;
     for (index, child) in topic.children.iter().enumerate() {
-        let h = heights[index];
+        let block = heights[index];
+        let center = child_centre(child, depth + 1, cursor, block, m);
         let child_branch = if depth == 0 { index } else { branch };
         place_horizontal(
-            child, cursor + h / 2.0, depth + 1, side, child_branch,
+            child, center, depth + 1, side, child_branch,
             Some(topic.id.clone()), columns, root_half, pal, m, out, index,
         );
-        cursor += h + gap;
+        cursor += block + gap;
     }
 }
 
@@ -1179,9 +1287,9 @@ fn subtree_width(topic: &Topic, depth: u32, m: Metrics) -> f64 {
 
 fn max_row_height(root: &Topic, depth: u32, m: Metrics) -> HashMap<u32, f64> {
     fn walk(topic: &Topic, depth: u32, map: &mut HashMap<u32, f64>, m: Metrics) {
-        let (_, h) = node_size(topic, depth, m);
+        let (width, h) = node_size(topic, depth, m);
         let entry = map.entry(depth).or_insert(0.0);
-        *entry = entry.max(h);
+        *entry = entry.max(h + label_block_height(&topic.labels, width));
         if topic.folded { return; }
         for child in &topic.children { walk(child, depth + 1, map, m); }
     }
@@ -1249,7 +1357,7 @@ fn place_outline(
     }
     out.push(Placed { node });
     let first_gap = if depth == 0 { m.h_gap } else { TREE_GAP };
-    let mut cursor = y + height;
+    let mut cursor = y + height + label_block_height(&topic.labels, width);
     if topic.folded || topic.children.is_empty() { return cursor; }
     let indent = if depth == 0 { width * 0.75 } else { TREE_INDENT };
     let child_x = if left { x + width - indent } else { x + indent };
@@ -1300,7 +1408,8 @@ const TIMELINE_PAIR_GAP: f64 = 35.0;
 /// children flow away from it (so they add up); deeper nodes in a horizontal
 /// timeline straddle their parent instead and only the tallest one counts.
 fn timeline_span(topic: &Topic, depth: u32, m: Metrics, vertical: bool) -> f64 {
-    let (_, height) = node_size(topic, depth, m);
+    let (width, height) = node_size(topic, depth, m);
+    let height = height + label_block_height(&topic.labels, width);
     if topic.folded || topic.children.is_empty() { return height; }
     let block: f64 = topic.children.iter()
         .map(|c| timeline_span(c, depth + 1, m, vertical))
@@ -1328,7 +1437,8 @@ fn place_timeline_h(
     // The milestone pushes its children away from the spine; every deeper node
     // straddles them.
     let mut cursor = if depth == 1 {
-        if perp < 0.0 { top - TIMELINE_GAP - total } else { top + height + TIMELINE_GAP }
+        if perp < 0.0 { top - TIMELINE_GAP - total }
+        else { top + height + label_block_height(&topic.labels, width) + TIMELINE_GAP }
     } else {
         top + height / 2.0 - total / 2.0
     };
@@ -1340,7 +1450,8 @@ fn place_timeline_h(
         } else {
             x + width + TIMELINE_LEVEL
         };
-        let child_top = cursor + span / 2.0 - child_height / 2.0;
+        let child_top = cursor + span / 2.0
+            - (child_height + label_block_height(&child.labels, child_width)) / 2.0;
         let start = if depth == 1 {
             (x + width / 2.0, if perp < 0.0 { top } else { top + height })
         } else {
@@ -1371,7 +1482,7 @@ fn place_timeline_v(
     if topic.folded || topic.children.is_empty() { return; }
     let kids: Vec<&Topic> = topic.children.iter().collect();
     let spans: Vec<f64> = kids.iter().map(|c| timeline_span(c, depth + 1, m, true)).collect();
-    let mut cursor = top + height + TIMELINE_GAP;
+    let mut cursor = top + height + label_block_height(&topic.labels, width) + TIMELINE_GAP;
     for (index, child) in kids.iter().enumerate() {
         let span = spans[index];
         let (child_width, _) = node_size(child, depth + 1, m);
@@ -1505,7 +1616,8 @@ fn place_bone_branch(
         } else {
             x - BONE_LEVEL - child_width
         };
-        let child_top = cursor + span / 2.0 - child_height / 2.0;
+        let child_top = cursor + span / 2.0
+            - (child_height + label_block_height(&child.labels, child_width)) / 2.0;
         place_bone_branch(
             child, child_x, child_top, depth + 1,
             if depth == 0 { index } else { branch },
@@ -3273,8 +3385,18 @@ pub fn compute_layout(doc: &Document) -> Layout {
                     // than MIN_BRANCH_PITCH for small labels.  Tall image cards
                     // already exceed that pitch and keep their v_gap.
                     let gaps: Vec<f64> = (0..members.len().saturating_sub(1))
-                        .map(|i| ((heights[i] + heights[i + 1]) / 2.0 + m.v_gap)
-                            .max(MIN_BRANCH_PITCH))
+                        .map(|i| {
+                            // Distance between two shape centres: half of each
+                            // shape, plus the *upper* topic's label block, which
+                            // hangs into the gap (measured on 23.07: a 2-label
+                            // branch grew its pitch from 39 to 93).
+                            let (upper_width, upper) = node_size(&root.children[members[i]], 1, m);
+                            let (_, lower) = node_size(&root.children[members[i + 1]], 1, m);
+                            let upper_labels = label_block_height(
+                                &root.children[members[i]].labels, upper_width);
+                            (upper / 2.0 + upper_labels + m.v_gap + lower / 2.0)
+                                .max(MIN_BRANCH_PITCH)
+                        })
                         .collect();
                     let span: f64 = gaps.iter().sum();
                     let mut centre = -span / 2.0;
@@ -3293,8 +3415,9 @@ pub fn compute_layout(doc: &Document) -> Layout {
                     let mut cursor = -stack / 2.0 - root_height / 2.0;
                     for (position, index) in members.iter().enumerate() {
                         let h = heights[position];
+                        let center = child_centre(&root.children[*index], 1, cursor, h, m);
                         place_horizontal(
-                            &root.children[*index], cursor + h / 2.0, 1, side, *index,
+                            &root.children[*index], center, 1, side, *index,
                             Some(root.id.clone()), &columns, root_half, &pal, m, &mut placed, *index,
                         );
                         cursor += h + m.v_gap;

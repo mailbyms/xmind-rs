@@ -331,27 +331,35 @@ fn svg_marker_row(node: &LaidOutNode, out: &mut String) {
     }
 }
 
-/// Labels hang 5px below the topic box (`.node-labels`), one rounded chip
-/// each.  They are decorations, so they never grow the layout box — the
-/// crop bounds are extended separately.
+/// Labels are the 23px pills the canvas draws under the topic box.  Their
+/// geometry comes from the layout (`label_chips`), so the export matches the
+/// screen — including the wrapping and the ellipsis on over-long labels.
 fn svg_labels(node: &LaidOutNode, out: &mut String) {
-    if node.labels.is_empty() { return; }
-    const H: f64 = 20.7;
-    let top = node.y + node.height + 5.0;
-    let mut x = node.x;
-    for label in &node.labels {
-        let em = 11.0;
-        let width = label.chars().map(|c| if c.is_ascii() { em * 0.56 } else { em }).sum::<f64>() + 16.0;
+    for (index, chip) in node.label_chips.iter().enumerate() {
+        let Some(label) = node.labels.get(index) else { continue };
+        let x = node.x + chip.x;
+        let y = node.y + chip.y;
         out.push_str(&format!(
-            "<rect x=\"{x:.1}\" y=\"{top:.1}\" width=\"{w:.1}\" height=\"{H:.0}\" rx=\"5\" \
+            "<rect x=\"{x:.1}\" y=\"{y:.1}\" width=\"{w:.1}\" height=\"23\" rx=\"8\" \
              fill=\"#fff\" fill-opacity=\"0.7\" stroke=\"#000\" stroke-opacity=\"0.1\"/>\n",
-            w = width,
+            w = chip.width,
         ));
+        // SVG text has no ellipsis: cut the string where the ink would leave
+        // the chip (13px CJK ≈ 1em, ASCII ≈ 0.55em).
+        let limit = (chip.width - 12.0).max(0.0);
+        let mut used = 0.0;
+        let mut shown = String::new();
+        for ch in label.chars() {
+            let w = 13.0 * if ch.is_ascii() { 0.55 } else { 1.0 };
+            if used + w > limit { shown.push('…'); break; }
+            used += w;
+            shown.push(ch);
+        }
         out.push_str(&format!(
-            "<text x=\"{tx:.1}\" y=\"{ty:.1}\" fill=\"#6f737b\" font-size=\"11\">{}</text>\n",
-            xml_escape(label), tx = x + 7.0, ty = top + 13.0,
+            "<text x=\"{tx:.1}\" y=\"{ty:.1}\" fill=\"#000\" fill-opacity=\"0.5\" \
+             font-size=\"13\">{}</text>\n",
+            xml_escape(&shown), tx = x + 6.0, ty = y + 16.0,
         ));
-        x += width + 4.0;
     }
 }
 
@@ -399,10 +407,11 @@ pub fn to_svg_with_images(doc: &Document, images: &HashMap<String, String>) -> S
         let mut min_y = layout.nodes.iter().map(|n| n.y).fold(f64::INFINITY, f64::min);
         let mut max_x = layout.nodes.iter().map(|n| n.x + n.width).fold(f64::NEG_INFINITY, f64::max);
         let mut max_y = layout.nodes.iter().map(|n| n.y + n.height).fold(f64::NEG_INFINITY, f64::max);
-        // `.node-labels` hang below the shape; include them in the crop.
+        // Label pills hang below the shape; include them in the crop.
         for node in &layout.nodes {
-            if !node.labels.is_empty() {
-                max_y = max_y.max(node.y + node.height + 5.0 + 20.7);
+            for chip in &node.label_chips {
+                max_y = max_y.max(node.y + chip.y + 23.0);
+                max_x = max_x.max(node.x + chip.x + chip.width);
             }
         }
         for path in layout.frames.iter().map(|f| f.path.as_str())
