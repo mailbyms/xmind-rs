@@ -3748,3 +3748,22 @@ status bar）合适位置显示应用版本号。这两处都是纯外壳信息�
 
 ### 60.5 未还原
 原版标签的双击改名/删除热键没有逐帧核对；本应用的「点击胶囊 → 浮层」是补充交互。
+
+## §61 发布 v0.6.1
+
+- 内容：标签布局 + 就地编辑（`29f8128`）、release warning 清零（`d28bc72`），
+  发布提交只改版本号；上游 `origin/main` 与本地发布前一致，无需 rebase。
+- 版本 0.6.0 → 0.6.1：`Cargo.toml`、`Cargo.lock`（5 个 workspace crate；
+  外部依赖 `ico` / `urlpattern` 的 0.6.0 不动）、`package.json`、
+  `package-lock.json`、`src-tauri/tauri.conf.json`；轻量 tag `v0.6.1`。
+- `example.xmind` 被回归脚本改过（多一个 `priority-1` 标记、键序重排），
+  备份后 `git restore` 还原，未进发布提交；`test*.xmind` / `v8-imageonly.xmind`
+  与 `.workbuddy/` 同样不进提交。
+- 验证：`cargo test --workspace --locked`、`npx tsc --noEmit`、
+  `npm run build:app`（0 warning）；exe 的 FileVersion/ProductVersion 均 0.6.1。
+- 发布说明 `target/release-assets/RELEASE_NOTES-0.6.1.md`；`README.txt` 同步版本
+  并新增第 10 条标签用法（保留 UTF-8 BOM）。资产：exe 10,374,656 B
+  （`47267d44…`）、zip 7,291,126 B（`14f9607e…`）、`SHA256SUMS.txt`；
+  zip 内 4 个 ASCII 文件名（exe + README + 两份 OFL 许可），`sha256sum -c` 两项 OK。
+- Release：https://github.com/mailbyms/xmind-rs/releases/tag/v0.6.1
+  仅 Windows x64；macOS arm64 用户继续用 v0.5.2 的 dmg。
