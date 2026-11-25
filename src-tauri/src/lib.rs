@@ -13,7 +13,7 @@ mod paths;
 mod state;
 
 use state::{startup_log, AppState};
-use tauri::{Emitter, Manager, RunEvent};
+use tauri::Manager;
 
 pub fn run() {
     let state = AppState::init().unwrap_or_else(|error| {
@@ -115,35 +115,43 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("failed to build xmind-rs")
-        .run(|app: &tauri::AppHandle, event| {
-            // macOS Finder "Open with" delivers the file as an Apple Event,
-            // which Tauri surfaces as RunEvent::Opened — NOT as argv (that is
-            // the Windows path, already handled in cli.rs). Handle both the
-            // cold-start case (webview not ready yet) and the already-running
-            // case (webview listening for the "opened" event).
-            #[cfg(target_os = "macos")]
-            if let RunEvent::Opened { urls } = event {
-                for url in urls {
-                    // file:// URL -> filesystem path.
-                    let Ok(path) = url.to_file_path() else {
-                        startup_log(&format!("ignored non-file open URL: {url}"));
-                        continue;
-                    };
-                    if !cli::is_openable_file(&path) {
-                        startup_log(&format!("ignored unsupported open file: {}", path.display()));
-                        continue;
-                    }
-                    startup_log(&format!("opened file via Finder: {}", path.display()));
-                    let path_string = path.to_string_lossy().to_string();
-                    if let Some(state) = app.try_state::<AppState>() {
-                        // Cold start: the frontend reads startup_file through
-                        // app_info once the webview is ready.
-                        *state.startup_file.lock().unwrap() = Some(path);
-                    }
-                    // Already running: the frontend listens for this event.
-                    // Harmless when no webview is listening yet.
-                    let _ = app.emit("opened", path_string);
-                }
-            }
-        });
+        .run(on_run_event);
 }
+
+/// macOS Finder "Open with" delivers the file as an Apple Event, which Tauri
+/// surfaces as `RunEvent::Opened` — NOT as argv (that is the Windows path,
+/// already handled in `cli.rs`). Handle both the cold-start case (webview not
+/// ready yet) and the already-running case (webview listening for "opened").
+#[cfg(target_os = "macos")]
+fn on_run_event(app: &tauri::AppHandle, event: tauri::RunEvent) {
+    use tauri::Emitter;
+
+    if let tauri::RunEvent::Opened { urls } = event {
+        for url in urls {
+            // file:// URL -> filesystem path.
+            let Ok(path) = url.to_file_path() else {
+                startup_log(&format!("ignored non-file open URL: {url}"));
+                continue;
+            };
+            if !cli::is_openable_file(&path) {
+                startup_log(&format!("ignored unsupported open file: {}", path.display()));
+                continue;
+            }
+            startup_log(&format!("opened file via Finder: {}", path.display()));
+            let path_string = path.to_string_lossy().to_string();
+            if let Some(state) = app.try_state::<AppState>() {
+                // Cold start: the frontend reads startup_file through
+                // app_info once the webview is ready.
+                *state.startup_file.lock().unwrap() = Some(path);
+            }
+            // Already running: the frontend listens for this event.
+            // Harmless when no webview is listening yet.
+            let _ = app.emit("opened", path_string);
+        }
+    }
+}
+
+/// Windows and Linux deliver "open with" through argv, so there is no run-loop
+/// event to react to; the signature keeps the `.run()` call site identical.
+#[cfg(not(target_os = "macos"))]
+fn on_run_event(_app: &tauri::AppHandle, _event: tauri::RunEvent) {}
