@@ -1,7 +1,7 @@
 {
   "name": "xmind-rs",
   "private": true,
-  "version": "0.6.1",
+  "version": "0.6.2",
   "type": "module",
   "description": "A memory-light XMind-compatible mind map app: Tauri 2 + React + Rust",
   "scripts": {

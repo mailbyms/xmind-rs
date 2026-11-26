@@ -173,8 +173,14 @@ pub struct LaidOutNode {
     /// Width reserved in the topic box for the in-box marker row: the shipped
     /// renderer gives every marker a slot to the left of the label.
     pub marker_width: f64,
-    /// Native marker icon size for this document (FINDINGS §43 / §47).
+    /// Marker icon size — the topic's own font size, never a document-wide
+    /// constant (FINDINGS §62).  A 14px sub-topic gets 14px icons.
     pub marker_size: f64,
+    /// White ring thickness around one icon: a sixth of `marker_size`.
+    pub marker_ring: f64,
+    /// Icon-to-icon advance.  Always smaller than `marker_size + 2·ring`, so
+    /// the rings overlap by a fixed 8px the way the shipped renderer does.
+    pub marker_step: f64,
     /// Content-group inset on each side, applied by the renderer when the
     /// topic carries an in-box marker row (FINDINGS §48).
     pub marker_pad: f64,
@@ -309,36 +315,39 @@ struct Metrics {
     row_gap: f64,
     sib_x: f64,
     pad: f64,
-    /// Per-level font size from `sheet.theme` (central / main / sub).  Text
-    /// metrics and `EffectiveStyle.font_size` must agree, so `node_size` reads
-    /// this instead of the hard-coded defaults when a theme is present.
-    font: Option<[u16; 3]>,
-    /// Native marker icon size.  Official files use 36px icons in 40px slots
-    /// (FINDINGS §43); a sheet whose theme XMind cannot resolve falls back to
-    /// 30px icons in 34px slots (FINDINGS §47).
-    marker_icon: f64,
+    /// Per-depth font size from `sheet.theme`.  Text metrics,
+    /// `EffectiveStyle.font_size` and the marker icons must all agree, so
+    /// `node_size` reads this instead of the hard-coded defaults when a theme
+    /// is present.  `level3`…`level5` overlays are real (see
+    /// `level3_theme_overlays_deep_topics_and_keeps_the_font_stack`), so the
+    /// table covers eight depths instead of just central / main / sub.
+    font: Option<[u16; FONT_LEVELS]>,
 }
+
+/// Depths covered by the theme font table; `depth >= 8` reuses the last entry.
+const FONT_LEVELS: usize = 8;
 
 impl Metrics {
     fn new(compact: bool) -> Self {
         if compact {
             Self {
                 h_gap: 30.0, root_gap: 96.0, v_gap: 24.0, sub_gap: 6.0,
-                row_gap: 42.0, sib_x: 8.0, pad: 0.7, font: None, marker_icon: 36.0,
+                row_gap: 42.0, sib_x: 8.0, pad: 0.7, font: None,
             }
         } else {
             Self {
                 h_gap: H_GAP, root_gap: H_GAP, v_gap: V_GAP, sub_gap: SUB_GAP,
-                row_gap: ROW_GAP, sib_x: SIB_X, pad: 1.0, font: None, marker_icon: 36.0,
+                row_gap: ROW_GAP, sib_x: SIB_X, pad: 1.0, font: None,
             }
         }
     }
 
     fn with_theme(mut self, theme: Option<&SheetTheme>) -> Self {
         if let Some(theme) = theme {
-            let mut sizes = [default_font_size(0), default_font_size(1), default_font_size(2)];
-            for (index, depth) in [0u32, 1, 2].into_iter().enumerate() {
-                if let Some(size) = theme.font_size(depth) { sizes[index] = size; }
+            let mut sizes = [0u16; FONT_LEVELS];
+            for (depth, slot) in sizes.iter_mut().enumerate() {
+                let depth = depth as u32;
+                *slot = theme.font_size(depth).unwrap_or_else(|| default_font_size(depth));
             }
             self.font = Some(sizes);
         }
@@ -347,7 +356,7 @@ impl Metrics {
 
     fn font_size(&self, depth: u32) -> u16 {
         match self.font {
-            Some(sizes) => sizes[match depth { 0 => 0, 1 => 1, _ => 2 }],
+            Some(sizes) => sizes[(depth as usize).min(FONT_LEVELS - 1)],
             None => default_font_size(depth),
         }
     }
@@ -513,23 +522,43 @@ pub fn node_title_lines(node: &LaidOutNode) -> Vec<String> {
 fn h_pad(depth: u32) -> f64 { match depth { 0 => 58.0, 1 => 36.0, _ => 12.0 } }
 fn v_pad(depth: u32) -> f64 { match depth { 0 => 30.0, 1 => 20.0, _ => 13.0 } }
 
-/// XMind lays markers out inside the topic box, to the left of the label.
-/// Measured on the shipped renderer (FINDINGS §48): the content group starts
-/// `h_pad/2` in from the shape edge, the first icon sits another 5px right
-/// (`transform(5,5)`), consecutive icons step by `icon + 2` (30px icons at
-/// x = 0, 32, 64, 96), and a 15px gap separates the row from the label:
-///   324 = 29 + [5 + 126] + 15 + 120(title) + 29
-/// Earlier builds used `count * (icon + 4) + 18`, which starts the row flush
-/// against the left border and leaves the label floating in a wide right half.
-/// `Metrics::marker_icon` switches the icon size for unresolved sheet themes.
-const MARKER_LEAD: f64 = 5.0;
-const MARKER_STEP: f64 = 2.0;
-const MARKER_TRAIL: f64 = 15.0;
-fn marker_width(topic: &Topic, m: Metrics) -> f64 {
+/// XMind lays markers out inside the topic box, to the left of the label, and
+/// sizes them from the topic's **own font size** (FINDINGS §62, verified in the
+/// shipped bundle):
+///   `markerImageSize = { width: titleTextFontSize }`
+///   `markerBorderLineWidth = markerImageSize.width / 6`  (white ring)
+///   `markerSpacing = -8`                                 (fixed overlap)
+/// A marker therefore occupies a `icon + 2·ring` slot but only advances
+/// `slot - 8`, and a 10px gap (`Fs.left`) separates the row from the label.
+/// The content group itself is inset by `h_pad/2` on both sides (§48).
+///
+/// This is why a deep sub-topic (14px text) must get a 14px icon: a
+/// document-wide 30/36px icon is taller than the 14px topic box and puffs it
+/// out.  Old builds used a fixed `lead + (n-1)(icon+2) + icon + trail`, which
+/// coincides with the real formula only at 30px icons.
+const MARKER_SPACING: f64 = -8.0;
+const MARKER_TRAIL: f64 = 10.0;
+
+/// The icon is the font size the node actually renders with: a per-topic
+/// `style.font-size` wins over the sheet theme, which wins over the defaults.
+fn marker_icon_size(topic: &Topic, depth: u32, m: Metrics) -> f64 {
+    topic.style.as_ref().and_then(|v| v.font_size)
+        .map(f64::from)
+        .unwrap_or_else(|| f64::from(m.font_size(depth)))
+}
+
+/// One icon plus its white ring on both sides (`Rs()` in the shipped bundle).
+fn marker_slot(icon: f64) -> f64 { icon + 2.0 * (icon / 6.0) }
+
+/// Advance from one icon's origin to the next: the slot minus the fixed 8px
+/// overlap.  Always smaller than the slot, so the rings visually overlap.
+fn marker_step(icon: f64) -> f64 { marker_slot(icon) + MARKER_SPACING }
+
+fn marker_width(topic: &Topic, depth: u32, m: Metrics) -> f64 {
     let count = topic.markers.len();
     if count == 0 { return 0.0; }
-    (MARKER_LEAD + (count - 1) as f64 * (m.marker_icon + MARKER_STEP)
-        + m.marker_icon + MARKER_TRAIL) * m.pad
+    let slot = marker_slot(marker_icon_size(topic, depth, m));
+    count as f64 * slot + (count - 1) as f64 * MARKER_SPACING + MARKER_TRAIL
 }
 
 /// The shipped renderer orders marker icons by their catalogue group
@@ -640,7 +669,7 @@ fn label_block_height(labels: &[String], box_width: f64) -> f64 {
 fn node_size(topic: &Topic, depth: u32, m: Metrics) -> (f64, f64) {
     let size = topic.style.as_ref().and_then(|v| v.font_size).unwrap_or_else(|| m.font_size(depth));
     let hpad = h_pad(depth) * m.pad;
-    let markers = marker_width(topic, m);
+    let markers = marker_width(topic, depth, m);
     // XMind keeps the note/info button *inside* the box at its right edge
     // (18×18 plus a 10px gap).  Reserve that column so the label never runs
     // underneath it.
@@ -1121,7 +1150,11 @@ fn make_node(
     // editor's row count) exactly as it was. Left-aligned labels get XMind's
     // 29/18/6px inset on each side.
     let text_pad = if style.align == "center" { 0.0 } else { h_pad(depth) * m.pad / 2.0 };
-    let markers = marker_width(topic, m);
+    let markers = marker_width(topic, depth, m);
+    let marker_icon = marker_icon_size(topic, depth, m);
+    // The icon must be the size the label is actually painted at (§62), so a
+    // theme override cannot leave the row and the text out of step.
+    debug_assert_eq!(marker_icon as u16, style.font_size, "marker icon ≠ rendered font size");
     let text_box = (width - markers).max(60.0);
     let base_lines = title_lines(&topic.title, style.font_size, text_box);
     // Marker topics spend the horizontal inset as real CSS padding around the
@@ -1148,7 +1181,11 @@ fn make_node(
         shape_closed,
         markers: ordered_markers(&topic.markers),
         marker_width: markers,
-        marker_size: m.marker_icon,
+        marker_size: marker_icon,
+        // White ring thickness, a sixth of the icon (§62).
+        marker_ring: marker_icon / 6.0,
+        // Icon-to-icon advance; smaller than the slot, so rings overlap.
+        marker_step: marker_step(marker_icon),
         marker_pad: marker_pad(depth, m),
         labels: topic.labels.clone(),
         label_chips: label_chips(&topic.labels, width, height),
@@ -3189,9 +3226,6 @@ pub fn compute_layout(doc: &Document) -> Layout {
     // palette ids on save (`colorThemeId: XMindRS-*`) — otherwise those files
     // silently fall back to a white canvas (FINDINGS §46).
     if let Some(bg) = sheet_theme.background() { pal.bg = bg; }
-    // `sheet_theme` is moved into `pal` just below, so remember whether the
-    // file carries a theme that XMind itself cannot resolve.
-    let unresolved_theme = !sheet_theme.has_theme && sheet.extra.contains_key("theme");
     if sheet_theme.has_theme {
         // `read_palette` normally puts these in `branch_colors`; this covers
         // documents built in memory or switched to another sheet.
@@ -3224,12 +3258,9 @@ pub fn compute_layout(doc: &Document) -> Layout {
     let brace = matches!(structure, Structure::BraceRight | Structure::BraceLeft);
     let mut m = if brace { Metrics::brace(doc.compact) } else { Metrics::new(doc.compact) }
         .with_theme(pal.sheet_theme.as_ref());
-    // A real sheet theme re-tagged with one of our palette ids is unresolved
-    // in the shipped renderer, which falls back to 30px marker icons (34px
-    // slots).  Native themes keep 36px / 40px (FINDINGS §43 / §47).
-    if unresolved_theme {
-        m.marker_icon = 30.0;
-    }
+    // Markers follow the font size this pass actually renders (§62), so an
+    // unresolved sheet theme needs no separate marker constant: the default
+    // 30/18/14 sizes already match what the shipped renderer falls back to.
     if matches!(structure, Structure::LogicRight | Structure::LogicLeft) {
         // 逻辑图 bundles its branches into a 160px fan before the first topic.
         m.root_gap = if doc.compact { 96.0 } else { 160.0 };

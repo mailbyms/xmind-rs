@@ -293,29 +293,31 @@ fn marker_fallback(id: &str) -> (String, &'static str) {
     (glyph, color)
 }
 
-/// `Layout.marker_width` reserves `5 + n*(icon+2) - 2 + 15` px.  The chips
-/// are `icon+2` wide except the last one (`icon`), and each icon is nudged 3px
-/// (2px on the last chip) inside its chip by the canvas CSS.
+/// The canvas draws markers as slots of `icon + 2·ring`, advanced by
+/// `marker_step` (8px shorter, so the rings overlap), all inside the topic's
+/// `marker_pad` inset.  The icon size is the topic's own font size
+/// (FINDINGS §62), so a 14px sub-topic draws 14px icons in a 32px box.  The
+/// exported SVG reuses the exact numbers the layout handed the DOM.
 fn svg_marker_row(node: &LaidOutNode, out: &mut String) {
     if node.markers.is_empty() { return; }
     let size = node.marker_size.max(1.0);
-    let count = node.markers.len();
+    let ring = node.marker_ring.max(0.0);
+    let step = node.marker_step;
+    let slot = size + 2.0 * ring;
     let cy = node.y + node.height / 2.0;
     for (index, id) in node.markers.iter().enumerate() {
-        let last = index + 1 == count;
-        let x = node.x + node.marker_pad + 5.0
-            + index as f64 * (size + 2.0)
-            + if last { 2.0 } else { 3.0 };
-        let cx = x + size / 2.0;
-        // `box-shadow: 0 0 0 3px #fff` on a circular chip.
+        let cx = node.x + node.marker_pad + index as f64 * step + slot / 2.0;
+        // The ring is a `size/6` stroke on a `size/2` circle: it reaches
+        // `ring/2` past the icon, i.e. a white disc of `size + ring`.
         out.push_str(&format!(
             "<circle cx=\"{cx:.1}\" cy=\"{cy:.1}\" r=\"{r:.1}\" fill=\"#fff\"/>\n",
-            r = size / 2.0 + 3.0,
+            r = size / 2.0 + ring / 2.0,
         ));
         if let Some(href) = marker_icon_href(id) {
             out.push_str(&format!(
                 "<image x=\"{x:.1}\" y=\"{y:.1}\" width=\"{size:.1}\" height=\"{size:.1}\" \
                  preserveAspectRatio=\"xMidYMid meet\" href=\"{href}\"/>\n",
+                x = cx - size / 2.0,
                 y = cy - size / 2.0,
             ));
         } else {

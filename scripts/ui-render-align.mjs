@@ -27,6 +27,12 @@ const ev = async (expression) => {
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 await new Promise((r) => ws.addEventListener('open', r));
 
+// The canvas fits the map to the window on open, but every reference number
+// below was measured at 100%.  Reset the zoom so DOM rects are in layout px.
+await ev(`document.body.dispatchEvent(new KeyboardEvent('keydown',
+  { key: '0', ctrlKey: true, bubbles: true }))`);
+await wait(150);
+
 const checks = [];
 const check = (name, actual, expected, tolerance = 0) => {
   const ok = tolerance
@@ -48,14 +54,20 @@ const dom = JSON.parse(await ev(`JSON.stringify({
     if (!n) return null;
     const r = n.getBoundingClientRect();
     const chips = [...n.querySelectorAll('.marker-chip')].map(c => c.getBoundingClientRect());
+    // The chip is the whole slot (icon + white ring), so row geometry has to be
+    // measured on the icons themselves (FINDINGS §62).
+    const icons = [...n.querySelectorAll('.marker-chip img')].map(i => i.getBoundingClientRect());
+    const first = icons[0] ?? chips[0];
+    const last = icons[icons.length - 1] ?? chips[chips.length - 1];
     const title = n.querySelector('.node-title').getBoundingClientRect();
     return {
       w: Math.round(r.width), padL: getComputedStyle(n).paddingLeft, padR: getComputedStyle(n).paddingRight,
-      firstMarkerX: Math.round(chips[0].x - r.x),
-      lastMarkerRight: Math.round(chips[chips.length - 1].right - r.x),
+      firstMarkerX: Math.round(first.x - r.x),
+      lastMarkerRight: Math.round(last.right - r.x),
       titleX: Math.round(title.x - r.x),
       titleRightGap: Math.round(r.right - title.right),
       titleAlign: getComputedStyle(n.querySelector('.node-title')).textAlign,
+      chips: chips.length,
       cursor: getComputedStyle(chips[0] ? n.querySelector('.marker-chip') : n).cursor,
     };
   })(),
@@ -109,7 +121,7 @@ check('marker row to label gap', dom.central.titleX - dom.central.lastMarkerRigh
 check('label right inset', dom.central.titleRightGap, 29, 3);
 check('marker topic label left-aligned', dom.central.titleAlign, 'left');
 check('marker chips are clickable', dom.central.cursor, 'pointer');
-check('4 marker chips rendered', dom.markerChips, 4);
+check('4 marker chips rendered', dom.central.chips, 4);
 
 // §48.2: clicking a marker opens the same-group popover, replacing works,
 // and the trash button removes it (both edits are undone afterwards).

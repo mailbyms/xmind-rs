@@ -3767,3 +3767,93 @@ status bar）合适位置显示应用版本号。这两处都是纯外壳信息�
   zip 内 4 个 ASCII 文件名（exe + README + 两份 OFL 许可），`sha256sum -c` 两项 OK。
 - Release：https://github.com/mailbyms/xmind-rs/releases/tag/v0.6.1
   仅 Windows x64；macOS arm64 用户继续用 v0.5.2 的 dmg。
+
+## §62 标记图标尺寸跟随主题字号（二级及更深子主题被撑高）
+
+用户反馈：给二级、三级及以下子主题插标记时，图标没有随主题高度/字号变化，
+会把子主题撑高，且图标与文字比例失调。
+
+### 62.1 原版事实（源码 + 真机双证）
+
+`research/asar-src/renderer/2907.js` 的视图属性表里三行就是全部规则：
+
+```js
+markerImageSize: e => ({ width: e.viewAttributes.titleTextFontSize,
+                         height: e.viewAttributes.titleTextFontSize }),
+markerSpacing: () => -8,
+markerBorderLineWidth: e => e.viewAttributes.markerImageSize.width / 6,
+markerBorderLineColor: () => white
+```
+
+即 **图标边长 = 该主题自己的字号**（不是文档级常量），白环 = 图标/6，
+相邻槽固定重叠 8px；槽宽 = 图标 + 2×白环，标签前再留 `Fs.left = 10`。
+
+`scripts/probe-orig-marker-size.mjs`（新）在原版 23.07 上逐层实测
+（`examples/test1.xmind`，根 4 标记）：
+
+| 深度 | 字号 | 盒子 | 图标 | 白环 | 槽 | 步进 | 标签起点 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | 30px | 324×70 | 30 | 5 | 40 | 32 | 146（= 5+126+15）|
+| 1 | 18px | 216×46 | 18 | 3 | 24 | 16 | 66（= 3·24−2·8+10）|
+| 2/3 | 14px | 93.33×32 | 14 | 2.33 | 18.67 | 10.67 | 39.33 |
+
+把 1/2/3 层各加 2–3 枚标记后重开（`target/verify/marker-depth-probe.xmind`），
+宽度增量也吻合：一级 184→216、二级 82.67→93.33。旧实现用文档级
+`Metrics.marker_icon`（36 或 30），二级子主题盒只有 32px 高却被塞 36px 图标，
+`.marker-chip` 连同 4px 余量高 40px → 视觉上把子主题顶出去，比例也完全不搭。
+
+### 62.2 实现
+
+- `layout.rs`：删掉 `Metrics.marker_icon` 与 `unresolved_theme` 的 30px 覆盖，
+  新增 `marker_icon_size = style.font_size ?? m.font_size(depth)`，
+  `marker_slot = icon·4/3`、`marker_step = slot − 8`、
+  `marker_width = n·slot − (n−1)·8 + 10`。`LaidOutNode` 增 `marker_ring`、
+  `marker_step` 两个派生字段（不写回文件），前端与导出不再各算一套公式。
+  图标 < 字号 的极端情况不再出现；槽高恰等于 CSS 行高（4/3 字号），
+  所以标记行永远不会比文字区高，`marker_row_never_grows_the_topic_box` 守住这点。
+- 顺带修掉一个潜在错位：`Metrics.font` 原来只存 `[central, main, sub]` 三档，
+  而主题可以有 `level3`/`level4` 覆盖（`level3_theme_overlays_deep_topics_…`
+  测的就是 20pt）。标记按「渲染字号」取值时立刻与 `style.font_size` 打架，
+  所以把表扩到 8 档（`FONT_LEVELS`，`theme.font_size(depth)` 逐层解析，
+  超出取最后一档），`make_node` 里用 `debug_assert_eq!` 锁死两者一致。
+- `styles.css`：`.marker-chip` 宽高 = 槽（`--marker-size + 2·--marker-ring`），
+  非末位 `margin-right = --marker-step − 槽` 形成 8px 叠压；白环改用
+  `box-shadow: 0 0 0 calc(--marker-ring / 2)`（原版是半径 icon/2、粗 icon/6 的
+  圆环，只外扩 icon/12）。删掉 `translateX(2px)` 这类靠位补丁。
+- `MapCanvas.tsx` 下发 `--marker-size/--marker-ring/--marker-step`；
+  `export.rs::svg_marker_row` 直接用同一组数字，PNG/PDF/SVG 与屏幕一致。
+- 30px 字号时新旧公式数值完全相同（40−8+10 = 5+30+15），所以既有基线
+  （中心盒 324、预留 146、首图标 34、行尾间距 15）全部不变。
+
+### 62.3 验证
+
+- 新增 `crates/xmind-core/tests/markers.rs`（4 条）：逐层图标 = 字号、
+  槽 / 步进 / 预留、标记行不高过盒子、无标记时预留为 0。
+- 新增 `roundtrip::svg_marker_row_scales_with_topic_font_size`：导出 SVG 里
+  30/18/14 三档图标与圆环坐标逐点比对。
+- `cargo test --workspace`（含 roundtrip 19）、`npx tsc --noEmit`、
+  `npm run build:app` 全通过；`ui-marker-inbox` 14/14、
+  `ui-export-raster` ALL PASS、`ui-render-align` **51/51** PASS。
+- 与真机逐项核对（`target/verify/marker-depth-probe.xmind`：根 3–4 标记、
+  一级 3 枚、二级/三级各 2 枚）：
+
+  | 节点 | 原版 | 本应用 |
+  | --- | --- | --- |
+  | 中心（4 枚）| 324×70，icon 30，预留 146 | 324×70，icon 30，预留 146 |
+  | 一级（3 枚）| 216×46，icon 18，预留 66 | 214.6×44，icon 18，预留 66 |
+  | 二级（2 枚）| 93.33×32，icon 14，预留 39.33 | 93.3×31.7，icon 14，预留 39.3 |
+
+  宽度/高度上 1–2px 的差是既有的标题宽度估算与 `v_pad` 差，与标记无关。
+
+### 62.4 回归脚本注意
+
+- `ui-render-align.mjs`：原先用 `.marker-chip` 的右边缘量「行尾到标签间距」，
+  槽变宽后语义变了 → 改用最后一枚 `img`；`4 marker chips rendered` 改为
+  只数中心主题内的 chip。脚本开头补 `Ctrl+0` 复位到 100%（画布打开时会
+  fit，DOM rect 会被缩放，之前靠「窗口刚好」才碰巧过）。
+- **样例文件坑**：本轮开工时工作区的 `examples/test1.xmind` 是上一轮回归
+  留下的**脏副本**（一级/二级/三及主题各被塞了标记、还多出一条三级链），
+  拿它跑 `ui-render-align` 会有 `branch 1 width 183 / 右分支节距 107 /
+  居中 -35` 四条「失败」——那是 fixture 变了，不是渲染坏了。`git restore`
+  还原成提交版本（中心 4 标记、分支无标记、两张贴纸）后 **51/51 全过**；
+  新增的 `target/verify/marker-depth-probe.xmind` 才是多层标记探针。

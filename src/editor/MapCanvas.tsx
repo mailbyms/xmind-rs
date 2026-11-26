@@ -1171,9 +1171,12 @@ const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
                 // A marker row already spends that inset as real CSS padding,
                 // so the label gets none on top of it.
                 ['--text-pad' as string]: `${hasMarkers ? 0 : (node.textPad || 0)}px`,
-                // Unresolved sheet themes fall back to 30px marker icons;
-                // native files keep 36px (FINDINGS §43 / §47).
-                ['--marker-size' as string]: `${node.markerSize || 36}px`,
+                // Markers are drawn at the topic's own font size with a white
+                // ring of a sixth of that, overlapping by 8px (§62).  All three
+                // numbers come from the layout so screen and export agree.
+                ['--marker-size' as string]: `${node.markerSize || 14}px`,
+                ['--marker-ring' as string]: `${node.markerRing ?? (node.markerSize || 14) / 6}px`,
+                ['--marker-step' as string]: `${node.markerStep ?? ((node.markerSize || 14) * 4) / 3}px`,
                 // The 下划线 shapes underline with the branch hue (or the
                 // theme's border colour); the label ink may be flipped for
                 // contrast, so `currentColor` would be wrong here.

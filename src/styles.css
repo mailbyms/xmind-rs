@@ -595,44 +595,51 @@ textarea.tie-input { min-height: 88px; line-height: 1.5; }
 .node.align-left.underline .node-title,
 .node.align-left.underline .node-title-input { padding-left: var(--text-pad, 0px); }
 /* XMind draws the marker row *inside* the topic box, to the left of the label.
-   Measured on the shipped renderer (FINDINGS §48): the row starts 5px into the
-   content group, icons step by `icon + 2`, and 15px separates it from the
-   label.  The topic itself supplies `markerPad` on both sides, so a 4-marker
-   central box is 29 + [5 + 126] + 15 + 120 + 29 = 324 wide.
-   The icon size is document-level: 36px natively, 30px for unresolved sheet
-   themes (FINDINGS §47). */
+   The icon is the topic's own font size, the white ring a sixth of it, and the
+   slots overlap by a fixed 8px (FINDINGS §62, verified in the shipped bundle:
+   `markerImageSize = titleTextFontSize`, `markerBorderLineWidth = size/6`,
+   `markerSpacing = -8`).  The backend hands us all three numbers plus the
+   10px gap to the label, so a 4-marker 30px central topic is
+   29 + [4·40 − 3·8] + 10 + 120 + 29 = 324 wide — and a 14px sub-topic gets
+   14px icons that fit inside its 32px box instead of puffing it out. */
 .node-markers {
   position: relative; z-index: 1; display: flex; flex: 0 0 auto;
-  align-items: center; padding-left: 5px; margin-right: 15px;
+  align-items: center; margin-right: 10px;
 }
 .marker-chip {
-  width: calc(var(--marker-size, 36px) + 2px);
-  height: calc(var(--marker-size, 36px) + 4px);
-  flex: 0 0 calc(var(--marker-size, 36px) + 2px); display: inline-flex;
-  align-items: center; justify-content: center; background: transparent;
-  border-radius: 4px; cursor: pointer;
+  /* The slot holds the icon plus its ring on both sides. */
+  width: calc(var(--marker-size, 14px) + 2 * var(--marker-ring, 2.33px));
+  height: calc(var(--marker-size, 14px) + 2 * var(--marker-ring, 2.33px));
+  flex: 0 0 calc(var(--marker-size, 14px) + 2 * var(--marker-ring, 2.33px));
+  /* Consecutive slots advance by `--marker-step`, which is 8px shorter than a
+     slot: the rings overlap exactly like the shipped renderer. */
+  margin-right: calc(var(--marker-step, 10.67px) - var(--marker-size, 14px)
+    - 2 * var(--marker-ring, 2.33px));
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border-radius: 4px; cursor: pointer;
   /* A click on a marker must not start the topic's pointer-capturing drag. */
   touch-action: none;
 }
-.marker-chip:last-child {
-  width: var(--marker-size, 36px); flex-basis: var(--marker-size, 36px);
-}
+.marker-chip:last-child { margin-right: 0; }
 .marker-chip:hover { background: rgba(255, 255, 255, .22); }
 .marker-chip.active { background: rgba(255, 255, 255, .34); }
-/* The shipped renderer strokes a white ring around each marker icon. */
+/* The shipped renderer strokes a white ring around each marker icon: a circle
+   of radius size/2 with a `size/6` stroke, so it reaches size/12 past the
+   icon.  A box-shadow spread of half the ring thickness matches that. */
 .marker-chip img {
-  width: var(--marker-size, 36px); height: var(--marker-size, 36px);
-  display: block; transform: translateX(2px);
-  border-radius: 50%; box-shadow: 0 0 0 3px rgba(255, 255, 255, 1);
+  width: var(--marker-size, 14px); height: var(--marker-size, 14px);
+  display: block;
+  border-radius: 50%;
+  box-shadow: 0 0 0 calc(var(--marker-ring, 2.33px) / 2) rgba(255, 255, 255, 1);
   pointer-events: none;
 }
 .ol-marker img { width: 16px; height: 16px; display: block; }
 .marker-chip-fallback {
-  width: var(--marker-size, 36px); height: var(--marker-size, 36px);
-  border-radius: 50%; font-size: 14px;
+  width: var(--marker-size, 14px); height: var(--marker-size, 14px);
+  border-radius: 50%; font-size: calc(var(--marker-size, 14px) * 0.47);
   display: inline-flex; align-items: center; justify-content: center;
-  color: #fff; padding: 0; transform: translateX(2px);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 1);
+  color: #fff; padding: 0;
+  box-shadow: 0 0 0 calc(var(--marker-ring, 2.33px) / 2) rgba(255, 255, 255, 1);
   pointer-events: none;
 }
 /* Image topics (贴纸 / 插画 / 本地图片): the shipped renderer stacks the

@@ -681,3 +681,47 @@ fn resaving_repairs_legacy_string_markers() {
         "legacy string markers must be rewritten as objects: {raw}"
     );
 }
+
+/// Markers are drawn at the topic's own font size (FINDINGS §62): the exported
+/// SVG must use the same icon size, slot centres and overlap as the canvas, so
+/// a 14px sub-topic does not get 30px icons pasted inside its 32px box.
+#[test]
+fn svg_marker_row_scales_with_topic_font_size() {
+    let mut doc = xmind_core::Document::new("标记尺寸导出");
+    let root = doc.root().id.clone();
+    assert!(xmind_core::ops::set_markers(&mut doc, &root, vec!["priority-1".into()]));
+    let branch = xmind_core::ops::add_child(&mut doc, &root, "一级").unwrap();
+    assert!(xmind_core::ops::set_markers(
+        &mut doc, &branch, vec!["priority-2".into(), "task-done".into()]
+    ));
+    let deep = xmind_core::ops::add_child(&mut doc, &branch, "更深的子主题").unwrap();
+    assert!(xmind_core::ops::set_markers(
+        &mut doc, &deep, vec!["priority-3".into(), "flag-green".into()]
+    ));
+
+    let layout = xmind_core::compute_layout(&doc);
+    let svg = xmind_file::to_svg_with_images(&doc, &std::collections::HashMap::new());
+
+    for (id, font) in [(&root, 30.0), (&branch, 18.0), (&deep, 14.0)] {
+        let node = layout.nodes.iter().find(|n| &n.id == id).expect("node");
+        assert!((node.marker_size - font).abs() < 0.01, "icon size {font}");
+        let slot = node.marker_size + 2.0 * node.marker_ring;
+        for index in 0..node.markers.len() {
+            let cx = node.x + node.marker_pad + index as f64 * node.marker_step + slot / 2.0;
+            let cy = node.y + node.height / 2.0;
+            let want = format!("<circle cx=\"{cx:.1}\" cy=\"{cy:.1}\" r=\"{:.1}\" fill=\"#fff\"/>",
+                node.marker_size / 2.0 + node.marker_ring / 2.0);
+            assert!(svg.contains(&want), "missing ring {want}");
+            let img = format!("<image x=\"{:.1}\" y=\"{:.1}\" width=\"{:.1}\" height=\"{:.1}\"",
+                cx - node.marker_size / 2.0, cy - node.marker_size / 2.0,
+                node.marker_size, node.marker_size);
+            assert!(svg.contains(&img), "missing icon {img}");
+        }
+        // Never the old document-wide size.
+        if font < 30.0 {
+            assert!(!svg.contains(&format!(
+                "<image x=\"{:.1}\" y=\"{:.1}\" width=\"30.0\"",
+                node.x, node.y)), "deep topic must not reuse the root icon size");
+        }
+    }
+}

@@ -31,7 +31,7 @@ fn relationship_becomes_a_curved_link() {
 
 #[test]
 fn boundary_and_summary_wrap_the_child_range() {
-    let (mut doc, root, first, _) = tree();
+    let (mut doc, root, _, _) = tree();
     let (start, end) = ops::decor_range(doc.root(), &root).unwrap();
     // Document::new ships four sample branches; the range covers all children.
     assert_eq!(start, doc.root().children.first().unwrap().id);

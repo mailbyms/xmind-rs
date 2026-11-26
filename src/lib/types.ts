@@ -163,8 +163,12 @@ export interface LaidOutNode {
   markers: string[];
   /** Width reserved for the in-box marker row, in topic-local px. */
   markerWidth: number;
-  /** Native marker icon size (36px for official themes, 30px for unresolved ones). */
+  /** Marker icon size — the topic's own font size (FINDINGS §62). */
   markerSize: number;
+  /** White ring thickness around one icon: a sixth of `markerSize`. */
+  markerRing: number;
+  /** Icon-to-icon advance; smaller than `markerSize + 2·markerRing`. */
+  markerStep: number;
   /** Content inset on each side when the topic carries markers (FINDINGS §48). */
   markerPad: number;
   labels: string[];
